@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yuma Tanemura's Works</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gasoek+One&family=Inter+Tight:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell">
+      <a class="logo" href="./">Yuma Tanemura's Works</a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#works">Works</a>
+        <a href="#contact">Contact</a>
+        <a href="https://github.com/uma-moebius" rel="noopener noreferrer" target="_blank">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="profile" aria-label="Profile">
+      <div class="shell profile__shell">
+        <div class="portrait-frame">
+          <img class="portrait" src="./assets/images/portrait.png" width="560" height="720" alt="Portrait of Yuma Tanemura">
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">Illustrator · Japan</p>
+          <p class="blurb">Illustrator based in Japan.</p>
+          <h1 class="name-lockup" aria-label="Yuma Tanemura">
+            <span class="name-line" aria-hidden="true">Y II III A</span>
+            <span class="name-line" aria-hidden="true">T A II E III II R A</span>
+          </h1>
+        </div>
+      </div>
+    </section>
+
+    <section class="works" id="works" aria-label="Works">
+      <div class="shell works__shell">
+        <div class="works-rows" aria-hidden="true">
+          <div class="marquee marquee--top">
+            <div class="marquee__track">
+              <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+              <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+            </div>
+          </div>
+          <div class="marquee marquee--bottom">
+            <div class="marquee__track">
+              <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+              <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+            </div>
+          </div>
+        </div>
+        <div class="works-footer">
+          <a class="view-all" href="#works">View all</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact" id="contact" aria-label="Contact">
+      <div class="shell contact__shell">
+        <div class="contact-left">
+          <h2 class="contact-heading">For commissions or collaborations.</h2>
+        </div>
+        <form class="contact-form" id="contact-form" action="#" method="POST" novalidate>
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text" autocomplete="name" placeholder="Your name" required>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@email.com" required>
+          </div>
+          <div class="field field--message">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="5" placeholder="What it is, and when it needs to exist." required></textarea>
+          </div>
+          <button class="send" type="submit">
+            <svg class="send-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <path fill="currentColor" d="M1.2 8.1 14.5 1.6c.4-.2.8.2.6.6L9.1 14.7c-.2.4-.7.3-.8-.1L7 9.2 1.4 8.9c-.5 0-.5-.7-.2-.8Z"/>
+            </svg>
+            <span>Send</span>
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="./assets/config.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
