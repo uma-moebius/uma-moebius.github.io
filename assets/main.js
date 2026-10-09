@@ -20,6 +20,12 @@
     var narrowAcross = 300;
     var narrowDown = 300;
     var narrowGrow = 680;
+    // Resting corners are 7.7348% on the large square and 11.3636% on a
+    // small one. The place changes before the size animates, so the radius
+    // has to start from the old proportion of the new box and ease across
+    // with the scale. Otherwise the clicked corners jump.
+    var largeRadius = 0.077348;
+    var smallRadius = 0.113636;
 
     function byPlace(place) {
       return works.querySelector('.works__frame[data-place="' + place + '"]');
@@ -62,6 +68,7 @@
         frame.style.transform = "";
         frame.style.transition = "";
         frame.style.transformOrigin = "";
+        frame.style.borderRadius = "";
         frame.style.zIndex = "";
       });
       moving = false;
@@ -71,6 +78,10 @@
       var sx = at.width / to.width;
       var sy = at.height / to.height;
       return "translate(" + (at.left - to.left) + "px, " + (at.top - to.top) + "px) scale(" + sx + ", " + sy + ")";
+    }
+
+    function corner(width, large) {
+      return ((large ? largeRadius : smallRadius) * width) + "px";
     }
 
     function place(next) {
@@ -118,6 +129,7 @@
         frame.style.transformOrigin = "top left";
         frame.style.transition = "none";
         frame.style.zIndex = frame === grow ? "3" : frame === travel ? "2" : "1";
+        frame.style.borderRadius = corner(to.width, frame === shrink);
         frame.style.transform = "translate(" + (from.left - to.left) + "px, " + (from.top - to.top) + "px) scale(" + sx + ", " + sy + ")";
       });
 
@@ -125,8 +137,10 @@
         requestAnimationFrame(function () {
           frames.forEach(function (frame) {
             var spec = timing.get(frame);
-            frame.style.transition = "transform " + spec.dur + "ms " + ease + " " + spec.delay + "ms";
+            var move = spec.dur + "ms " + ease + " " + spec.delay + "ms";
+            frame.style.transition = "transform " + move + ", border-radius " + move;
             frame.style.transform = "translate(0px, 0px) scale(1, 1)";
+            frame.style.borderRadius = corner(last.get(frame).width, frame === grow);
           });
         });
       });
@@ -179,9 +193,16 @@
       travel.style.zIndex = "1";
       shrink.style.transform = shift(shrinkTo, shrinkFrom);
       grow.style.transform = shift(growTo, growFrom);
+      shrink.style.borderRadius = corner(shrinkTo.width, true);
+      grow.style.borderRadius = corner(growTo.width, false);
 
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
+          shrink.style.transition = "border-radius " + narrowShrink + "ms " + ease;
+          shrink.style.borderRadius = corner(shrinkTo.width, false);
+          grow.style.transition = "border-radius " + narrowGrow + "ms " + ease + " " + t4 + "ms";
+          grow.style.borderRadius = corner(growTo.width, true);
+
           shrink.animate([
             { transform: shift(shrinkTo, shrinkFrom), easing: ease },
             { transform: shift(shrinkTo, park), offset: at(t1), easing: ease },
