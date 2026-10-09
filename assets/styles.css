@@ -54,6 +54,7 @@ textarea:focus-visible {
 }
 
 .shell {
+  container: shell / inline-size;
   width: min(1200px, 100%);
   margin-inline: auto;
   padding-inline: var(--gutter);
@@ -111,7 +112,8 @@ textarea:focus-visible {
   color: var(--candy);
   font-family: var(--display);
   font-weight: 800;
-  font-size: min(156px, calc((100vw - 2 * var(--gutter)) / 7.0385));
+  /* 7.06 is the measured width of Baloo 2, so the name stays inside the shell. */
+  font-size: min(156px, calc(100cqw / 7.06));
   line-height: 1.2;
   letter-spacing: -0.01282em;
   white-space: nowrap;
@@ -344,7 +346,7 @@ textarea:focus-visible {
   background: var(--field);
   color: var(--ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 400;
 }
 
