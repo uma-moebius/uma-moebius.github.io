@@ -6,13 +6,20 @@
     var motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var ease = "cubic-bezier(0.22, 1, 0.36, 1)";
     var duration = 680;
-    // The sliding square crosses the row the other two resize through.
-    // On the desktop columns that row is only the gutter wide while both
-    // resize together, so the slide starts once the shrinking square has
-    // lifted clear, and the clicked square grows once the slide has passed.
-    // Same curve and duration. Side-by-side (narrow) layout keeps one move.
+    // Desktop columns: the sliding square crosses a row that is only the
+    // gutter wide while the other two resize, so it waits until that row
+    // is open and the clicked square grows after the slide has passed.
     var travelDelay = 340;
     var growDelay = 440;
+    // Narrow layout: the clicked square and the large one exchange places.
+    // A straight cross overlaps, so the large square parks in the free
+    // corner, the clicked square slides up the open column, and the parked
+    // square walks the gap between the rows into its slot before the grow.
+    var narrowShrink = 400;
+    var narrowShift = 380;
+    var narrowAcross = 300;
+    var narrowDown = 300;
+    var narrowGrow = 680;
 
     function byPlace(place) {
       return works.querySelector('.works__frame[data-place="' + place + '"]');
@@ -49,12 +56,21 @@
 
     function clearMotion() {
       frames.forEach(function (frame) {
+        if (frame.getAnimations) {
+          frame.getAnimations().forEach(function (anim) { anim.cancel(); });
+        }
         frame.style.transform = "";
         frame.style.transition = "";
         frame.style.transformOrigin = "";
         frame.style.zIndex = "";
       });
       moving = false;
+    }
+
+    function shift(to, at) {
+      var sx = at.width / to.width;
+      var sy = at.height / to.height;
+      return "translate(" + (at.left - to.left) + "px, " + (at.top - to.top) + "px) scale(" + sx + ", " + sy + ")";
     }
 
     function place(next) {
@@ -89,6 +105,11 @@
       var last = measure();
       moving = true;
 
+      if (!stacked) {
+        playNarrow(shrink, grow, travel, first, last);
+        return;
+      }
+
       frames.forEach(function (frame) {
         var from = first.get(frame);
         var to = last.get(frame);
@@ -110,8 +131,77 @@
         });
       });
 
-      var total = stacked ? growDelay + duration : duration;
-      window.setTimeout(clearMotion, total + 80);
+      window.setTimeout(clearMotion, growDelay + duration + 80);
+    }
+
+    function playNarrow(shrink, grow, travel, first, last) {
+      var growFrom = first.get(grow);
+      var travelFrom = first.get(travel);
+      var shrinkFrom = first.get(shrink);
+      var shrinkTo = last.get(shrink);
+      var growTo = last.get(grow);
+      var leftX = Math.min(growFrom.left, travelFrom.left);
+      var rightX = Math.max(growFrom.left, travelFrom.left);
+      var topY = shrinkFrom.top;
+      var bottomY = growFrom.top;
+      var side = growFrom.width;
+      var bandTop = topY + side;
+      var band = bottomY - bandTop;
+      var midY = bandTop + (band - side) / 2;
+      var clickedLeft = growFrom.left <= travelFrom.left;
+
+      function square(x, y) {
+        return { left: x, top: y, width: side, height: side };
+      }
+
+      var parkX = clickedLeft ? rightX : leftX;
+      var holdX = clickedLeft ? leftX : rightX;
+      var park = square(parkX, topY);
+      var midPark = square(parkX, midY);
+      var midHold = square(holdX, midY);
+      var grown = square(holdX, topY);
+      var t1 = narrowShrink;
+      var t2 = t1 + narrowShift;
+      var t3 = t2 + narrowAcross;
+      var t4 = t3 + narrowDown;
+      var total = t4 + narrowGrow;
+
+      function at(ms) {
+        return ms / total;
+      }
+
+      shrink.style.transformOrigin = "top left";
+      grow.style.transformOrigin = "top left";
+      shrink.style.transition = "none";
+      grow.style.transition = "none";
+      shrink.style.zIndex = "2";
+      grow.style.zIndex = "3";
+      travel.style.zIndex = "1";
+      shrink.style.transform = shift(shrinkTo, shrinkFrom);
+      grow.style.transform = shift(growTo, growFrom);
+
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          shrink.animate([
+            { transform: shift(shrinkTo, shrinkFrom), easing: ease },
+            { transform: shift(shrinkTo, park), offset: at(t1), easing: ease },
+            { transform: shift(shrinkTo, midPark), offset: at(t2), easing: ease },
+            { transform: shift(shrinkTo, midHold), offset: at(t3), easing: ease },
+            { transform: shift(shrinkTo, shrinkTo), offset: at(t4), easing: ease },
+            { transform: "translate(0px, 0px) scale(1, 1)", offset: 1 }
+          ], { duration: total, fill: "forwards" });
+
+          grow.animate([
+            { transform: shift(growTo, growFrom), easing: ease },
+            { transform: shift(growTo, growFrom), offset: at(t1), easing: ease },
+            { transform: shift(growTo, grown), offset: at(t2), easing: ease },
+            { transform: shift(growTo, grown), offset: at(t4), easing: ease },
+            { transform: "translate(0px, 0px) scale(1, 1)", offset: 1 }
+          ], { duration: total, fill: "forwards" });
+        });
+      });
+
+      window.setTimeout(clearMotion, total + 120);
     }
 
     works.addEventListener("click", function (event) {
