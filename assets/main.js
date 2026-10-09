@@ -6,6 +6,13 @@
     var motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var ease = "cubic-bezier(0.22, 1, 0.36, 1)";
     var duration = 680;
+    // The sliding square crosses the row the other two resize through.
+    // On the desktop columns that row is only the gutter wide while both
+    // resize together, so the slide starts once the shrinking square has
+    // lifted clear, and the clicked square grows once the slide has passed.
+    // Same curve and duration. Side-by-side (narrow) layout keeps one move.
+    var travelDelay = 340;
+    var growDelay = 440;
 
     function byPlace(place) {
       return works.querySelector('.works__frame[data-place="' + place + '"]');
@@ -64,7 +71,20 @@
         return;
       }
 
+      var shrink = next.shrink;
+      var grow = next.large;
+      var travel = frames.filter(function (frame) {
+        return frame !== shrink && frame !== grow;
+      })[0];
       var first = measure();
+      var travelBox = first.get(travel);
+      var growBox = first.get(grow);
+      var stacked = Math.abs(travelBox.left - growBox.left) < Math.abs(travelBox.top - growBox.top);
+      var timing = new Map();
+      timing.set(shrink, { delay: 0, dur: duration });
+      timing.set(travel, { delay: stacked ? travelDelay : 0, dur: duration });
+      timing.set(grow, { delay: stacked ? growDelay : 0, dur: duration });
+
       place(next);
       var last = measure();
       moving = true;
@@ -76,20 +96,22 @@
         var sy = from.height / to.height;
         frame.style.transformOrigin = "top left";
         frame.style.transition = "none";
-        frame.style.zIndex = frame === next.large ? "2" : "1";
+        frame.style.zIndex = frame === grow ? "3" : frame === travel ? "2" : "1";
         frame.style.transform = "translate(" + (from.left - to.left) + "px, " + (from.top - to.top) + "px) scale(" + sx + ", " + sy + ")";
       });
 
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
           frames.forEach(function (frame) {
-            frame.style.transition = "transform " + duration + "ms " + ease;
+            var spec = timing.get(frame);
+            frame.style.transition = "transform " + spec.dur + "ms " + ease + " " + spec.delay + "ms";
             frame.style.transform = "translate(0px, 0px) scale(1, 1)";
           });
         });
       });
 
-      window.setTimeout(clearMotion, duration + 80);
+      var total = stacked ? growDelay + duration : duration;
+      window.setTimeout(clearMotion, total + 80);
     }
 
     works.addEventListener("click", function (event) {
@@ -103,6 +125,7 @@
       play({
         side: works.dataset.side === "left" ? "right" : "left",
         large: frame,
+        shrink: large,
         top: frame === top ? large : other,
         bottom: frame === bottom ? large : other
       });
