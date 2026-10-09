@@ -53,9 +53,9 @@
       <section class="works" id="works" aria-labelledby="works-label">
         <h2 class="section-label" id="works-label">Works</h2>
         <div class="works__grid" id="works-grid" data-side="left">
-          <button type="button" class="works__frame" data-fill="stage" data-place="large"></button>
-          <button type="button" class="works__frame" data-fill="stage-top" data-place="top"></button>
-          <button type="button" class="works__frame" data-fill="stage-bottom" data-place="bottom"></button>
+          <button type="button" class="works__frame" data-fill="stage" data-place="large" aria-current="true" aria-label="Featured work" tabindex="-1"></button>
+          <button type="button" class="works__frame" data-fill="stage-top" data-place="top" aria-label="Show the upper work larger"></button>
+          <button type="button" class="works__frame" data-fill="stage-bottom" data-place="bottom" aria-label="Show the lower work larger"></button>
         </div>
       </section>
 
@@ -65,7 +65,8 @@
             <h2 class="contact__heading" id="contact-heading">For commissions or collaborations.</h2>
             <a class="contact__mail" href="mailto:hello@yumatanemura.com">hello@yumatanemura.com</a>
           </div>
-          <form class="contact__form" id="contact-form" action="#" method="POST">
+          <form class="contact__form" id="contact-form" action="https://formspree.io/f/mbgdrwba" method="POST">
+            <input type="hidden" name="_next" value="https://yumatanemura.com/thank-you/">
             <div class="field">
               <label for="name">Name</label>
               <input id="name" name="name" type="text" autocomplete="name" placeholder="Your name" required>

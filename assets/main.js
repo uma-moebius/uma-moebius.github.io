@@ -3,7 +3,9 @@
   if (works) {
     var frames = Array.prototype.slice.call(works.querySelectorAll(".works__frame"));
     var moving = false;
+    var runId = 0;
     var motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var narrowLayout = window.matchMedia("(max-width: 700px)");
     var ease = "cubic-bezier(0.22, 1, 0.36, 1)";
     var duration = 680;
     // Desktop columns: the sliding square crosses a row that is only the
@@ -32,16 +34,21 @@
     }
 
     function labelFrames() {
+      var sideBySide = narrowLayout.matches;
       frames.forEach(function (frame) {
-        var large = frame.dataset.place === "large";
-        if (large) {
+        var place = frame.dataset.place;
+        if (place === "large") {
           frame.setAttribute("aria-current", "true");
           frame.setAttribute("aria-label", "Featured work");
           frame.tabIndex = -1;
         } else {
           frame.removeAttribute("aria-current");
-          frame.setAttribute("aria-label", "Show this work larger");
           frame.tabIndex = 0;
+          if (place === "top") {
+            frame.setAttribute("aria-label", sideBySide ? "Show the left work larger" : "Show the upper work larger");
+          } else {
+            frame.setAttribute("aria-label", sideBySide ? "Show the right work larger" : "Show the lower work larger");
+          }
         }
       });
     }
@@ -61,6 +68,8 @@
     }
 
     function clearMotion() {
+      // A backgrounded tab can let a timer or a late frame outlive the motion.
+      runId++;
       frames.forEach(function (frame) {
         if (frame.getAnimations) {
           frame.getAnimations().forEach(function (anim) { anim.cancel(); });
@@ -72,6 +81,25 @@
         frame.style.zIndex = "";
       });
       moving = false;
+    }
+
+    function whenSettled(id, fallbackMs) {
+      var anims = [];
+      frames.forEach(function (frame) {
+        if (!frame.getAnimations) return;
+        frame.getAnimations().forEach(function (anim) { anims.push(anim); });
+      });
+      if (!anims.length) {
+        window.setTimeout(function () {
+          if (id === runId) clearMotion();
+        }, fallbackMs);
+        return;
+      }
+      Promise.all(anims.map(function (anim) {
+        return anim.finished.catch(function () {});
+      })).then(function () {
+        if (id === runId) clearMotion();
+      });
     }
 
     function shift(to, at) {
@@ -98,6 +126,7 @@
         return;
       }
 
+      var id = ++runId;
       var shrink = next.shrink;
       var grow = next.large;
       var travel = frames.filter(function (frame) {
@@ -117,7 +146,7 @@
       moving = true;
 
       if (!stacked) {
-        playNarrow(shrink, grow, travel, first, last);
+        playNarrow(id, shrink, grow, travel, first, last);
         return;
       }
 
@@ -135,6 +164,7 @@
 
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
+          if (id !== runId) return;
           frames.forEach(function (frame) {
             var spec = timing.get(frame);
             var move = spec.dur + "ms " + ease + " " + spec.delay + "ms";
@@ -142,13 +172,12 @@
             frame.style.transform = "translate(0px, 0px) scale(1, 1)";
             frame.style.borderRadius = corner(last.get(frame).width, frame === grow);
           });
+          whenSettled(id, growDelay + duration + 80);
         });
       });
-
-      window.setTimeout(clearMotion, growDelay + duration + 80);
     }
 
-    function playNarrow(shrink, grow, travel, first, last) {
+    function playNarrow(id, shrink, grow, travel, first, last) {
       var growFrom = first.get(grow);
       var travelFrom = first.get(travel);
       var shrinkFrom = first.get(shrink);
@@ -198,6 +227,7 @@
 
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
+          if (id !== runId) return;
           shrink.style.transition = "border-radius " + narrowShrink + "ms " + ease;
           shrink.style.borderRadius = corner(shrinkTo.width, false);
           grow.style.transition = "border-radius " + narrowGrow + "ms " + ease + " " + t4 + "ms";
@@ -219,10 +249,9 @@
             { transform: shift(growTo, grown), offset: at(t4), easing: ease },
             { transform: "translate(0px, 0px) scale(1, 1)", offset: 1 }
           ], { duration: total, fill: "forwards" });
+          whenSettled(id, total + 120);
         });
       });
-
-      window.setTimeout(clearMotion, total + 120);
     }
 
     works.addEventListener("click", function (event) {
@@ -243,6 +272,10 @@
     });
 
     labelFrames();
+    narrowLayout.addEventListener("change", function () {
+      labelFrames();
+      if (moving) clearMotion();
+    });
   }
 
   var form = document.getElementById("contact-form");
@@ -260,6 +293,11 @@
     event.preventDefault();
     if (error) error.hidden = true;
 
+    ["name", "message"].forEach(function (fieldName) {
+      var field = form.elements[fieldName];
+      if (field) field.value = field.value.trim();
+    });
+
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -275,16 +313,26 @@
 
     if (button) button.disabled = true;
 
+    // A stalled request never rejects, so Send would stay disabled.
+    var sendWait = 15000;
+    var controller = new AbortController();
+    var timer = window.setTimeout(function () {
+      controller.abort();
+    }, sendWait);
+
     fetch(endpoint, {
       method: "POST",
       body: new FormData(form),
-      headers: { Accept: "application/json" }
+      headers: { Accept: "application/json" },
+      signal: controller.signal
     })
       .then(function (response) {
+        window.clearTimeout(timer);
         if (!response.ok) throw new Error("submit failed");
         window.location.assign("/thank-you/");
       })
       .catch(function () {
+        window.clearTimeout(timer);
         if (button) button.disabled = false;
         showError("Could not send. Please try again.");
       });
