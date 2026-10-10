@@ -50,18 +50,19 @@
           <p class="sunsec__readout" aria-hidden="true">06:00 · ALT 00° · AZ 090°</p>
         </div>
       </section>
+
+      <section class="works" id="works" aria-labelledby="works-label">
+        <div class="works__pin">
+          <h2 class="section-label works__label" id="works-label" data-decode>Works</h2>
+          <ol class="works__index" id="works-index" aria-label="Works index"></ol>
+          <div class="works__stage" id="works-stage"><img alt="" decoding="async"></div>
+          <p class="works__empty" id="works-empty" data-line="no works yet — first one in progress" hidden><span class="sr-only">no works yet — first one in progress</span><span class="works__empty-type" aria-hidden="true"></span><span class="works__caret" aria-hidden="true"></span></p>
+          <p class="sr-only" id="works-status" aria-live="polite"></p>
+        </div>
+      </section>
     </div>
 
     <div class="shell">
-      <section class="works" id="works" aria-labelledby="works-label">
-        <h2 class="section-label" id="works-label">Works</h2>
-        <div class="works__grid" id="works-grid" data-side="left">
-          <button type="button" class="works__frame" data-fill="stage" data-place="large" aria-current="true" aria-label="Featured work" tabindex="-1"></button>
-          <button type="button" class="works__frame" data-fill="stage-top" data-place="top" aria-label="Show the upper work larger"></button>
-          <button type="button" class="works__frame" data-fill="stage-bottom" data-place="bottom" aria-label="Show the lower work larger"></button>
-        </div>
-      </section>
-
       <section class="contact" id="contact" aria-labelledby="contact-heading">
         <div class="contact__layout">
           <div class="contact__intro">
@@ -97,6 +98,8 @@
   <script src="./assets/config.js"></script>
   <script src="./assets/main.js"></script>
   <script src="./assets/ascii.js"></script>
+  <script src="./assets/works-data.js"></script>
+  <script src="./assets/works.js"></script>
   <script src="./assets/scene.js"></script>
 </body>
 </html>

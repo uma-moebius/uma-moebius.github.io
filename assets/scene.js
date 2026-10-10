@@ -1,5 +1,5 @@
 /* One character field — ASCII wordmark → ASCII SUN (still at rest, light drifts) → the SUN opens a mouth and
-   swallows the camera → the dark thins into dots. Input velocity drives rotation + glitch. */
+   swallows the camera → the dark thins into Works. Input velocity drives rotation + glitch. */
 (function () {
   var A = window.ASCII;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -43,7 +43,7 @@
   // ---------- scene ----------
   var scene = document.querySelector(".scene"); if (!scene) return;
   var bg = scene.querySelector(".scene__bg"), cv = scene.querySelector(".scene__canvas"), g = cv.getContext("2d");
-  var sun = scene.querySelector(".sunsec"), pin = sun.querySelector(".sunsec__pin");
+  var sun = scene.querySelector(".sunsec"), pin = sun.querySelector(".sunsec__pin"), works = scene.querySelector(".works");
   var label = pin.querySelector(".sunsec__label"), bio = pin.querySelector(".sunsec__bio"), links = pin.querySelector(".sunsec__links"), readout = pin.querySelector(".sunsec__readout");
   var ringEl = bg.querySelector(".scene__ring");
   var CHARS = " .·:-=+*sun%#@", LV = CHARS.length, WILD = "SUN01/#:<>*", GLYPHS = CHARS + WILD;
@@ -82,9 +82,11 @@
   var rot = 0, ringRot = 0, lastRead = "";
   var SUN_END = .36, DIVE_END = .8;
   function frameState(t) {
-    var pa = reduce ? .3 : prog(sun);
+    var pa = reduce ? .3 : prog(sun), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
     var rise = A.smooth(pa / .16), nk = A.clamp(pa / SUN_END), k = reduce ? 0 : A.smooth((pa - SUN_END) / (DIVE_END - SUN_END));
-    var thin = A.clamp((pa - DIVE_END) / (1 - DIVE_END)) * .9;
+    var thin = A.clamp((pa - DIVE_END) / (1 - DIVE_END)) * .9, u = A.clamp(pw / .2);
+    if (pa >= 1) thin = (window.WORKS_VIEW && window.WORKS_VIEW.empty) ? .9 : .9 + .1 * u; // empty Works: the thinned field stays
+    if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
     var drift = reduce ? 0 : t;
     var az = (-62 + 62 * nk) * Math.PI / 180 + Math.sin(drift * .00023) * .22, el = .1 + .42 * nk + Math.sin(drift * .00017 + 1) * .08;
     var Ls = [Math.sin(az) * Math.cos(el), -Math.sin(el), Math.cos(az) * Math.cos(el)], Ld = [-.25, -.32, .91];
@@ -93,7 +95,7 @@
     // mouth: a thin crooked slit appears as the dive starts, opens wide, and its centre drifts onto the camera axis
     var mo = reduce ? 0 : A.smooth((k - .1) / .85);
     return {
-      pa: pa, k: k, thin: thin, nk: nk,
+      pa: pa, pw: pw, k: k, thin: thin, nk: nk,
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: fcx + (W / 2 - fcx) * k, cy: (fcy + (1 - rise) * H * .62) + (H / 2 - (fcy + (1 - rise) * H * .62)) * k,
       L: [L[0] / n, L[1] / n, L[2] / n],
@@ -272,6 +274,7 @@
     diving = st.k > 0 && st.pa < 1;
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
     if (st.thin < 1) drawField(t, st);
+    if (window.WORKS_VIEW) window.WORKS_VIEW.draw(g, dpr, W / 2, H / 2, st.pw);
     drawUI(t, st);
   }
   function frame(t) {
@@ -295,11 +298,15 @@
     root.classList.add(hero && HW ? "wm-ascii" : "wm-plain");
     if (reduce) {
       drawHero(0); render(0);
+      addEventListener("scroll", function () { render(0); }, { passive: true }); // static frame; redraw only to keep Works hover/confirm in sync
+      ["pointerover", "click", "focusin", "keyup"].forEach(function (ev) { document.addEventListener(ev, function () { requestAnimationFrame(function () { render(0); }); }); });
       return;
     }
     new IntersectionObserver(function (es) { visible = es[0].isIntersecting; wake(); }).observe(scene);
     if (hero) new IntersectionObserver(function (es) { heroVis = es[0].isIntersecting; wake(); }).observe(hero);
     document.addEventListener("visibilitychange", wake);
+    // Works sequences need frames even without input
+    document.addEventListener("pointerover", wake); document.addEventListener("click", wake); document.addEventListener("keydown", wake);
     wake();
   }); });
   // a face that arrives late changes text boxes → refit so the SUN never overlaps the corner text

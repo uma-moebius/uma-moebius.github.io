@@ -52,6 +52,43 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
   .sunsec__readout { top: calc(var(--row) * 10.5); }
 }
 
+/* Works: pinned full-screen scene; index on the cell grid, work as frameless characters → frameless image */
+.works { position: relative; z-index: 2; height: 260vh; height: 260svh; margin-top: -100vh; margin-top: -100svh; scroll-margin-top: -55vh; }
+.works__pin { position: sticky; top: 0; height: 100vh; height: 100svh; opacity: var(--in, 0); pointer-events: none; }
+.works__pin.is-live { pointer-events: auto; }
+.works__label { position: absolute; left: 0; right: 0; top: calc(var(--row) * 2); margin: 0; }
+.works__pin { --wfs: clamp(15px, 1.39vw, 20px); --iw: calc(var(--wfs) * 24); --wg: calc(var(--u) * 12);
+  --sw: min(calc(100vh - var(--row) * 10), calc(100vw - var(--iw) - var(--wg) - var(--gutter) * 2));
+  --x0: calc((100vw - var(--iw) - var(--wg) - var(--sw)) / 2); }   /* index + work centred as one composition */
+.works__index { position: absolute; left: var(--x0); top: 50%; transform: translateY(-50%); width: var(--iw); list-style: none; margin: 0; padding: 0; }
+.works__row { display: grid; grid-template-columns: 1.2ch 3.6ch minmax(0, 1fr) 4ch; align-items: center;
+  width: 100%; height: calc(var(--wfs) * 2.6); margin: 0; padding: 0; border: 0; background: none; color: #fff4f7; text-align: left; cursor: pointer;
+  font-size: var(--wfs); line-height: 1; font-variant-numeric: tabular-nums; transition: opacity .2s ease; }
+.works__mark { width: .4em; height: .4em; border-radius: 50%; background: var(--candy); transform: scale(0); transition: transform .25s ease; }
+.works__row[aria-current="true"] .works__mark { transform: scale(1); }
+.works__row[aria-current="true"] .works__title { color: var(--candy); }
+.works__no, .works__year { color: #e2cbd6; }
+.works__no { padding-left: .2ch; }
+.works__title { overflow: hidden; white-space: nowrap; }
+.works__title::after { content: " ................................................" / ""; color: rgba(246,231,234,.3); }
+.works__year { text-align: right; }
+.works__index.is-previewing .works__row:not(.is-preview) { opacity: .5; }
+.works__row:focus { outline: none; }
+.works__row:focus-visible { outline: 1px solid var(--candy); outline-offset: 2px; }
+.works__stage { position: absolute; left: calc(var(--x0) + var(--iw) + var(--wg)); top: 50%; transform: translateY(-50%); width: var(--sw); aspect-ratio: 1; }
+.works__stage > img { display: block; width: 100%; height: 100%; object-fit: contain; opacity: 0; user-select: none; }
+.works__empty { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); margin: 0; text-align: center;
+  font-family: var(--mono); font-size: var(--wfs); line-height: var(--row); color: var(--blush); white-space: pre; }   /* one line on the cell grid, centred */
+.works__caret { display: inline-block; width: 1ch; height: 1.15em; margin-left: .2ch; vertical-align: -.2em; background: var(--candy); animation: caret-blink 1.06s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
+@media (max-width: 768px) {
+  .works__pin { --wfs: 16px; }
+  .works__empty { font-size: 14px; }
+  .works__stage { left: var(--gutter); right: var(--gutter); top: calc(var(--row) * 5); transform: none; width: auto; }
+  .works__index { left: var(--gutter); top: auto; bottom: calc(var(--row) * 2); transform: none; width: auto; right: var(--gutter); }
+  .works__row { height: calc(var(--row) * 2.25); }
+}
+
 /* cursor dot (approved) */
 .sun-cursor { position:fixed; left:0; top:0; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:var(--candy);
   pointer-events:none; z-index:60; transform:translate(var(--cx,-99px),var(--cy,-99px));
@@ -60,7 +97,14 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) { html.has-sun-cursor, html.has-sun-cursor * { cursor:none !important; } }
 @media (hover:none), (pointer:coarse) { .sun-cursor { display:none; } }
 
+/* page tint toward the selected work (~6%) */
+body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #141018)); transition: background-color .35s ease; }
+
 @media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
+  .works__caret { animation: none; }
   .sunsec { height: 100vh; height: 100svh; }
+  .works { height: 100vh; height: 100svh; margin-top: 0; scroll-margin-top: 0; }
+  .works__row, .works__mark { transition: none; }
 }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
