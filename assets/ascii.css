@@ -100,6 +100,45 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
 /* page tint toward the selected work (~6%) */
 body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #141018)); transition: background-color .35s ease; }
 
+/* contact: a prompt, not a form card — character-cell lines, block caret, [ Send ] */
+.contact { margin-top: calc(var(--row) * 10); }
+.contact__layout { gap: calc(var(--row) * 3) calc(var(--u) * 12); grid-template-columns: minmax(0, 448px) minmax(0, 560px); }
+.contact__heading { font-family: var(--mono); font-weight: 400; font-size: 26.667px; line-height: calc(var(--row) * 2); letter-spacing: 0; max-width: none; }
+.contact__mail { margin-top: calc(var(--row) * 2); color: var(--candy); }
+.contact__mail::before { content: "<" / ""; color: var(--hint); } .contact__mail::after { content: ">" / ""; color: var(--hint); }
+.contact__form { gap: calc(var(--row) * 1); font-family: var(--mono); font-size: 16px; }
+.field { display: grid; grid-template-columns: 10ch minmax(0, 1fr); column-gap: 0; row-gap: 0; align-items: baseline; position: relative; }
+.field label { font-size: 16px; line-height: calc(var(--row) * 1.5); color: var(--mute); white-space: pre; transition: color .15s; }
+.field label::after { content: " >" / ""; color: var(--hint); transition: color .15s; }
+.field:focus-within label, .field:focus-within label::after { color: var(--candy); }
+.field input, .field textarea { font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 1.5); height: auto; min-height: 0;
+  padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--blush);
+  caret-color: var(--candy); caret-shape: block; }
+.field input { height: calc(var(--row) * 1.5); }
+.field textarea { resize: none; overflow: auto; }
+.field input:focus-visible, .field textarea:focus-visible { outline: none; }  /* focus = pink prompt + pink rule + block caret */
+.field input::placeholder, .field textarea::placeholder { color: var(--hint); }
+.field input:-webkit-autofill { -webkit-text-fill-color: var(--blush); transition: background-color 600000s 0s; }
+.field::after { content: "......................................................................................................................" / "";
+  grid-column: 2; overflow: hidden; white-space: nowrap; color: rgba(246,231,234,.22); line-height: var(--row); height: var(--row); transition: color .15s; }
+.field:focus-within::after { color: rgba(255,92,154,.75); }
+.form-error { font-family: var(--mono); font-size: 16px; color: var(--candy); padding-left: 10ch; }
+.form-error::before { content: "! " / ""; }
+.send { align-self: flex-start; margin: var(--row) 0 0 10ch; width: auto; height: calc(var(--row) * 2); padding: 0 1ch; border-radius: 0;
+  background: transparent; color: var(--candy); font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 2); letter-spacing: 0;
+  transition: background-color .12s, color .12s; }
+.send::before { content: "[ " / ""; } .send::after { content: " ]" / ""; }
+.send:hover:not(:disabled), .send:focus-visible { background: var(--candy); color: var(--night); outline: none; }   /* inverse video */
+.send:active:not(:disabled) { transform: none; }
+.send:disabled { opacity: .55; }
+@media (max-width: 768px) {
+  .contact { margin-top: calc(var(--row) * 6); }
+  .contact__layout { grid-template-columns: minmax(0, 1fr); }
+  .contact__heading { font-size: 20px; line-height: calc(var(--row) * 1.75); }
+  .send, .form-error { padding-left: 0; }
+  .send { padding: 0 1ch; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   body { transition: none; }
   .works__caret { animation: none; }
