@@ -71,7 +71,7 @@
     function rr(el) { var b = el.getBoundingClientRect(); return { l: b.left - p.left, r: b.right - p.left, t: b.top - p.top, b: b.bottom - p.top }; }
     var la = rr(label), bi = rr(bio), li = rr(links), ro = rr(readout), x0, x1, y0, y1;
     // readout + label sit at the top; bio / links in the bottom corners (desktop) or under the label (mobile)
-    if (!small) { x0 = bi.r + 24; x1 = li.l - 24; y0 = ro.b + 16; y1 = H - 24; }
+    if (!small) { x0 = Math.max(bi.r + 24, W - li.l + 24); x1 = W - x0; y0 = ro.b + 16; y1 = H - 24; } // symmetric about W/2 → SUN on the page axis, still clear of bio / links
     else { x0 = 8; x1 = W - 8; y0 = ro.b + 16; y1 = H - 16; }
     var rfs = Math.max(11, Math.min(18, (Math.min(x1 - x0, y1 - y0) / 2) * .045));
     R0 = (Math.min(x1 - x0, y1 - y0) / 2 - rfs) / 1.12; fcx = (x0 + x1) / 2; fcy = (y0 + y1) / 2;
