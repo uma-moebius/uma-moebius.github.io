@@ -131,12 +131,16 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 .send:hover:not(:disabled), .send:focus-visible { background: var(--candy); color: var(--night); outline: none; }   /* inverse video */
 .send:active:not(:disabled) { transform: none; }
 .send:disabled { opacity: .55; }
+.site-footer { display: block; margin-top: calc(var(--row) * 8); min-height: 0; background: none; color: var(--hint); text-align: center; padding-bottom: calc(var(--row) * 2); }
+.dusk { display: block; width: min(100%, 720px); height: calc(var(--row) * 5.5); margin: 0 auto; }
+.site-footer p { margin: var(--row) 0 0; }
 @media (max-width: 768px) {
   .contact { margin-top: calc(var(--row) * 6); }
   .contact__layout { grid-template-columns: minmax(0, 1fr); }
   .contact__heading { font-size: 20px; line-height: calc(var(--row) * 1.75); }
   .send, .form-error { padding-left: 0; }
   .send { padding: 0 1ch; }
+  .dusk { height: calc(var(--row) * 4.5); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,5 +1,5 @@
 /* One character field — ASCII wordmark → ASCII SUN (still at rest, light drifts) → the SUN opens a mouth and
-   swallows the camera → the dark thins into Works. Input velocity drives rotation + glitch. */
+   swallows the camera → the dark thins into Works → a setting sun at the footer. Input velocity drives rotation + glitch. */
 (function () {
   var A = window.ASCII;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -103,7 +103,7 @@
     };
   }
 
-  // sphere shading of the SUN
+  // sphere shading shared by the SUN and the footer sun → one material
   function shade(nx, ny, r2, L0, L1, L2, lon, dk, phase) {
     var nz = Math.sqrt(1 - r2), d = nx * L0 + ny * L1 + nz * L2; if (d < 0) d = 0;
     var tex = .5 + .3 * Math.sin(ny * 11 + Math.sin(lon * 2 + ny * 3) * 1.2) + .2 * Math.sin(lon * 9) * Math.sin(ny * 17 + lon * 2);
@@ -267,6 +267,29 @@
     }
   }
 
+  // ---------- footer: a small setting sun on a character horizon (static; same material) ----------
+  var dusk = document.querySelector(".dusk");
+  function drawDusk() {
+    if (!dusk) return;
+    var r = dusk.getBoundingClientRect(), Wd = Math.round(r.width), Hd = Math.round(r.height); if (Wd < 10) return;
+    dusk.width = Math.round(Wd * dpr); dusk.height = Math.round(Hd * dpr);
+    var dg = dusk.getContext("2d"), cw = small ? 4 : 5, ch = cw * 1.75, AT = A.atlas(GLYPHS, COLORS, cw, ch, 600, dpr), top = LV - 1;
+    var rows = Math.floor(Hd / ch), hz = rows - 1, Rd = (hz - .2) * ch, cx = Wd / 2, cy = hz * ch;
+    var az = -.75, el = .22, L0 = Math.sin(az) * Math.cos(el), L1 = -Math.sin(el), L2 = Math.cos(az) * Math.cos(el);
+    var cols = Math.floor(Wd / cw), gx0 = (Wd - cols * cw) / 2;
+    for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+      var x = gx0 + (i + .5) * cw, y = (j + .5) * ch, lvl;
+      if (j === hz) { // horizon line of characters, fading to the edges
+        var ef = 1 - Math.abs(x - cx) / (Wd / 2); if (A.hash(i, 77) > ef * 1.4) continue; lvl = ef > .55 ? 4 : 3;
+        dg.drawImage(AT.canvas, lvl * AT.tw, (ef > .7 ? 6 : 3) * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
+        continue;
+      }
+      var nx = (x - cx) / Rd, ny = (y - cy) / Rd, r2 = nx * nx + ny * ny; if (r2 > 1) continue;
+      lvl = Math.round(A.clamp(shade(nx, ny, r2, L0, L1, L2, Math.atan2(nx, Math.sqrt(1 - r2)), 0, 0)) * top); if (lvl <= 0) continue;
+      dg.drawImage(AT.canvas, lvl * AT.tw, lvl * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
+    }
+  }
+
   // ---------- loop: only while the scene is on screen (or something is settling) ----------
   var running = false, visible = false, lastT = 0, ready = false;
   function render(t) {
@@ -294,7 +317,7 @@
     document.fonts.load("800 100px \"Baloo 2\"").then(go, go); setTimeout(go, 2000);
   }
   A.ready(function () { readyHero(function () {
-    build(); buildHero(); ready = true; heroT0 = performance.now();
+    build(); buildHero(); drawDusk(); ready = true; heroT0 = performance.now();
     root.classList.add(hero && HW ? "wm-ascii" : "wm-plain");
     if (reduce) {
       drawHero(0); render(0);
@@ -311,5 +334,5 @@
   }); });
   // a face that arrives late changes text boxes → refit so the SUN never overlaps the corner text
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", function () { if (ready) { fit(); if (reduce) render(0); } });
-  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!ready) return; build(); buildHero(); if (reduce) { drawHero(0); render(0); } else wake(); }, 120); });
+  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!ready) return; build(); buildHero(); drawDusk(); if (reduce) { drawHero(0); render(0); } else wake(); }, 120); });
 })();
