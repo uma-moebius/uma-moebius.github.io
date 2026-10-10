@@ -26,6 +26,7 @@ body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
 .scene__ring { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: translate(var(--rx, 50vw), var(--ry, 50vh)) rotate(var(--rot, 0deg)); opacity: var(--ro, 1); }
 .scene__glyph { position: absolute; left: 0; top: 0; font-family: var(--mono); font-weight: 600; font-size: var(--rfs, 16px); line-height: 1; color: var(--candy);
   transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--rr, 300px) * -1)) translate(var(--gx, 0px), var(--gy, 0px)) rotate(var(--gr, 0deg)); }
+.scene__glyph.is-wild { color: var(--blush); }
 
 .sunsec { position: relative; z-index: 1; height: 200vh; height: 200svh; }
 .sunsec__pin { position: sticky; top: 0; height: 100vh; height: 100svh; }
@@ -40,5 +41,13 @@ body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
   .sunsec__bio, .sunsec__links { top: calc(var(--row) * 5); bottom: auto; font-size: 15px; }
   .sunsec__readout { top: calc(var(--row) * 10.5); }
 }
+
+/* cursor dot (approved) */
+.sun-cursor { position:fixed; left:0; top:0; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:var(--candy);
+  pointer-events:none; z-index:60; transform:translate(var(--cx,-99px),var(--cy,-99px));
+  transition: width .2s, height .2s, margin .2s, background-color .2s, box-shadow .2s; }
+.sun-cursor.is-over { width:34px; height:34px; margin:-17px 0 0 -17px; background:transparent; box-shadow:0 0 0 1px var(--candy); }
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) { html.has-sun-cursor, html.has-sun-cursor * { cursor:none !important; } }
+@media (hover:none), (pointer:coarse) { .sun-cursor { display:none; } }
 
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }

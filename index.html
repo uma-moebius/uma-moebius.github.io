@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./assets/ascii.css">
 </head>
 <body>
+  <div class="sun-cursor" aria-hidden="true"></div>
   <header class="site-header">
     <div class="shell">
       <a class="logo" href="./">yumatanemura.com</a>
@@ -41,7 +42,7 @@
 
       <section class="sunsec" id="about" aria-labelledby="about-label">
         <div class="sunsec__pin">
-          <h2 class="section-label sunsec__label" id="about-label">About</h2>
+          <h2 class="section-label sunsec__label" id="about-label" data-decode>About</h2>
           <p class="sunsec__bio">Yuma Tanemura<br>Illustrator / Designer<br>Based in Japan</p>
           <p class="sunsec__links">
             <a href="https://www.instagram.com/yuma.tanemura/" target="_blank" rel="noopener noreferrer">Instagram</a><br>
@@ -65,7 +66,7 @@
       <section class="contact" id="contact" aria-labelledby="contact-heading">
         <div class="contact__layout">
           <div class="contact__intro">
-            <h2 class="contact__heading" id="contact-heading">For commissions or collaborations.</h2>
+            <h2 class="contact__heading" id="contact-heading" data-decode>For commissions or collaborations.</h2>
             <a class="contact__mail" href="mailto:hello@yumatanemura.com">hello@yumatanemura.com</a>
           </div>
           <form class="contact__form" id="contact-form" action="https://formspree.io/f/mbgdrwba" method="POST">
