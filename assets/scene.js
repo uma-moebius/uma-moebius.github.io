@@ -1,4 +1,4 @@
-/* One character field — ASCII SUN (still at rest, light drifts) → the SUN opens a mouth and
+/* One character field — ASCII wordmark → ASCII SUN (still at rest, light drifts) → the SUN opens a mouth and
    swallows the camera → the dark thins into dots. Input velocity drives rotation + glitch. */
 (function () {
   var A = window.ASCII;
@@ -204,6 +204,67 @@
   }
   function settle(o) { o.wild = false; o.el.classList.remove("is-wild"); o.el.textContent = o.c; o.el.style.removeProperty("--gx"); o.el.style.removeProperty("--gy"); o.el.style.removeProperty("--gr"); }
 
+  // ---------- hero: the Baloo 2 wordmark rendered as characters (same glyph set + pink ramp as the SUN) ----------
+  var hero = document.querySelector(".hero"), h1 = document.querySelector(".wordmark"), hcv = document.querySelector(".hero__canvas");
+  var hg = hcv ? hcv.getContext("2d") : null, HW = null, heroVis = true, heroT0 = 0;
+  function buildHero() {
+    HW = null; if (!hg || !h1) return;
+    var hb = hcv.getBoundingClientRect(), r = h1.getBoundingClientRect(), cs = getComputedStyle(h1), fs = parseFloat(cs.fontSize);
+    var CW = Math.ceil(hb.width), CH = Math.ceil(hb.height); if (CW < 10 || CH < 10) return;
+    hcv.width = Math.round(CW * dpr); hcv.height = Math.round(CH * dpr);
+    var cw = Math.max(3, Math.min(6, Math.round(fs / 30))), ch = cw * 1.75, text = h1.textContent.trim();
+    var m = document.createElement("canvas"); m.width = CW; m.height = CH;
+    var mg = m.getContext("2d"), font = "800 " + fs + "px \"Baloo 2\"";
+    mg.font = font; mg.letterSpacing = (-0.01282 * fs).toFixed(2) + "px"; mg.textAlign = "center"; mg.textBaseline = "alphabetic";
+    var tm = mg.measureText(text), asc = tm.actualBoundingBoxAscent, desc = tm.actualBoundingBoxDescent;
+    var tx = r.left - hb.left + r.width / 2, ty = r.top - hb.top + r.height / 2 + (asc - desc) / 2;
+    mg.fillStyle = "#fff"; mg.fillText(text, tx, ty);
+    var cov = mg.getImageData(0, 0, CW, CH).data;
+    // soft height field (blurred letterforms) → per-cell normal → lit like the SUN
+    var bl = document.createElement("canvas"); bl.width = CW; bl.height = CH; var bg2 = bl.getContext("2d");
+    bg2.filter = "blur(" + (fs * .045).toFixed(1) + "px)"; bg2.drawImage(m, 0, 0); var hf = bg2.getImageData(0, 0, CW, CH).data;
+    function hAt(x, y) { x = Math.max(0, Math.min(CW - 1, Math.round(x))); y = Math.max(0, Math.min(CH - 1, Math.round(y))); return hf[(y * CW + x) * 4 + 3] / 255; }
+    var gx0 = (CW % cw) / 2, gy0 = ((ty - asc) - Math.floor((ty - asc) / ch) * ch), cols = Math.floor((CW - gx0) / cw), rows = Math.floor((CH - gy0) / ch);
+    var cells = [];
+    for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+      var x0 = Math.round(gx0 + i * cw), y0 = Math.round(gy0 + j * ch), x1 = Math.round(gx0 + (i + 1) * cw), y1 = Math.round(gy0 + (j + 1) * ch), sum = 0, n = 0;
+      for (var yy = y0; yy < y1; yy += 1) for (var xx = x0; xx < x1; xx += 1) { sum += cov[(yy * CW + xx) * 4 + 3]; n++; }
+      var c = sum / (n * 255); if (c < .1) continue;
+      var px = (x0 + x1) / 2, py = (y0 + y1) / 2, s = fs * .03;
+      var gx = (hAt(px + s, py) - hAt(px - s, py)) / (2 * s), gy = (hAt(px, py + s) - hAt(px, py - s)) / (2 * s);
+      cells.push({ i: i, j: j, c: c, gx: gx * fs * .09, gy: gy * fs * .09, x: px, y: py, h: A.hash(i * 1.7, j * 3.3) });
+    }
+    // crisp thin outline of the real letterforms keeps the name legible while the characters scramble
+    var ol = document.createElement("canvas"); ol.width = hcv.width; ol.height = hcv.height; var og = ol.getContext("2d");
+    og.scale(dpr, dpr); og.font = font; og.letterSpacing = mg.letterSpacing; og.textAlign = "center"; og.textBaseline = "alphabetic";
+    og.fillStyle = "rgba(255,92,154,.09)"; og.fillText(text, tx, ty);      // faint silhouette
+    og.lineWidth = 1; og.strokeStyle = "rgba(255,92,154,.6)"; og.strokeText(text, tx, ty);
+    HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, outline: ol, fs: fs,
+      AT: A.atlas(GLYPHS, COLORS, cw, ch, 600, dpr) };
+  }
+  function drawHero(t) {
+    if (!HW) return;
+    var E = energy, AT = HW.AT, top = LV - 1, tw = AT.tw, th = AT.th, cw = HW.cw, ch = HW.ch, dw = tw, dh = th;
+    var tick = Math.floor(t / 45), glitch = E > .02, intro = reduce ? 1 : A.clamp((t - heroT0) / 1100);
+    var drift = reduce ? 0 : t, az = -.9 + Math.sin(drift * .00023) * .5, el = .55 + Math.sin(drift * .00017 + 1) * .15;
+    var L0 = Math.sin(az) * Math.cos(el), L1 = -Math.sin(el), L2 = Math.cos(az) * Math.cos(el), fsK = 6 / HW.fs;
+    hg.setTransform(1, 0, 0, 1, 0, 0); hg.clearRect(0, 0, hcv.width, hcv.height);
+    var oj = glitch ? (A.hash(tick, 9) - .5) * E * 6 : 0;
+    hg.globalAlpha = .55 + .45 * intro - (glitch ? E * .35 : 0); hg.drawImage(HW.outline, Math.round(oj * dpr), 0); hg.globalAlpha = 1;
+    var lastJ = -1, off = 0, hot = false;
+    for (var n = 0, cs = HW.cells; n < cs.length; n++) {
+      var c = cs[n]; if (c.h > intro) continue;
+      if (c.j !== lastJ) { lastJ = c.j; off = 0; hot = false;
+        if (glitch) { var band = c.j >> 1, hb = A.hash(band + 40, tick); if (hb < E * .6) { off = (A.hash(band * 3.1, tick + 7) - .5) * E * cw * 40; hot = hb < E * .18; } } }
+      var nl = Math.hypot(c.gx, c.gy, 1), d = (-c.gx * L0 - c.gy * L1 + L2) / nl; if (d < 0) d = 0;
+      var tex = .5 + .3 * Math.sin(c.y * fsK * 1.6 + Math.sin(c.x * fsK * .35) * 1.4) + .2 * Math.sin(c.x * fsK * 1.1 + c.y * fsK * .7);
+      var b = (.34 + d * (.5 + .28 * tex)) * (.55 + .45 * Math.min(1, c.c * 1.3));
+      var lvl = Math.max(c.c > .6 ? 6 : 3, Math.round((b > 1 ? 1 : b) * top)), gi = lvl;
+      if (glitch && A.hash(c.i + c.j * 131, tick) < E * .45) gi = LV + ((A.hash(c.i * 7 + c.j, tick + 3) * WILD.length) | 0);
+      hg.drawImage(AT.canvas, gi * tw, (hot ? top : lvl) * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), dw, dh);
+    }
+  }
+
   // ---------- loop: only while the scene is on screen (or something is settling) ----------
   var running = false, visible = false, lastT = 0, ready = false;
   function render(t) {
@@ -219,21 +280,29 @@
     // no idle spin: rotation only from input (pointer velocity + scroll)
     rot += energy * dt * .0035 + scrollAcc * .0009; ringRot += energy * dt * .25 + scrollAcc * .05; scrollAcc = 0;
     if (visible) render(t);
+    if (heroVis) drawHero(t);
     wild(t);
-    if ((visible || energy > 0 || !calm) && !document.hidden) requestAnimationFrame(frame); else { running = false; lastT = 0; }
+    if ((visible || heroVis || energy > 0 || !calm) && !document.hidden) requestAnimationFrame(frame); else { running = false; lastT = 0; }
   }
   function wake() { if (ready && !running && !reduce && !document.hidden) { running = true; requestAnimationFrame(frame); } }
-  A.ready(function () {
-    build(); ready = true;
+  function readyHero(cb) { // Baloo 2 must be loaded before the letterforms are sampled
+    if (!document.fonts || !document.fonts.load) return cb();
+    var done = false, go = function () { if (!done) { done = true; cb(); } };
+    document.fonts.load("800 100px \"Baloo 2\"").then(go, go); setTimeout(go, 2000);
+  }
+  A.ready(function () { readyHero(function () {
+    build(); buildHero(); ready = true; heroT0 = performance.now();
+    root.classList.add(hero && HW ? "wm-ascii" : "wm-plain");
     if (reduce) {
-      render(0);
+      drawHero(0); render(0);
       return;
     }
     new IntersectionObserver(function (es) { visible = es[0].isIntersecting; wake(); }).observe(scene);
+    if (hero) new IntersectionObserver(function (es) { heroVis = es[0].isIntersecting; wake(); }).observe(hero);
     document.addEventListener("visibilitychange", wake);
     wake();
-  });
+  }); });
   // a face that arrives late changes text boxes → refit so the SUN never overlaps the corner text
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", function () { if (ready) { fit(); if (reduce) render(0); } });
-  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!ready) return; build(); if (reduce) render(0); else wake(); }, 120); });
+  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!ready) return; build(); buildHero(); if (reduce) { drawHero(0); render(0); } else wake(); }, 120); });
 })();

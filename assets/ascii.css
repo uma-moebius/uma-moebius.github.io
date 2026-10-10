@@ -19,6 +19,16 @@ body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
 .nav { gap: calc(var(--u) * 4); }
 .nav a, .logo { font-weight: 400; }
 
+/* hero: wordmark only (Baloo 2 letterforms, rendered as characters), centred in the first screen */
+.hero { position: relative; height: 100vh; height: 100svh; display: grid; place-items: center; }
+.wordmark { position: relative; margin: 0; text-align: center; }
+.hero__canvas { position: absolute; top: 0; left: 50%; width: 100vw; height: 100%; transform: translateX(-50%); pointer-events: none; }
+html.js .wordmark { color: transparent; animation: wm-fallback 0s 3s forwards; }  /* no flash of plain text before the characters are ready */
+html.wm-ascii .wordmark { color: transparent; animation: none; }   /* real h1 text stays for a11y / selection; the canvas draws it */
+html.wm-plain .wordmark { color: var(--candy); animation: none; }
+@keyframes wm-fallback { to { color: var(--candy); } }
+html.wm-ascii .wordmark::selection { color: var(--ink); }
+
 /* scene: one pinned character field shared by SUN and Works */
 .scene { position: relative; }
 .scene__bg { position: sticky; top: 0; height: 100vh; height: 100svh; margin-bottom: -100vh; margin-bottom: -100svh; pointer-events: none; z-index: 0; overflow: hidden; }
