@@ -28,7 +28,7 @@ body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
   transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--rr, 300px) * -1)) translate(var(--gx, 0px), var(--gy, 0px)) rotate(var(--gr, 0deg)); }
 .scene__glyph.is-wild { color: var(--blush); }
 
-.sunsec { position: relative; z-index: 1; height: 200vh; height: 200svh; }
+.sunsec { position: relative; z-index: 1; height: 460vh; height: 460svh; }
 .sunsec__pin { position: sticky; top: 0; height: 100vh; height: 100svh; }
 .sunsec__pin > * { opacity: var(--fade, 1); }
 .sunsec__label { position: absolute; left: 0; right: 0; top: calc(var(--row) * 2); margin: 0; }
@@ -50,4 +50,7 @@ body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) { html.has-sun-cursor, html.has-sun-cursor * { cursor:none !important; } }
 @media (hover:none), (pointer:coarse) { .sun-cursor { display:none; } }
 
+@media (prefers-reduced-motion: reduce) {
+  .sunsec { height: 100vh; height: 100svh; }
+}
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
