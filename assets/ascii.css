@@ -1,0 +1,22 @@
+/* SUN + ASCII layer. Layout on the monospace cell: --u = one character (8px), --row = one line (16px). */
+:root {
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --u: 8px; --row: 16px;
+  --gutter: calc(var(--u) * 6);         /* 48px */
+  --mono-size: 13.333px;                /* JetBrains Mono advance = .6em → exactly one --u per character */
+}
+@media (max-width: 768px) { :root { --gutter: calc(var(--u) * 3); } }
+html, body { overflow-x: clip; }
+body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
+
+/* monospace for labels, nav, numbers, readouts, form labels, footer */
+.logo, .nav a, .section-label, .works__row, .sunsec__readout, .field label, .site-footer, .send, .contact__mail {
+  font-family: var(--mono); font-size: var(--mono-size); line-height: var(--row); letter-spacing: 0; font-weight: 400;
+}
+.section-label { text-transform: none; color: var(--mute); }
+.site-header { position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding-top: calc(var(--row) * 2); }
+.site-header .shell { align-items: center; gap: var(--row) calc(var(--u) * 4); }
+.nav { gap: calc(var(--u) * 4); }
+.nav a, .logo { font-weight: 400; }
+
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
