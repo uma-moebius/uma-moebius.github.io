@@ -31,28 +31,28 @@
       <h1 class="wordmark" aria-label="yuma.tanemura">
         <span class="wordmark__run" aria-hidden="true"><span class="wordmark__ch" style="--i:0">y</span><span class="wordmark__ch" style="--i:1">u</span><span class="wordmark__ch" style="--i:2">m</span><span class="wordmark__ch" style="--i:3">a</span><span class="wordmark__ch" style="--i:4">.</span><span class="wordmark__ch" style="--i:5">t</span><span class="wordmark__ch" style="--i:6">a</span><span class="wordmark__ch" style="--i:7">n</span><span class="wordmark__ch" style="--i:8">e</span><span class="wordmark__ch" style="--i:9">m</span><span class="wordmark__ch" style="--i:10">u</span><span class="wordmark__ch" style="--i:11">r</span><span class="wordmark__ch" style="--i:12">a</span></span>
       </h1>
+    </div>
 
-      <section class="about" id="about" aria-labelledby="about-label">
-        <h2 class="section-label" id="about-label">About</h2>
-        <div class="about__lockup">
-          <p class="about__bio">
-            Yuma Tanemura<br>
-            Illustrator / Designer<br>
-            Based in Japan
-          </p>
-          <div class="sun">
-            <div class="sun__ring" aria-hidden="true">
-              <span class="sun__glyph" style="--a:0deg">S</span><span class="sun__glyph" style="--a:5.1724deg">U</span><span class="sun__glyph" style="--a:10.3448deg">N</span><span class="sun__glyph" style="--a:22.5deg">S</span><span class="sun__glyph" style="--a:27.6724deg">U</span><span class="sun__glyph" style="--a:32.8448deg">N</span><span class="sun__glyph" style="--a:45deg">S</span><span class="sun__glyph" style="--a:50.1724deg">U</span><span class="sun__glyph" style="--a:55.3448deg">N</span><span class="sun__glyph" style="--a:67.5deg">S</span><span class="sun__glyph" style="--a:72.6724deg">U</span><span class="sun__glyph" style="--a:77.8448deg">N</span><span class="sun__glyph" style="--a:90deg">S</span><span class="sun__glyph" style="--a:95.1724deg">U</span><span class="sun__glyph" style="--a:100.3448deg">N</span><span class="sun__glyph" style="--a:112.5deg">S</span><span class="sun__glyph" style="--a:117.6724deg">U</span><span class="sun__glyph" style="--a:122.8448deg">N</span><span class="sun__glyph" style="--a:135deg">S</span><span class="sun__glyph" style="--a:140.1724deg">U</span><span class="sun__glyph" style="--a:145.3448deg">N</span><span class="sun__glyph" style="--a:157.5deg">S</span><span class="sun__glyph" style="--a:162.6724deg">U</span><span class="sun__glyph" style="--a:167.8448deg">N</span><span class="sun__glyph" style="--a:180deg">S</span><span class="sun__glyph" style="--a:185.1724deg">U</span><span class="sun__glyph" style="--a:190.3448deg">N</span><span class="sun__glyph" style="--a:202.5deg">S</span><span class="sun__glyph" style="--a:207.6724deg">U</span><span class="sun__glyph" style="--a:212.8448deg">N</span><span class="sun__glyph" style="--a:225deg">S</span><span class="sun__glyph" style="--a:230.1724deg">U</span><span class="sun__glyph" style="--a:235.3448deg">N</span><span class="sun__glyph" style="--a:247.5deg">S</span><span class="sun__glyph" style="--a:252.6724deg">U</span><span class="sun__glyph" style="--a:257.8448deg">N</span><span class="sun__glyph" style="--a:270deg">S</span><span class="sun__glyph" style="--a:275.1724deg">U</span><span class="sun__glyph" style="--a:280.3448deg">N</span><span class="sun__glyph" style="--a:292.5deg">S</span><span class="sun__glyph" style="--a:297.6724deg">U</span><span class="sun__glyph" style="--a:302.8448deg">N</span><span class="sun__glyph" style="--a:315deg">S</span><span class="sun__glyph" style="--a:320.1724deg">U</span><span class="sun__glyph" style="--a:325.3448deg">N</span><span class="sun__glyph" style="--a:337.5deg">S</span><span class="sun__glyph" style="--a:342.6724deg">U</span><span class="sun__glyph" style="--a:347.8448deg">N</span>
-            </div>
-            <div class="sun__face" aria-hidden="true"></div>
-          </div>
-          <p class="about__links">
+    <div class="scene">
+      <div class="scene__bg" aria-hidden="true">
+        <canvas class="scene__canvas"></canvas>
+        <div class="scene__ring"></div>
+      </div>
+
+      <section class="sunsec" id="about" aria-labelledby="about-label">
+        <div class="sunsec__pin">
+          <h2 class="section-label sunsec__label" id="about-label">About</h2>
+          <p class="sunsec__bio">Yuma Tanemura<br>Illustrator / Designer<br>Based in Japan</p>
+          <p class="sunsec__links">
             <a href="https://www.instagram.com/yuma.tanemura/" target="_blank" rel="noopener noreferrer">Instagram</a><br>
             <a href="https://github.com/uma-moebius" target="_blank" rel="noopener noreferrer">GitHub</a>
           </p>
+          <p class="sunsec__readout" aria-hidden="true">06:00 · ALT 00° · AZ 090°</p>
         </div>
       </section>
+    </div>
 
+    <div class="shell">
       <section class="works" id="works" aria-labelledby="works-label">
         <h2 class="section-label" id="works-label">Works</h2>
         <div class="works__grid" id="works-grid" data-side="left">
@@ -96,5 +96,7 @@
 
   <script src="./assets/config.js"></script>
   <script src="./assets/main.js"></script>
+  <script src="./assets/ascii.js"></script>
+  <script src="./assets/scene.js"></script>
 </body>
 </html>
