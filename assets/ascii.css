@@ -38,7 +38,7 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
   transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--rr, 300px) * -1)) translate(var(--gx, 0px), var(--gy, 0px)) rotate(var(--gr, 0deg)); }
 .scene__glyph.is-wild { color: var(--blush); }
 
-.sunsec { position: relative; z-index: 1; height: 460vh; height: 460svh; }
+.sunsec { position: relative; z-index: 1; height: 280vh; height: 280svh; }   /* 1.8 screens of scroll for the whole SUN timeline */
 .sunsec__pin { position: sticky; top: 0; height: 100vh; height: 100svh; }
 .sunsec__pin > * { opacity: var(--fade, 1); }
 .sunsec__label { position: absolute; left: 0; right: 0; top: calc(var(--row) * 2); margin: 0; }
