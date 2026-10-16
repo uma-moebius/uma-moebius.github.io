@@ -101,8 +101,7 @@ textarea:focus-visible {
 
 .logo:hover,
 .about__links a:hover,
-.contact__mail:hover,
-.thank-you__back:hover {
+.contact__mail:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -263,34 +262,6 @@ textarea:focus-visible {
 
 .site-footer p {
   margin: 0;
-}
-
-.thank-you-page {
-  min-height: 100vh;
-  background: var(--night);
-}
-
-.thank-you {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 48px 24px;
-}
-
-.thank-you__sent {
-  margin: 0;
-  color: var(--blush);
-  font-size: 40px;
-  font-weight: 500;
-}
-
-.thank-you__back {
-  color: var(--candy);
-  font-size: 16px;
-  font-weight: 500;
 }
 
 @media (max-width: 900px) {
