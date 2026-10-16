@@ -12,6 +12,7 @@
   // ---- empty state: no works yet → index + stage stay out of the page, one line types in with the scene ----
   if (!WORKS.length) {
     list.hidden = true; stage.hidden = true;
+    pinEl.parentElement.classList.add("is-empty");
     var typed = empty && empty.querySelector(".works__empty-type"), line = empty ? empty.dataset.line : "", shown = -1;
     if (empty) empty.hidden = false;
     window.WORKS_VIEW = { empty: true, busy: function () { return false; }, draw: function (g, d, gx, gy, pw) {
