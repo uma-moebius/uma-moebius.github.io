@@ -73,7 +73,7 @@ textarea:focus-visible {
 .nav a,
 .section-label,
 .site-footer {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
 }
@@ -201,7 +201,7 @@ textarea:focus-visible {
 .form-error {
   margin: 0;
   color: var(--blush);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -215,7 +215,7 @@ textarea:focus-visible {
   background: var(--candy);
   color: var(--ink);
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: transform 160ms ease;
@@ -285,7 +285,7 @@ textarea:focus-visible {
 
   .contact__layout { grid-template-columns: 1fr; }
 
-  .contact__heading { font-size: 32px; }
+  .contact__heading { font-size: 28px; }
 
   .site-footer { margin-top: 64px; }
 }

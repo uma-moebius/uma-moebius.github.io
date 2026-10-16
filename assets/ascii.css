@@ -3,7 +3,7 @@
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --u: 8px; --row: 16px;
   --gutter: calc(var(--u) * 6);         /* 48px */
-  --mono-size: 13.333px;                /* JetBrains Mono advance = .6em → exactly one --u per character */
+  --mono-size: 13px;                    /* type scale: 13 / 16 / 20 / 28 / 40px */
 }
 @media (max-width: 768px) { :root { --gutter: calc(var(--u) * 3); } }
 html, body { overflow-x: clip; }
@@ -13,7 +13,8 @@ body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
 .logo, .nav a, .section-label, .works__row, .sunsec__readout, .field label, .site-footer, .send, .contact__mail {
   font-family: var(--mono); font-size: var(--mono-size); line-height: var(--row); letter-spacing: 0; font-weight: 400;
 }
-.section-label { text-transform: none; color: var(--mute); }
+.section-label { text-transform: none; color: var(--mute); font-size: 16px; letter-spacing: .08em; }
+.section-label::before { content: "[ " / ""; } .section-label::after { content: " ]" / ""; }   /* same brackets as [ Send ] */
 .site-header { position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding-top: calc(var(--row) * 2); }
 .site-header .shell { align-items: center; gap: var(--row) calc(var(--u) * 4); }
 .nav { gap: calc(var(--u) * 4); }
@@ -59,7 +60,7 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
 .works__pin { position: sticky; top: 0; height: 100vh; height: 100svh; opacity: var(--in, 0); pointer-events: none; }
 .works__pin.is-live { pointer-events: auto; }
 .works__label { position: absolute; left: 0; right: 0; top: calc(var(--row) * 2); margin: 0; }
-.works__pin { --wfs: clamp(15px, 1.39vw, 20px); --iw: calc(var(--wfs) * 24); --wg: calc(var(--u) * 12);
+.works__pin { --wfs: 16px; --iw: calc(var(--wfs) * 24); --wg: calc(var(--u) * 12);
   --sw: min(calc(100vh - var(--row) * 10), calc(100vw - var(--iw) - var(--wg) - var(--gutter) * 2));
   --x0: calc((100vw - var(--iw) - var(--wg) - var(--sw)) / 2); }   /* index + work centred as one composition */
 .works__index { position: absolute; left: var(--x0); top: 50%; transform: translateY(-50%); width: var(--iw); list-style: none; margin: 0; padding: 0; }
@@ -83,9 +84,10 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
   font-family: var(--mono); font-size: var(--wfs); line-height: var(--row); color: var(--blush); white-space: pre; }   /* one line on the cell grid, centred */
 .works__caret { display: inline-block; width: 1ch; height: 1.15em; margin-left: .2ch; vertical-align: -.2em; background: var(--candy); animation: caret-blink 1.06s steps(1) infinite; }
 @keyframes caret-blink { 50% { opacity: 0; } }
+@media (min-width: 1440px) { .works__pin { --wfs: 20px; } }
 @media (max-width: 768px) {
   .works__pin { --wfs: 16px; }
-  .works__empty { font-size: 14px; }
+  .works__empty { font-size: 13px; }
   .works__stage { left: var(--gutter); right: var(--gutter); top: calc(var(--row) * 5); transform: none; width: auto; }
   .works__index { left: var(--gutter); top: auto; bottom: calc(var(--row) * 2); transform: none; width: auto; right: var(--gutter); }
   .works__row { height: calc(var(--row) * 2.25); }
@@ -105,7 +107,7 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 /* contact: a prompt, not a form card — character-cell lines, block caret, [ Send ] */
 .contact { margin-top: calc(var(--row) * 10); }
 .contact__layout { gap: calc(var(--row) * 3) calc(var(--u) * 12); grid-template-columns: minmax(0, 448px) minmax(0, 560px); }
-.contact__heading { font-family: var(--mono); font-weight: 400; font-size: 26.667px; line-height: calc(var(--row) * 2); letter-spacing: 0; max-width: none; }
+.contact__heading { font-family: var(--mono); font-weight: 400; font-size: 28px; line-height: calc(var(--row) * 2); letter-spacing: 0; max-width: none; }
 .contact__mail { margin-top: calc(var(--row) * 2); color: var(--candy); }
 .contact__mail::before { content: "<" / ""; color: var(--hint); } .contact__mail::after { content: ">" / ""; color: var(--hint); }
 .contact__form { gap: calc(var(--row) * 1); font-family: var(--mono); font-size: 16px; }
