@@ -28,9 +28,8 @@ window.ASCII = (function () {
   }
   function ready(cb) {
     var done = false; function go() { if (!done) { done = true; ADV = null; cb(); } }
-    // every face the layout measures (mono cells, the Inter Tight bio that bounds the SUN) must be in before the first fit
-    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load("400 13px " + FAMILY), document.fonts.load("600 13px " + FAMILY),
-      document.fonts.load('400 16px "Inter Tight"'), document.fonts.load('500 16px "Inter Tight"')]).then(function () { return document.fonts.ready; }).then(go, go);
+    // every face the layout measures (mono cells, the bio that bounds the SUN) must be in before the first fit
+    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load("400 13px " + FAMILY), document.fonts.load("600 13px " + FAMILY)]).then(function () { return document.fonts.ready; }).then(go, go);
     setTimeout(go, 1500); if (!document.fonts) go();
   }
   function hash(a, b) { var h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); }

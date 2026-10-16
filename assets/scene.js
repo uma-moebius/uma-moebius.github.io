@@ -71,10 +71,17 @@
     function rr(el) { var b = el.getBoundingClientRect(); return { l: b.left - p.left, r: b.right - p.left, t: b.top - p.top, b: b.bottom - p.top }; }
     var la = rr(label), bi = rr(bio), li = rr(links), ro = rr(readout), x0, x1, y0, y1;
     // readout + label sit at the top; bio / links in the bottom corners (desktop) or under the label (mobile)
-    if (!small) { x0 = Math.max(bi.r + 24, W - li.l + 24); x1 = W - x0; y0 = ro.b + 16; y1 = H - 24; } // symmetric about W/2 → SUN on the page axis, still clear of bio / links
-    else { x0 = 8; x1 = W - 8; y0 = ro.b + 16; y1 = H - 16; }
-    var rfs = Math.max(11, Math.min(18, (Math.min(x1 - x0, y1 - y0) / 2) * .045));
-    R0 = (Math.min(x1 - x0, y1 - y0) / 2 - rfs) / 1.12; fcx = (x0 + x1) / 2; fcy = (y0 + y1) / 2;
+    var half;
+    if (!small) { // on the page axis; as large as the height allows, shrunk only where the circle would reach the bio / links boxes
+      x0 = 24; x1 = W - 24; y0 = ro.b + 16; y1 = H - 24; fcx = W / 2; fcy = (y0 + y1) / 2;
+      half = Math.min((x1 - x0) / 2, (y1 - y0) / 2);
+      [bi, li].forEach(function (b) {
+        var dx = Math.max(b.l - 24 - fcx, 0, fcx - b.r - 24), dy = Math.max(b.t - 24 - fcy, 0, fcy - b.b - 24);
+        half = Math.min(half, Math.hypot(dx, dy));
+      });
+    } else { x0 = 8; x1 = W - 8; y0 = ro.b + 16; y1 = H - 16; fcx = (x0 + x1) / 2; fcy = (y0 + y1) / 2; half = Math.min(x1 - x0, y1 - y0) / 2; }
+    var rfs = Math.max(11, Math.min(18, half * .045));
+    R0 = (half - rfs) / 1.12;
     ringEl.style.setProperty("--rfs", rfs + "px");
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
