@@ -1,3 +1,20 @@
+/* self-hosted latin subsets: JetBrains Mono (variable, 400–600) and Baloo 2 800 — the only faces the site uses */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Baloo 2";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("fonts/baloo2-800-latin.woff2") format("woff2");
+}
+
 :root {
   --night: #141018;
   --blush: #f6e7ea;
@@ -7,7 +24,7 @@
   --ink: #1a1216;
   --hint: #8e7280;
   --gutter: 51px;
-  --ui: "Inter Tight", system-ui, sans-serif;
+  --ui: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --display: "Baloo 2", system-ui, sans-serif;
 }
 
