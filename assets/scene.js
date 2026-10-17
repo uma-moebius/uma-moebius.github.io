@@ -102,9 +102,9 @@
     // mouth: a thin crooked slit appears as the dive starts, opens wide, and its centre drifts onto the camera axis
     var mo = reduce ? 0 : A.smooth((k - .1) / .85);
     return {
-      pa: pa, pw: pw, k: k, thin: thin, nk: nk,
-      z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
-      cx: fcx + (W / 2 - fcx) * k, cy: (fcy + (1 - rise) * H * .62) + (H / 2 - (fcy + (1 - rise) * H * .62)) * k,
+      pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: rise,
+      z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
+      cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
       mo: mo, ma: .1 + .52 * Math.pow(mo, 1.4), mb: .003 + .62 * Math.pow(mo, 3.2), my: .2 * (1 - A.smooth(k / .92)), lip: .012 + .022 * mo
     };
@@ -187,7 +187,7 @@
     pin.style.setProperty("--fade", (1 - A.clamp((st.pa - (SUN_END - .02)) / .03)).toFixed(3));
     ringEl.style.setProperty("--rx", st.cx + "px"); ringEl.style.setProperty("--ry", st.cy + "px");
     ringEl.style.setProperty("--rr", (st.R * 1.12) + "px");
-    ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : (1 - A.clamp(st.k * 2.2)).toFixed(3));
+    ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : (st.a * (1 - A.clamp(st.k * 2.2))).toFixed(3));
     ringEl.style.setProperty("--rot", ringRot.toFixed(2) + "deg");
     var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
     var txt = hh + ":" + mm + " · ALT " + String(Math.round(st.nk * 62)).padStart(2, "0") + "° · AZ " + String(Math.round(90 + st.nk * 90)).padStart(3, "0") + "°";
@@ -303,7 +303,7 @@
     var st = frameState(t);
     diving = st.k > 0 && st.pa < 1;
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-    if (st.thin < 1) drawField(t, st);
+    g.globalAlpha = st.a; if (st.thin < 1) drawField(t, st); g.globalAlpha = 1;
     if (window.WORKS_VIEW) window.WORKS_VIEW.draw(g, dpr, W / 2, H / 2, st.pw);
     drawUI(t, st);
   }
