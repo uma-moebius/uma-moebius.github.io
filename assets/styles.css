@@ -327,6 +327,10 @@ textarea:focus-visible {
   font-weight: 400;
 }
 
+.thank-you-page .edge__line {
+  font-size: 28px;
+}
+
 .edge__back {
   color: var(--candy);
   font-size: 16px;
