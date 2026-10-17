@@ -213,7 +213,7 @@
   }
   function settle(o) { o.wild = false; o.el.classList.remove("is-wild"); o.el.textContent = o.c; o.el.style.removeProperty("--gx"); o.el.style.removeProperty("--gy"); o.el.style.removeProperty("--gr"); }
 
-  // ---------- hero: the Baloo 2 wordmark rendered as characters (same glyph set + pink ramp as the SUN) ----------
+  // ---------- hero: the Baloo 2 wordmark sampled into small characters (same atlas system as the SUN, no outline layer) ----------
   var hero = document.querySelector(".hero"), h1 = document.querySelector(".wordmark"), hcv = document.querySelector(".hero__canvas");
   var hg = hcv ? hcv.getContext("2d") : null, HW = null, heroVis = true, heroT0 = 0;
   function buildHero() {
@@ -241,38 +241,39 @@
       var c = sum / (n * 255); if (c < .1) continue;
       var px = (x0 + x1) / 2, py = (y0 + y1) / 2, s = fs * .03;
       var gx = (hAt(px + s, py) - hAt(px - s, py)) / (2 * s), gy = (hAt(px, py + s) - hAt(px, py - s)) / (2 * s);
-      cells.push({ i: i, j: j, c: c, gx: gx * fs * .09, gy: gy * fs * .09, x: px, y: py, h: A.hash(i * 1.7, j * 3.3) });
+      var depth = hAt(px, py);
+      cells.push({ i: i, j: j, c: c, depth: depth, edge: c < .45 || depth < .25, gx: gx * fs * .09, gy: gy * fs * .09, x: px, y: py, h: A.hash(i * 1.7, j * 3.3) });
     }
-    // crisp thin outline of the real letterforms keeps the name legible while the characters scramble
-    var ol = document.createElement("canvas"); ol.width = hcv.width; ol.height = hcv.height; var og = ol.getContext("2d");
-    og.scale(dpr, dpr); og.font = font; og.letterSpacing = mg.letterSpacing; og.textAlign = "center"; og.textBaseline = "alphabetic";
-    og.fillStyle = "rgba(255,92,154,.09)"; og.fillText(text, tx, ty);      // faint silhouette
-    og.lineWidth = 1; og.strokeStyle = "rgba(255,92,154,.6)"; og.strokeText(text, tx, ty);
-    HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, outline: ol, fs: fs,
-      AT: A.atlas(GLYPHS, COLORS, cw, ch, 600, dpr) };
+    HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
   }
+  // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 → #ffe3ee; dense inside, sparse and fine toward the edges
+  var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGLYPHS = HCH + HWILD;
+  var HCOLORS = A.ramp([[0, "#6e1d43"], [.45, "#ff5c9a"], [.75, "#ff9cc2"], [1, "#ffe3ee"]], HLV);
   function drawHero(t) {
     if (!HW) return;
-    var E = energy, AT = HW.AT, top = LV - 1, tw = AT.tw, th = AT.th, cw = HW.cw, ch = HW.ch, dw = tw, dh = th;
-    var tick = Math.floor(t / 45), glitch = E > .02, intro = reduce ? 1 : A.clamp((t - heroT0) / 1100);
+    var E = Math.min(.5, energy) * .7, AT = HW.AT, top = HLV - 1, tw = AT.tw, th = AT.th, cw = HW.cw, ch = HW.ch;
+    var tick = Math.floor(t / 50), slow = Math.floor(t / 220), glitch = E > .03, intro = reduce ? 1 : A.clamp((t - heroT0) / 1100);
     var drift = reduce ? 0 : t, az = -.9 + Math.sin(drift * .00023) * .5, el = .55 + Math.sin(drift * .00017 + 1) * .15;
     var L0 = Math.sin(az) * Math.cos(el), L1 = -Math.sin(el), L2 = Math.cos(az) * Math.cos(el), fsK = 6 / HW.fs;
     hg.setTransform(1, 0, 0, 1, 0, 0); hg.clearRect(0, 0, hcv.width, hcv.height);
-    var oj = glitch ? (A.hash(tick, 9) - .5) * E * 6 : 0;
-    hg.globalAlpha = .55 + .45 * intro - (glitch ? E * .35 : 0); hg.drawImage(HW.outline, Math.round(oj * dpr), 0); hg.globalAlpha = 1;
-    var lastJ = -1, off = 0, hot = false;
+    var lastJ = -1, off = 0;
     for (var n = 0, cs = HW.cells; n < cs.length; n++) {
       var c = cs[n]; if (c.h > intro) continue;
-      if (c.j !== lastJ) { lastJ = c.j; off = 0; hot = false;
-        if (glitch) { var band = c.j >> 1, hb = A.hash(band + 40, tick); if (hb < E * .6) { off = (A.hash(band * 3.1, tick + 7) - .5) * E * cw * 40; hot = hb < E * .18; } } }
+      if (c.edge && c.h < .25) continue;                                   // edges: sparser
+      if (c.j !== lastJ) { lastJ = c.j; off = 0;
+        if (glitch) { var band = c.j >> 1, hb = A.hash(band + 40, tick); if (hb < E * .5) off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 8) * cw; } }
       var nl = Math.hypot(c.gx, c.gy, 1), d = (-c.gx * L0 - c.gy * L1 + L2) / nl; if (d < 0) d = 0;
       var tex = .5 + .3 * Math.sin(c.y * fsK * 1.6 + Math.sin(c.x * fsK * .35) * 1.4) + .2 * Math.sin(c.x * fsK * 1.1 + c.y * fsK * .7);
-      var b = (.34 + d * (.5 + .28 * tex)) * (.55 + .45 * Math.min(1, c.c * 1.3));
-      var lvl = Math.max(c.c > .6 ? 6 : 3, Math.round((b > 1 ? 1 : b) * top)), gi = lvl;
-      if (glitch && A.hash(c.i + c.j * 131, tick) < E * .45) gi = LV + ((A.hash(c.i * 7 + c.j, tick + 3) * WILD.length) | 0);
-      hg.drawImage(AT.canvas, gi * tw, (hot ? top : lvl) * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), dw, dh);
+      var b = (.42 + d * (.5 + .28 * tex)) * (.7 + .3 * c.depth), lvl;
+      if (c.edge) lvl = c.c > .3 ? 4 : c.c > .18 ? 3 : 2;                    // fine marks on the rim
+      else lvl = Math.max(5, Math.round((b > 1 ? 1 : b) * top));
+      if (!reduce && A.hash(c.i * 3.7 + c.j * 7.1, slow) < .006) lvl = Math.max(1, Math.min(top, lvl + (A.hash(c.i, slow + 1) < .5 ? -1 : 1))); // idle: rare one-cell swap
+      var gi = lvl;
+      if (glitch && A.hash(c.i + c.j * 131, tick) < E * .3) gi = HLV + ((A.hash(c.i * 7 + c.j, tick + 3) * HWILD.length) | 0);
+      hg.drawImage(AT.canvas, gi * tw, lvl * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
     }
   }
+  if (h1 && !reduce) h1.addEventListener("pointerenter", function () { kick(.45); });
 
   // ---------- footer: a small setting sun on a character horizon (static; same material) ----------
   var dusk = document.querySelector(".dusk");
