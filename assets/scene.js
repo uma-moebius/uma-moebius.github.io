@@ -102,7 +102,7 @@
     // mouth: a thin crooked slit appears as the dive starts, opens wide, and its centre drifts onto the camera axis
     var mo = reduce ? 0 : A.smooth((k - .1) / .85);
     return {
-      pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: rise,
+      pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : rise,   // static mode: shown only once the field is pinned
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
