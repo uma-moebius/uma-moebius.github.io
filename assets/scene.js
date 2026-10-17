@@ -106,8 +106,27 @@
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
-      mo: mo, ma: .1 + .52 * Math.pow(mo, 1.4), mb: .003 + .62 * Math.pow(mo, 3.2), my: .2 * (1 - A.smooth(k / .92)), lip: .012 + .022 * mo
+      mo: mo, m: mouth(mo, .2 * (1 - A.smooth(k / .92)))
     };
+  }
+
+  // mouth: the first 60% of mo plays Yuma's recorded mouth take up to its widest open (scroll-driven, reversible);
+  // the rest is one slow, monotonic growth from that peak pose into the swallow shape at mo = 1
+  var MC = window.SUN_MOUTH, MN = MC ? MC.open.length : 0, HUMAN_END = .6;
+  function msample(key, x) { var a = MC[key], i = Math.floor(x), f = x - i; if (i <= 0) return a[0]; if (i >= MN - 1) return a[MN - 1]; return a[i] + (a[i + 1] - a[i]) * f; }
+  function human(x) {
+    var O = msample("open", x), Wd = msample("width", x), Rd = msample("roundness", x), up = msample("upper", x), lo = msample("lower", x), as = msample("asym", x);
+    var span = up < 0 && lo > up ? lo - up : 0;
+    return { on: O > .004, ma: Wd * (.2 + .16 * A.smooth(O / .3)), mb: .003 + .3 * O, my: .2 + .05 * (up + lo), lip: .012 + .022 * O,
+      prof: .95 - .5 * Rd, tilt: as * 6, up: span > 1e-3 ? -up / span : .5, wob: .35 };
+  }
+  function mouth(mo, myS) {
+    if (!MN) return { on: mo > 0, ma: .1 + .52 * Math.pow(mo, 1.4), mb: .003 + .62 * Math.pow(mo, 3.2), my: myS, lip: .012 + .022 * mo, prof: .7, tilt: 0, up: .5, wob: 1 };
+    var S = { ma: .62, mb: .623, my: myS, lip: .034, prof: .7, tilt: 0, up: .5, wob: 1 };   // the swallow shape at mo = 1
+    if (mo <= HUMAN_END) return human(mo / HUMAN_END * (MN - 1));
+    var H = human(MN - 1), u = A.smooth((mo - HUMAN_END) / (1 - HUMAN_END)), o = { on: true };
+    ["ma", "mb", "my", "lip", "prof", "tilt", "up", "wob"].forEach(function (key) { o[key] = H[key] + (S[key] - H[key]) * u; });
+    return o;
   }
 
   // sphere shading shared by the SUN and the footer sun → one material
@@ -136,7 +155,7 @@
     var i0 = Math.floor((Math.max(0, cx - ext) - ox) / cw) - 1, i1 = Math.ceil((Math.min(W, cx + ext) - ox) / cw) + 1;
     var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(H, cy + ext) - oy) / ch) + 1;
     var tick = Math.floor(t / 45), slow = Math.floor(t / 140), glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
-    var mouth = st.mo > 0, ma = st.ma, mb = st.mb, my = st.my, lip = st.lip, breath = t * .0011, mslow = Math.floor(t / 240);
+    var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = t * .0011, mslow = Math.floor(t / 240);
     for (var j = j0; j < j1; j++) {
       var y = oy + (j + .5) * ch, ny = (y - cy) / R, off = 0, hot = false, py = Math.round((oy + j * ch) * dpr);
       if (py > cv.height || py + dh < 0) continue;
@@ -150,20 +169,20 @@
           if (mouth) {
             var ex = nx / ma;
             if (ex > -1.25 && ex < 1.25) {
-              var ax = ex < 0 ? -ex : ex, open = ax < 1 ? Math.pow(1 - ax * ax, .7) : 0;
+              var ax = ex < 0 ? -ex : ex, open = ax < 1 ? Math.pow(1 - ax * ax, P) : 0;
               // crooked, slowly breathing slit (asymmetric: no face, no teeth)
-              var mid = my + mb * (.18 * Math.sin(ex * 2.3 + .7) + .05 * Math.sin(ex * 5.1 + breath * .6));
-              var hgt = mb * open * (1 + .06 * Math.sin(breath + ex * 3.1) + .04 * Math.sin(breath * 1.7 - ex * 6.3));
-              var dy = ny - mid; if (dy < 0) dy = -dy;
-              if (dy < hgt) { // cavity: sparse, dark, deeper toward the middle
-                var q = dy / hgt, depth = (1 - q * q) * open, hc2 = A.hash(i * 2.7 + j * 9.1, mslow);
+              var mid = my + M.tilt * ex * mb + wob * mb * (.18 * Math.sin(ex * 2.3 + .7) + .05 * Math.sin(ex * 5.1 + breath * .6));
+              var hgt = mb * open * (1 + wob * (.06 * Math.sin(breath + ex * 3.1) + .04 * Math.sin(breath * 1.7 - ex * 6.3)));
+              var dyS = ny - mid, lim = dyS < 0 ? hgt * 2 * M.up : hgt * 2 * (1 - M.up), dy = dyS < 0 ? -dyS : dyS; // upper lip lift vs jaw drop
+              if (dy < lim) { // cavity: sparse, dark, deeper toward the middle
+                var q = dy / lim, depth = (1 - q * q) * open, hc2 = A.hash(i * 2.7 + j * 9.1, mslow);
                 if (hc2 > .11 + .3 * (1 - depth) * (1 - depth)) continue;
                 // glyph and tone are picked separately: tiny marks ('.', '·', ':') in deep plum → the dark reads as characters
                 gi = depth > .6 ? 1 : depth > .3 ? 2 : 3; lvl = depth > .6 ? 5 : depth > .3 ? 6 : 8;
                 g.drawImage(atlas, gi * tw, lvl * th, tw, th, Math.round((ox + i * cw + off) * dpr), py, dw, dh);
                 continue;
               }
-              var lw = lip * (.4 + .6 * open), e2 = dy - hgt;
+              var lw = lip * (.4 + .6 * open), e2 = dy - lim;
               if (e2 < lw) b = .62 + .3 * (1 - e2 / lw) * (.6 + .4 * open);          // soft lip edge, brighter
               else if (e2 < lw * 3.2) b *= .45 + .55 * ((e2 - lw) / (lw * 2.2));   // the fold just outside the lip sinks into shade
             }
