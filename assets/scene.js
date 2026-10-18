@@ -274,9 +274,9 @@
     }
     HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
   }
-  // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 → #ffe3ee; dense inside, sparse and fine toward the edges
-  var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGLYPHS = HCH + HWILD;
-  var HCOLORS = A.ramp([[0, "#6e1d43"], [.45, "#ff5c9a"], [.75, "#ff9cc2"], [1, "#ffe3ee"]], HLV);
+  // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 and never lighter (no white); light reads through character density
+  var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGLYPHS = HCH + HWILD, HGLOW = .04; // at most 4% of the cells on the top tone at once
+  var HCOLORS = A.ramp([[0, "#6e1d43"], [.55, "#ff5c9a"], [1, "#ff9cc2"]], HLV);
   function drawHero(t) {
     if (!HW) return;
     var E = Math.min(.5, energy) * .7, AT = HW.AT, top = HLV - 1, tw = AT.tw, th = AT.th, cw = HW.cw, ch = HW.ch;
@@ -284,7 +284,7 @@
     var drift = reduce ? 0 : t, az = -.9 + Math.sin(drift * .00023) * .5, el = .55 + Math.sin(drift * .00017 + 1) * .15;
     var L0 = Math.sin(az) * Math.cos(el), L1 = -Math.sin(el), L2 = Math.cos(az) * Math.cos(el), fsK = 6 / HW.fs;
     hg.setTransform(1, 0, 0, 1, 0, 0); hg.clearRect(0, 0, hcv.width, hcv.height);
-    var lastJ = -1, off = 0;
+    var lastJ = -1, off = 0, glow = 0, glowMax = Math.round(HW.cells.length * HGLOW);
     for (var n = 0, cs = HW.cells; n < cs.length; n++) {
       var c = cs[n]; if (c.h > intro) continue;
       if (c.edge && c.h < .25) continue;                                   // edges: sparser
@@ -296,9 +296,10 @@
       if (c.edge) lvl = c.c > .3 ? 4 : c.c > .18 ? 3 : 2;                    // fine marks on the rim
       else lvl = Math.max(5, Math.round((b > 1 ? 1 : b) * top));
       if (!reduce && A.hash(c.i * 3.7 + c.j * 7.1, slow) < .006) lvl = Math.max(1, Math.min(top, lvl + (A.hash(c.i, slow + 1) < .5 ? -1 : 1))); // idle: rare one-cell swap
-      var gi = lvl;
+      var gi = lvl, tone = lvl;
+      if (tone === top && ++glow > glowMax) tone = top - 1;                // the densest glyph stays, only its tone steps down
       if (glitch && A.hash(c.i + c.j * 131, tick) < E * .3) gi = HLV + ((A.hash(c.i * 7 + c.j, tick + 3) * HWILD.length) | 0);
-      hg.drawImage(AT.canvas, gi * tw, lvl * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
+      hg.drawImage(AT.canvas, gi * tw, tone * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
     }
   }
   if (h1 && !reduce) h1.addEventListener("pointerenter", function () { kick(.45); });
