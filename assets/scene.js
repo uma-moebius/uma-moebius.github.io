@@ -277,8 +277,11 @@
   // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 and never lighter (no white); light reads through character density
   var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGLYPHS = HCH + HWILD, HGLOW = .04; // at most 4% of the cells on the top tone
   var HCOLORS = A.ramp([[0, "#6e1d43"], [.55, "#ff5c9a"], [1, "#ff9cc2"]], HLV);
-  // breathing: each cell's character steps 1–2 levels denser and back, ~3.5–5s per cycle, every cell on its own phase; its tone never changes
-  var HBREATH = 3500, HBREATH_SPAN = 1500;
+  // heartbeat: 60 BPM, a strong beat then a weaker one 180ms later (fast attack, slow decay), travelling out from the centre
+  // as a wave that reaches the edges in 300ms; only the characters get denser (up to 2 levels), the tones never change
+  var HB_PERIOD = 1000, HB_GAP = 180, HB_SECOND = .45, HB_ATTACK = 30, HB_DECAY = 70, HB_WAVE = 300, HB_STEPS = 2;
+  function pulse(x) { return x < 0 ? 0 : x < HB_ATTACK ? x / HB_ATTACK : Math.exp(-(x - HB_ATTACK) / HB_DECAY); }
+  function heart(t) { var x = ((t % HB_PERIOD) + HB_PERIOD) % HB_PERIOD; return Math.min(1, pulse(x) + HB_SECOND * pulse(x - HB_GAP)); }
   function drawHero(t) {
     if (!HW) return;
     var E = Math.min(.5, energy) * .7, AT = HW.AT, top = HLV - 1, tw = AT.tw, th = AT.th, cw = HW.cw, ch = HW.ch;
@@ -291,8 +294,10 @@
         var b = (.42 + d * (.5 + .28 * tex)) * (.7 + .3 * c.depth);
         c.lvl = c.edge ? (c.c > .3 ? 4 : c.c > .18 ? 3 : 2) : Math.max(5, Math.round((b > 1 ? 1 : b) * top));
         c.tone = c.lvl; if (c.tone === top && ++glow > glowMax) c.tone = top - 1;   // at most HGLOW of the cells on the top tone
-        c.amp = A.hash(c.i * 5.3, c.j * 2.9) < .5 ? 1 : 2; c.per = HBREATH + A.hash(c.i * .7, c.j * 9.1) * HBREATH_SPAN; c.ph = A.hash(c.i * 2.1, c.j * .9);
       });
+      var mx = 0, my = 0; HW.cells.forEach(function (c) { mx += c.x; my += c.y; }); mx /= HW.cells.length; my /= HW.cells.length;
+      var far = 1; HW.cells.forEach(function (c) { c.dly = Math.hypot(c.x - mx, c.y - my); far = Math.max(far, c.dly); });
+      HW.cells.forEach(function (c) { c.dly = c.dly / far * HB_WAVE; });
       HW.lit = true;
     }
     hg.setTransform(1, 0, 0, 1, 0, 0); hg.clearRect(0, 0, hcv.width, hcv.height);
@@ -303,7 +308,7 @@
       if (c.j !== lastJ) { lastJ = c.j; off = 0;
         if (glitch) { var band = c.j >> 1, hb = A.hash(band + 40, tick); if (hb < E * .5) off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 8) * cw; } }
       var gi = c.lvl;
-      if (!reduce) { var w = .5 - .5 * Math.cos((t / c.per + c.ph) * Math.PI * 2); gi = Math.min(top, c.lvl + Math.round(w * c.amp)); }
+      if (!reduce) gi = Math.min(top, c.lvl + Math.round(heart(t - c.dly) * HB_STEPS));
       if (glitch && A.hash(c.i + c.j * 131, tick) < E * .3) gi = HLV + ((A.hash(c.i * 7 + c.j, tick + 3) * HWILD.length) | 0);
       hg.drawImage(AT.canvas, gi * tw, c.tone * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
     }
