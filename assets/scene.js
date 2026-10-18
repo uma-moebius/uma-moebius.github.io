@@ -88,7 +88,7 @@
 
   var rot = 0, ringRot = 0, lastRead = "";
   var SUN_END = .36, DIVE_END = .8, moS = 0, moV = 0, moT = 0;
-  function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the mouth and the swallow zoom
+  function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
     var dt = moT ? Math.min(.05, (t - moT) / 1000) : 0, w = 1 / .12; moT = t;
     if (!dt || target === 0 && moS < 1e-4) { moS = target; moV = 0; return moS; }
     var x = moS - target, e = Math.exp(-w * dt), c = moV + w * x;
@@ -98,8 +98,9 @@
   }
   function frameState(t) {
     var pa = reduce ? .3 : prog(sun), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
-    var rise = A.smooth(pa / .16), nk = A.clamp(pa / SUN_END), k = reduce ? 0 : A.smooth((pa - SUN_END) / (DIVE_END - SUN_END));
-    var thin = A.clamp((pa - DIVE_END) / (1 - DIVE_END)) * .9, u = A.clamp(pw / .2);
+    var pf = reduce ? pa : springMo(pa, t); // everything that moves follows one sprung progress; text and anchors stay on raw scroll
+    var rise = A.smooth(pf / .16), nk = A.clamp(pf / SUN_END), k = reduce ? 0 : A.smooth((pf - SUN_END) / (DIVE_END - SUN_END));
+    var thin = A.clamp((pf - DIVE_END) / (1 - DIVE_END)) * .9, u = A.clamp(pw / .2);
     if (pa >= 1) thin = (window.WORKS_VIEW && window.WORKS_VIEW.empty) ? .9 : .9 + .1 * u; // empty Works: the thinned field stays
     if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
     var drift = reduce ? 0 : t;
@@ -108,10 +109,10 @@
     var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
     var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
     // mouth: a thin crooked slit appears as the dive starts and opens wide, centred on the sphere = on the zoom axis
-    var kf = reduce ? 0 : springMo(k, t), mo = reduce ? 0 : A.smooth((kf - .1) / .85); // the mouth and the swallow zoom share one followed value
+    var mo = reduce ? 0 : A.smooth((k - .1) / .85);
     return {
       pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : rise,   // static mode: shown only once the field is pinned
-      z: Math.pow(3, 1 - (1 - kf) * (1 - kf)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, kf), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
+      z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
       mo: mo, m: mouth(mo, 0)
