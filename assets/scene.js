@@ -99,14 +99,14 @@
     var Ls = [Math.sin(az) * Math.cos(el), -Math.sin(el), Math.cos(az) * Math.cos(el)], Ld = [-.25, -.32, .91];
     var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
     var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
-    // mouth: a thin crooked slit appears as the dive starts, opens wide, and its centre drifts onto the camera axis
+    // mouth: a thin crooked slit appears as the dive starts and opens wide, centred on the sphere = on the zoom axis
     var mo = reduce ? 0 : A.smooth((k - .1) / .85);
     return {
       pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : rise,   // static mode: shown only once the field is pinned
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
-      mo: mo, m: mouth(mo, .2 * (1 - A.smooth(k / .92)))
+      mo: mo, m: mouth(mo, 0)
     };
   }
 
@@ -117,7 +117,7 @@
   function human(x) {
     var O = msample("open", x), Wd = msample("width", x), Rd = msample("roundness", x), up = msample("upper", x), lo = msample("lower", x), as = msample("asym", x);
     var span = up < 0 && lo > up ? lo - up : 0;
-    return { on: O > .004, ma: Wd * (.2 + .16 * A.smooth(O / .3)), mb: .003 + .3 * O, my: .2 + .05 * (up + lo), lip: .012 + .022 * O,
+    return { on: O > .004, ma: Wd * (.2 + .16 * A.smooth(O / .3)), mb: .003 + .3 * O, my: .05 * (up + lo), lip: .012 + .022 * O,
       prof: .95 - .5 * Rd, tilt: as * 6, up: span > 1e-3 ? -up / span : .5, wob: .35 };
   }
   function mouth(mo, myS) {
