@@ -275,31 +275,37 @@
     HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
   }
   // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 and never lighter (no white); light reads through character density
-  var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGLYPHS = HCH + HWILD, HGLOW = .04; // at most 4% of the cells on the top tone at once
+  var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGLYPHS = HCH + HWILD, HGLOW = .04; // at most 4% of the cells on the top tone
   var HCOLORS = A.ramp([[0, "#6e1d43"], [.55, "#ff5c9a"], [1, "#ff9cc2"]], HLV);
+  // breathing: each cell's character steps 1–2 levels denser and back, ~3.5–5s per cycle, every cell on its own phase; its tone never changes
+  var HBREATH = 3500, HBREATH_SPAN = 1500;
   function drawHero(t) {
     if (!HW) return;
     var E = Math.min(.5, energy) * .7, AT = HW.AT, top = HLV - 1, tw = AT.tw, th = AT.th, cw = HW.cw, ch = HW.ch;
-    var tick = Math.floor(t / 50), slow = Math.floor(t / 220), glitch = E > .03, intro = reduce ? 1 : A.clamp((t - heroT0) / 1100);
-    var drift = reduce ? 0 : t, az = -.9 + Math.sin(drift * .00023) * .5, el = .55 + Math.sin(drift * .00017 + 1) * .15;
-    var L0 = Math.sin(az) * Math.cos(el), L1 = -Math.sin(el), L2 = Math.cos(az) * Math.cos(el), fsK = 6 / HW.fs;
+    var tick = Math.floor(t / 50), glitch = E > .03, intro = reduce ? 1 : A.clamp((t - heroT0) / 1100);
+    if (!HW.lit) { // tone and resting character per cell, from the letterform density under a fixed light (never time, hover or recovery)
+      var az = -.9, el = .55, L0 = Math.sin(az) * Math.cos(el), L1 = -Math.sin(el), L2 = Math.cos(az) * Math.cos(el), fsK = 6 / HW.fs, glow = 0, glowMax = Math.round(HW.cells.length * HGLOW);
+      HW.cells.forEach(function (c) {
+        var nl = Math.hypot(c.gx, c.gy, 1), d = (-c.gx * L0 - c.gy * L1 + L2) / nl; if (d < 0) d = 0;
+        var tex = .5 + .3 * Math.sin(c.y * fsK * 1.6 + Math.sin(c.x * fsK * .35) * 1.4) + .2 * Math.sin(c.x * fsK * 1.1 + c.y * fsK * .7);
+        var b = (.42 + d * (.5 + .28 * tex)) * (.7 + .3 * c.depth);
+        c.lvl = c.edge ? (c.c > .3 ? 4 : c.c > .18 ? 3 : 2) : Math.max(5, Math.round((b > 1 ? 1 : b) * top));
+        c.tone = c.lvl; if (c.tone === top && ++glow > glowMax) c.tone = top - 1;   // at most HGLOW of the cells on the top tone
+        c.amp = A.hash(c.i * 5.3, c.j * 2.9) < .5 ? 1 : 2; c.per = HBREATH + A.hash(c.i * .7, c.j * 9.1) * HBREATH_SPAN; c.ph = A.hash(c.i * 2.1, c.j * .9);
+      });
+      HW.lit = true;
+    }
     hg.setTransform(1, 0, 0, 1, 0, 0); hg.clearRect(0, 0, hcv.width, hcv.height);
-    var lastJ = -1, off = 0, glow = 0, glowMax = Math.round(HW.cells.length * HGLOW);
+    var lastJ = -1, off = 0;
     for (var n = 0, cs = HW.cells; n < cs.length; n++) {
       var c = cs[n]; if (c.h > intro) continue;
       if (c.edge && c.h < .25) continue;                                   // edges: sparser
       if (c.j !== lastJ) { lastJ = c.j; off = 0;
         if (glitch) { var band = c.j >> 1, hb = A.hash(band + 40, tick); if (hb < E * .5) off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 8) * cw; } }
-      var nl = Math.hypot(c.gx, c.gy, 1), d = (-c.gx * L0 - c.gy * L1 + L2) / nl; if (d < 0) d = 0;
-      var tex = .5 + .3 * Math.sin(c.y * fsK * 1.6 + Math.sin(c.x * fsK * .35) * 1.4) + .2 * Math.sin(c.x * fsK * 1.1 + c.y * fsK * .7);
-      var b = (.42 + d * (.5 + .28 * tex)) * (.7 + .3 * c.depth), lvl;
-      if (c.edge) lvl = c.c > .3 ? 4 : c.c > .18 ? 3 : 2;                    // fine marks on the rim
-      else lvl = Math.max(5, Math.round((b > 1 ? 1 : b) * top));
-      if (!reduce && A.hash(c.i * 3.7 + c.j * 7.1, slow) < .006) lvl = Math.max(1, Math.min(top, lvl + (A.hash(c.i, slow + 1) < .5 ? -1 : 1))); // idle: rare one-cell swap
-      var gi = lvl, tone = lvl;
-      if (tone === top && ++glow > glowMax) tone = top - 1;                // the densest glyph stays, only its tone steps down
+      var gi = c.lvl;
+      if (!reduce) { var w = .5 - .5 * Math.cos((t / c.per + c.ph) * Math.PI * 2); gi = Math.min(top, c.lvl + Math.round(w * c.amp)); }
       if (glitch && A.hash(c.i + c.j * 131, tick) < E * .3) gi = HLV + ((A.hash(c.i * 7 + c.j, tick + 3) * HWILD.length) | 0);
-      hg.drawImage(AT.canvas, gi * tw, tone * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
+      hg.drawImage(AT.canvas, gi * tw, c.tone * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
     }
   }
   if (h1 && !reduce) h1.addEventListener("pointerenter", function () { kick(.45); });
