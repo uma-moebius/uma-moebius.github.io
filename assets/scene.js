@@ -249,7 +249,7 @@
     var hb = hcv.getBoundingClientRect(), r = h1.getBoundingClientRect(), cs = getComputedStyle(h1), fs = parseFloat(cs.fontSize);
     var CW = Math.ceil(hb.width), CH = Math.ceil(hb.height); if (CW < 10 || CH < 10) return;
     hcv.width = Math.round(CW * dpr); hcv.height = Math.round(CH * dpr);
-    var cw = Math.max(3, Math.min(6, Math.round(fs / 30))), ch = cw * 1.75, text = h1.textContent.trim();
+    var cw = Math.max(2, Math.min(6, Math.round(fs / 38))), ch = cw * 1.75, text = h1.textContent.trim();
     var m = document.createElement("canvas"); m.width = CW; m.height = CH;
     var mg = m.getContext("2d"), font = "800 " + fs + "px \"Baloo 2\"";
     mg.font = font; mg.letterSpacing = (-0.01282 * fs).toFixed(2) + "px"; mg.textAlign = "center"; mg.textBaseline = "alphabetic";
@@ -266,11 +266,11 @@
     for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
       var x0 = Math.round(gx0 + i * cw), y0 = Math.round(gy0 + j * ch), x1 = Math.round(gx0 + (i + 1) * cw), y1 = Math.round(gy0 + (j + 1) * ch), sum = 0, n = 0;
       for (var yy = y0; yy < y1; yy += 1) for (var xx = x0; xx < x1; xx += 1) { sum += cov[(yy * CW + xx) * 4 + 3]; n++; }
-      var c = sum / (n * 255); if (c < .1) continue;
+      var c = sum / (n * 255); if (c < .5) continue;                      // half-covered cells only: counters, apertures and gaps between strokes stay open
       var px = (x0 + x1) / 2, py = (y0 + y1) / 2, s = fs * .03;
       var gx = (hAt(px + s, py) - hAt(px - s, py)) / (2 * s), gy = (hAt(px, py + s) - hAt(px, py - s)) / (2 * s);
       var depth = hAt(px, py);
-      cells.push({ i: i, j: j, c: c, depth: depth, edge: c < .45 || depth < .25, gx: gx * fs * .09, gy: gy * fs * .09, x: px, y: py, h: A.hash(i * 1.7, j * 3.3) });
+      cells.push({ i: i, j: j, c: c, depth: depth, edge: c < .7 || depth < .15, gx: gx * fs * .09, gy: gy * fs * .09, x: px, y: py, h: A.hash(i * 1.7, j * 3.3) });
     }
     HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
   }
