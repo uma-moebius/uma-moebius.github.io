@@ -272,26 +272,6 @@
       var depth = hAt(px, py);
       cells.push({ i: i, j: j, c: c, depth: depth, edge: c < .45 || depth < .25, gx: gx * fs * .09, gy: gy * fs * .09, x: px, y: py, h: A.hash(i * 1.7, j * 3.3) });
     }
-    // keep the 'e' open: find its aperture (the rows where its right side is cut back under the crossbar) and leave at least one row of cells empty there
-    var ei = text.indexOf("e");
-    if (ei >= 0) {
-      var ex0 = tx - tm.width / 2 + mg.measureText(text.slice(0, ei)).width, ew = mg.measureText("e").width;
-      var em = document.createElement("canvas"); em.width = CW; em.height = CH; var eg = em.getContext("2d");
-      eg.font = font; eg.textAlign = "left"; eg.textBaseline = "alphabetic"; eg.fillStyle = "#fff"; eg.fillText("e", ex0, ty);
-      var ed = eg.getImageData(0, 0, CW, CH).data, gl = Math.max(0, Math.floor(ex0 - ew)), gr = Math.min(CW - 1, Math.ceil(ex0 + ew * 2)), rows2 = [], right = -1, top = CH, bot = -1;
-      for (var yy = 0; yy < CH; yy++) { var xr = -1; for (var xx = gl; xx <= gr; xx++) if (ed[(yy * CW + xx) * 4 + 3] > 127) xr = xx; rows2.push(xr); if (xr >= 0) { right = Math.max(right, xr); top = Math.min(top, yy); bot = yy; } }
-      var cut = [], wallX = -1, mid = (top + bot) / 2;
-      var low = -1; for (var yy = Math.round(mid); yy <= bot; yy++) if (rows2[yy] >= right - ew * .3) low = yy; // last row reaching out again: the lower curve's tip
-      for (var yy = Math.round(mid); yy < low; yy++) if (rows2[yy] >= 0 && rows2[yy] < right - ew * .3) { cut.push(yy); wallX = Math.max(wallX, rows2[yy]); }
-      if (cut.length) {
-        var ya = cut[0], yb = cut[cut.length - 1], yc = (ya + yb) / 2, jc = Math.round((yc - gy0) / ch - .5), hit = false;
-        cells.forEach(function (c) { if (c.y > ya && c.y < yb) hit = true; });
-        cells = cells.filter(function (c) {
-          if (c.x <= wallX + cw * .5 || c.x > right + cw) return true;
-          return !(hit ? c.y > ya && c.y < yb : c.j === jc);                 // the aperture rows only (or, if it's thinner than a cell, the row at its middle)
-        });
-      }
-    }
     HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
   }
   // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 and never lighter (no white); light reads through character density
