@@ -281,12 +281,14 @@
       var ed = eg.getImageData(0, 0, CW, CH).data, gl = Math.max(0, Math.floor(ex0 - ew)), gr = Math.min(CW - 1, Math.ceil(ex0 + ew * 2)), rows2 = [], right = -1, top = CH, bot = -1;
       for (var yy = 0; yy < CH; yy++) { var xr = -1; for (var xx = gl; xx <= gr; xx++) if (ed[(yy * CW + xx) * 4 + 3] > 127) xr = xx; rows2.push(xr); if (xr >= 0) { right = Math.max(right, xr); top = Math.min(top, yy); bot = yy; } }
       var cut = [], wallX = -1, mid = (top + bot) / 2;
-      for (var yy = Math.round(mid); yy <= bot; yy++) if (rows2[yy] >= 0 && rows2[yy] < right - ew * .3) { cut.push(yy); wallX = Math.max(wallX, rows2[yy]); }
+      var low = -1; for (var yy = Math.round(mid); yy <= bot; yy++) if (rows2[yy] >= right - ew * .3) low = yy; // last row reaching out again: the lower curve's tip
+      for (var yy = Math.round(mid); yy < low; yy++) if (rows2[yy] >= 0 && rows2[yy] < right - ew * .3) { cut.push(yy); wallX = Math.max(wallX, rows2[yy]); }
       if (cut.length) {
-        var ya = cut[0], yb = cut[cut.length - 1], yc = (ya + yb) / 2, jc = Math.round((yc - gy0) / ch - .5);
+        var ya = cut[0], yb = cut[cut.length - 1], yc = (ya + yb) / 2, jc = Math.round((yc - gy0) / ch - .5), hit = false;
+        cells.forEach(function (c) { if (c.y > ya && c.y < yb) hit = true; });
         cells = cells.filter(function (c) {
           if (c.x <= wallX + cw * .5 || c.x > right + cw) return true;
-          return !(c.j === jc || (c.y > ya && c.y < yb));                   // the aperture rows, and always the one nearest its middle
+          return !(hit ? c.y > ya && c.y < yb : c.j === jc);                 // the aperture rows only (or, if it's thinner than a cell, the row at its middle)
         });
       }
     }
