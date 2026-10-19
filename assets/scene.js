@@ -46,7 +46,9 @@
   var sun = scene.querySelector(".sunsec"), pin = sun.querySelector(".sunsec__pin"), works = scene.querySelector(".works");
   var label = pin.querySelector(".sunsec__label"), bio = pin.querySelector(".sunsec__bio"), links = pin.querySelector(".sunsec__links"), readout = pin.querySelector(".sunsec__readout");
   var ringEl = bg.querySelector(".scene__ring");
-  var CHARS = " .·:-=+*sun%#@", LV = CHARS.length, WILD = "SUN01/#:<>*", GLYPHS = CHARS + WILD;
+  // glyph roles (A.EDGE / A.AIR): the interior ramp holds no air or stroke characters — the dark side is ';' and '=' rows, not dust
+  var CHARS = " ;====+*sun%#@", LV = CHARS.length, WILD = "SUN01/#:<>*", GE = LV + WILD.length, GA = GE + A.EDGE.length;
+  var GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
   var COLORS = A.ramp([[0, "#2a1220"], [.28, "#6e1d43"], [.6, "#ff5c9a"], [.84, "#ff9cc2"], [1, "#ffe3ee"]], LV);
 
   var ring = [];
@@ -165,47 +167,77 @@
     var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(H, cy + ext) - oy) / ch) + 1;
     var tick = Math.floor(t / 45), slow = Math.floor(t / 140), glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
     var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = t * .0011, mslow = Math.floor(t / 240);
+    var rimOn = R > cw * 3, rbw = ch * .5 / R, rlo = (1 - rbw) * (1 - rbw), rhi = (1 + rbw) * (1 + rbw), CAVA = 3 + (A.AIR.length - 3) * dk;   // as the dive zooms in, the deep air turns from dots into : , ' ` → read as type, not as specks
+    // mouth as a signed field (px; + inside the open mouth, − on lips / sphere), so its outline is found like the rim
+    var cOpen = 0, cDy = 0, cLim = 0;
+    function cav(nx, ny) {
+      var ex = nx / ma, ax = ex < 0 ? -ex : ex; if (ax >= 1.25) { cOpen = 0; return -1e9; }
+      var open = ax < 1 ? Math.pow(1 - ax * ax, P) : 0;
+      // crooked, slowly breathing slit (asymmetric: no face, no teeth)
+      var mid = my + M.tilt * ex * mb + wob * mb * (.18 * Math.sin(ex * 2.3 + .7) + .05 * Math.sin(ex * 5.1 + breath * .6));
+      var hgt = mb * open * (1 + wob * (.06 * Math.sin(breath + ex * 3.1) + .04 * Math.sin(breath * 1.7 - ex * 6.3)));
+      var dyS = ny - mid, lim = dyS < 0 ? hgt * 2 * M.up : hgt * 2 * (1 - M.up), dy = dyS < 0 ? -dyS : dyS; // upper lip lift vs jaw drop
+      cOpen = open; cDy = dy; cLim = lim;
+      return (lim - dy - (ax > 1 ? (ax - 1) * ma : 0)) * R;
+    }
+    function blit(gi, lvl, i, py, off) { g.drawImage(atlas, gi * tw, lvl * th, tw, th, Math.round((ox + i * cw + off) * dpr), py, dw, dh); }
     for (var j = j0; j < j1; j++) {
       var y = oy + (j + .5) * ch, ny = (y - cy) / R, off = 0, hot = false, py = Math.round((oy + j * ch) * dpr);
       if (py > cv.height || py + dh < 0) continue;
       if (glitch) { var band = j >> 1, hb = A.hash(band, tick); if (hb < E * .55) { off = (A.hash(band * 3.1, tick + 7) - .5) * E * cw * 36; hot = hb < E * .16; } }
       for (var i = i0; i < i1; i++) {
         if (thin > 0 && A.hash(i, j + 500) < thin) continue;
-        var x = ox + (i + .5) * cw, nx = (x - cx) / R, r2 = nx * nx + ny * ny, lvl;
+        var x = ox + (i + .5) * cw, nx = (x - cx) / R, r2 = nx * nx + ny * ny, lvl, gi;
+        var wildHit = glitch && A.hash(i + j * 131, tick) < E * .4;
+        // rim: the cells the sphere outline actually passes through (one per row / column) take a stroke along it
+        if (rimOn && r2 > rlo && r2 < rhi) {
+          var rr = Math.sqrt(r2), ux = nx / rr, uy = ny / rr, sd = (rr - 1) * R, ext = A.cellExt(ux, uy, cw, ch);
+          if (sd > -ext && sd <= ext) {
+            var rb = shade(ux * .999, uy * .999, .998, L0, L1, L2, Math.atan2(ux, .04) + rot, dk, phase);
+            lvl = Math.round((rb > 1 ? 1 : rb < 0 ? 0 : rb) * top); lvl = lvl < 4 ? 4 : lvl > top - 1 ? top - 1 : lvl;  // the dark side keeps a dim contour
+            gi = wildHit ? LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0) : GE + A.edge(ux, uy, A.cross(uy, sd, ch));
+            blit(gi, hot ? top : lvl, i, py, off); continue;
+          }
+        }
         if (r2 <= 1) {
           var lon = Math.atan2(nx, Math.sqrt(1 - r2)) + rot;
           var b = shade(nx, ny, r2, L0, L1, L2, lon, dk, phase);
-          if (mouth) {
-            var ex = nx / ma;
-            if (ex > -1.25 && ex < 1.25) {
-              var ax = ex < 0 ? -ex : ex, open = ax < 1 ? Math.pow(1 - ax * ax, P) : 0;
-              // crooked, slowly breathing slit (asymmetric: no face, no teeth)
-              var mid = my + M.tilt * ex * mb + wob * mb * (.18 * Math.sin(ex * 2.3 + .7) + .05 * Math.sin(ex * 5.1 + breath * .6));
-              var hgt = mb * open * (1 + wob * (.06 * Math.sin(breath + ex * 3.1) + .04 * Math.sin(breath * 1.7 - ex * 6.3)));
-              var dyS = ny - mid, lim = dyS < 0 ? hgt * 2 * M.up : hgt * 2 * (1 - M.up), dy = dyS < 0 ? -dyS : dyS; // upper lip lift vs jaw drop
-              if (dy < lim) { // cavity: sparse, dark, deeper toward the middle
-                var q = dy / lim, depth = (1 - q * q) * open, hc2 = A.hash(i * 2.7 + j * 9.1, mslow);
-                if (hc2 > .11 + .3 * (1 - depth) * (1 - depth)) continue;
-                // glyph and tone are picked separately: tiny marks ('.', '·', ':') in deep plum → the dark reads as characters
-                gi = depth > .6 ? 1 : depth > .3 ? 2 : 3; lvl = depth > .6 ? 5 : depth > .3 ? 6 : 8;
-                g.drawImage(atlas, gi * tw, lvl * th, tw, th, Math.round((ox + i * cw + off) * dpr), py, dw, dh);
-                continue;
+          if (mouth && (nx / ma) > -1.25 && (nx / ma) < 1.25) {
+            var s0 = cav(nx, ny), open = cOpen, dy = cDy, lim = cLim;
+            if (s0 > -2 * ch && s0 < 2 * ch) { // near the outline: is it inside this cell?
+              var hx = cw * .5 / R, hy = ch * .5 / R;
+              var gx = (cav(nx + hx, ny) - cav(nx - hx, ny)) / cw, gy = (cav(nx, ny + hy) - cav(nx, ny - hy)) / ch, gl = Math.hypot(gx, gy);
+              if (gl > 1e-6) {
+                var mnx = gx / gl, mny = gy / gl, ds = s0 / gl, mext = A.cellExt(mnx, mny, cw, ch);
+                if (ds > -mext && ds <= mext) { // the lip line: a stroke along it, in the lip tone
+                  var lb = .62 + .3 * (.6 + .4 * open);
+                  lvl = Math.min(top - 3, Math.round(lb * top));   // the lip line stays pink: a crisp line, not a white drawn outline
+                  gi = wildHit ? LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0) : GE + A.edge(mnx, mny, A.cross(mny, ds, ch));
+                  blit(gi, hot ? top : lvl, i, py, off); continue;
+                }
               }
-              var lw = lip * (.4 + .6 * open), e2 = dy - lim;
-              if (e2 < lw) b = .62 + .3 * (1 - e2 / lw) * (.6 + .4 * open);          // soft lip edge, brighter
-              else if (e2 < lw * 3.2) b *= .45 + .55 * ((e2 - lw) / (lw * 2.2));   // the fold just outside the lip sinks into shade
             }
+            if (s0 > 0) { // cavity: sparse, dark, deeper toward the middle — air characters only, in deep plum
+              var q = dy / lim, depth = (1 - q * q) * open, hc2 = A.hash(i * 2.7 + j * 9.1, mslow);
+              if (hc2 > .11 + .3 * (1 - depth) * (1 - depth)) continue;
+              var ha = A.hash(i * 5.3 + 11, j * 1.9);   // per cell, stable: which air character (no extra flicker)
+              var alo = Math.round(2 * dk); gi = GA + (depth > .6 ? alo + ((ha * (CAVA - alo)) | 0) : depth > .3 ? 1 + ((ha * 2) | 0) : 2); lvl = depth > .6 ? 5 : depth > .3 ? 6 : 8;
+              blit(gi, lvl, i, py, off); continue;
+            }
+            var lw = lip * (.4 + .6 * open), e2 = dy - lim;
+            if (e2 < lw) b = .62 + .3 * (1 - e2 / lw) * (.6 + .4 * open);          // soft lip edge, brighter
+            else if (e2 < lw * 3.2) b *= .45 + .55 * ((e2 - lw) / (lw * 2.2));   // the fold just outside the lip sinks into shade
           }
           lvl = Math.round((b > 1 ? 1 : b < 0 ? 0 : b) * top);
-        } else if (r2 < 1.32) {
+          if (lvl <= 0) continue;
+          gi = lvl;
+        } else if (r2 < 1.32) { // air around the SUN
           var f = (1.15 - Math.sqrt(r2)) / .15; if (f <= 0) continue;
           var hc = A.hash(i * 1.3 + j * 7.7, slow); if (hc > f * .5) continue;
-          lvl = hc < f * .12 ? 2 : 1;
+          lvl = hc < f * .12 ? 2 : 1; gi = GA + lvl - 1;
         } else continue;
-        if (lvl <= 0) continue;
-        var gi = lvl;
-        if (glitch && A.hash(i + j * 131, tick) < E * .4) gi = LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0);
-        g.drawImage(atlas, gi * tw, (hot ? top : lvl) * th, tw, th, Math.round((ox + i * cw + off) * dpr), py, dw, dh);
+        if (wildHit) gi = LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0);
+        blit(gi, hot ? top : lvl, i, py, off);
       }
     }
   }
@@ -275,7 +307,7 @@
     HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
   }
   // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 and never lighter (no white); light reads through character density
-  var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGLYPHS = HCH + HWILD, HGLOW = .04; // at most 4% of the cells on the top tone
+  var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGE = HLV + HWILD.length, HGLYPHS = HCH + HWILD + A.EDGE, HGLOW = .04; // at most 4% of the cells on the top tone
   var HCOLORS = A.ramp([[0, "#6e1d43"], [.55, "#ff5c9a"], [1, "#ff9cc2"]], HLV);
   // heartbeat: 60 BPM, a strong beat then a weaker one 180ms later (fast attack, slow decay), travelling out from the centre
   // as a wave that reaches the edges in 300ms; only the characters get denser (up to 2 levels), the tones never change
@@ -293,6 +325,15 @@
         var tex = .5 + .3 * Math.sin(c.y * fsK * 1.6 + Math.sin(c.x * fsK * .35) * 1.4) + .2 * Math.sin(c.x * fsK * 1.1 + c.y * fsK * .7);
         var b = (.42 + d * (.5 + .28 * tex)) * (.7 + .3 * c.depth);
         c.lvl = c.edge ? (c.c > .3 ? 4 : c.c > .18 ? 3 : 2) : Math.max(5, Math.round((b > 1 ? 1 : b) * top));
+        c.eg = -1;
+        if (c.edge) { // the letter outline: a stroke along it (same rule as the SUN rim), lit like the letter, never on the top tone
+          var gl = Math.hypot(c.gx, c.gy);
+          if (gl > .02) {
+            var enx = -c.gx / gl, eny = -c.gy / gl, e = (c.c - .5) * (Math.abs(enx) * HW.cw + Math.abs(eny) * HW.ch);   // ≥ half-covered → the outline sits outward of the centre
+            c.eg = HGE + A.edge(enx, eny, A.cross(eny, -e, HW.ch));
+            c.lvl = Math.max(4, Math.min(top - 1, Math.round((b > 1 ? 1 : b) * top)));
+          }
+        }
         c.tone = c.lvl; if (c.tone === top && ++glow > glowMax) c.tone = top - 1;   // at most HGLOW of the cells on the top tone
       });
       var mx = 0, my = 0; HW.cells.forEach(function (c) { mx += c.x; my += c.y; }); mx /= HW.cells.length; my /= HW.cells.length;
@@ -304,11 +345,12 @@
     var lastJ = -1, off = 0;
     for (var n = 0, cs = HW.cells; n < cs.length; n++) {
       var c = cs[n]; if (c.h > intro) continue;
-      if (c.edge && c.h < .25) continue;                                   // edges: sparser
+      if (c.edge && c.eg < 0 && c.h < .25) continue;                      // edges without a clear direction: sparser
       if (c.j !== lastJ) { lastJ = c.j; off = 0;
         if (glitch) { var band = c.j >> 1, hb = A.hash(band + 40, tick); if (hb < E * .5) off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 8) * cw; } }
       var gi = c.lvl;
-      if (!reduce) gi = Math.min(top, c.lvl + Math.round(heart(t - c.dly) * HB_STEPS));
+      if (c.eg >= 0) gi = c.eg;                                             // the outline holds still; the letter beats inside it
+      else if (!reduce) gi = Math.min(top, c.lvl + Math.round(heart(t - c.dly) * HB_STEPS));
       if (glitch && A.hash(c.i + c.j * 131, tick) < E * .3) gi = HLV + ((A.hash(c.i * 7 + c.j, tick + 3) * HWILD.length) | 0);
       hg.drawImage(AT.canvas, gi * tw, c.tone * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
     }
@@ -328,11 +370,18 @@
     for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
       var x = gx0 + (i + .5) * cw, y = (j + .5) * ch, lvl;
       if (j === hz) { // horizon line of characters, fading to the edges
-        var ef = 1 - Math.abs(x - cx) / (Wd / 2); if (A.hash(i, 77) > ef * 1.4) continue; lvl = ef > .55 ? 4 : 3;
+        var ef = 1 - Math.abs(x - cx) / (Wd / 2); if (A.hash(i, 77) > ef * 1.4) continue; lvl = ef > .55 ? GE + 1 : GA + 1;   // a stroke '-', thinning into air '·'
         dg.drawImage(AT.canvas, lvl * AT.tw, (ef > .7 ? 6 : 3) * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
         continue;
       }
-      var nx = (x - cx) / Rd, ny = (y - cy) / Rd, r2 = nx * nx + ny * ny; if (r2 > 1) continue;
+      var nx = (x - cx) / Rd, ny = (y - cy) / Rd, r2 = nx * nx + ny * ny, rr = Math.sqrt(r2);
+      if (rr > 0) { var ux = nx / rr, uy = ny / rr, sd = (rr - 1) * Rd; // the rim: same stroke rule as the SUN
+        if (sd > -A.cellExt(ux, uy, cw, ch) && sd <= A.cellExt(ux, uy, cw, ch)) {
+          var rb = A.clamp(shade(ux * .999, uy * .999, .998, L0, L1, L2, Math.atan2(ux, .04), 0, 0)); lvl = Math.max(4, Math.min(top - 1, Math.round(rb * top)));
+          dg.drawImage(AT.canvas, (GE + A.edge(ux, uy, A.cross(uy, sd, ch))) * AT.tw, lvl * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
+          continue;
+        } }
+      if (r2 > 1) continue;
       lvl = Math.round(A.clamp(shade(nx, ny, r2, L0, L1, L2, Math.atan2(nx, Math.sqrt(1 - r2)), 0, 0)) * top); if (lvl <= 0) continue;
       dg.drawImage(AT.canvas, lvl * AT.tw, lvl * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
     }

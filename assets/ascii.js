@@ -32,8 +32,25 @@ window.ASCII = (function () {
     if (document.fonts && document.fonts.load) Promise.all([document.fonts.load("400 13px " + FAMILY), document.fonts.load("600 13px " + FAMILY)]).then(function () { return document.fonts.ready; }).then(go, go);
     setTimeout(go, 1500); if (!document.fonts) go();
   }
+  // one glyph rule for every character surface (SUN, wordmark, footer sun, the air around and inside them):
+  // INTERIOR = a brightness ramp (each caller's own), EDGE = a directional stroke that follows the local outline,
+  // AIR = small punctuation only. The three sets never share a character, so a role always reads the same.
+  var EDGE = "_-\u00af/|\\", AIR = ".\u00b7:,'`";
+  // n = unit normal of the outline (screen px, y down, pointing toward the empty side);
+  // oy = where the outline crosses the cell's centre column, in cell heights from its centre (− upper half, + lower half)
+  function edge(nx, ny, oy) {
+    var a = Math.atan2(-nx, -ny) * 57.29578; if (a < 0) a += 180; if (a >= 180) a -= 180;   // tangent angle, 0 = horizontal
+    if (a < 30 || a >= 150) return oy < -.2 ? 2 : oy > .2 ? 0 : 1;                         // ¯ - _ by height in the cell → steps read as one curve
+    if (a >= 70 && a < 110) return 4;                                                       // |
+    if (oy < -.25 || oy > .25) return oy < 0 ? 2 : 0;                                         // a diagonal grazing the top / bottom of the cell → ¯ / _ (the "_/" step)
+    return a < 70 ? 3 : 5;                                                                  // / or \
+  }
+  // signed distance sd (px, + on the empty side) → height where the outline crosses the centre column, in cell heights
+  function cross(ny, sd, ch) { var d = ny < 0 ? (ny > -.05 ? -.05 : ny) : (ny < .05 ? .05 : ny); return -sd / d / ch; }
+  // half-width of the band (along the normal) that holds exactly one cell per row (steep outline) or per column (shallow one)
+  function cellExt(nx, ny, cw, ch) { var ax = nx < 0 ? -nx : nx, ay = ny < 0 ? -ny : ny; return (ax * cw > ay * ch ? ax * cw : ay * ch) * .5; }
   function hash(a, b) { var h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); }
   function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
   function smooth(v) { v = clamp(v); return v * v * (3 - 2 * v); }
-  return { atlas: atlas, ramp: ramp, ready: ready, hash: hash, clamp: clamp, smooth: smooth, FAMILY: FAMILY };
+  return { EDGE: EDGE, AIR: AIR, edge: edge, cellExt: cellExt, cross: cross, atlas: atlas, ramp: ramp, ready: ready, hash: hash, clamp: clamp, smooth: smooth, FAMILY: FAMILY };
 })();
