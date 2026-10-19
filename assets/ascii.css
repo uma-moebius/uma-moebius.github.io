@@ -128,6 +128,9 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 .field:focus-within::after { color: var(--candy); }
 .form-error { font-family: var(--mono); font-size: 16px; color: var(--candy); padding-left: 10ch; }
 .form-error::before { content: "! " / ""; }
+/* turnstile: out of the flex flow (no gap, no size) until it asks for an interaction */
+.turnstile { position: absolute; width: 0; height: 0; overflow: hidden; }
+.turnstile.is-visible { position: static; width: 100%; height: auto; overflow: visible; }
 .send { align-self: flex-start; margin: var(--row) 0 0 10ch; width: auto; height: calc(var(--row) * 2); padding: 0 1ch; border-radius: 0;
   background: transparent; color: var(--candy); font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 2); letter-spacing: 0;
   transition: background-color .12s, color .12s; }

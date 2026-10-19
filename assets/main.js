@@ -12,7 +12,14 @@
 
   window.onTurnstileLoad = function () {
     if (!slot || !siteKey || !window.turnstile) return;
-    widget = window.turnstile.render(slot, { sitekey: siteKey, theme: "dark", size: "flexible" });
+    widget = window.turnstile.render(slot, {
+      sitekey: siteKey,
+      theme: "dark",
+      size: "flexible",
+      appearance: "interaction-only",
+      "before-interactive-callback": function () { slot.classList.add("is-visible"); },
+      "after-interactive-callback": function () { slot.classList.remove("is-visible"); }
+    });
   };
 
   form.addEventListener("submit", function (event) {
