@@ -7,11 +7,22 @@
 const LIMITS = { name: 100, email: 254, message: 5000 };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const MAX_BODY = 20000;
+const HOSTNAMES = ["yumatanemura.com", "www.yumatanemura.com"];
+// Same headers as _headers, for responses the Worker builds itself.
+const SECURITY_HEADERS = {
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Frame-Options": "DENY",
+  "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+  "Cache-Control": "no-store",
+};
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === "/api/contact") return contact(request, env, url);
+    if (url.pathname === "/api/contact") return secure(await contact(request, env, url));
     return env.ASSETS.fetch(request);
   },
 };
@@ -26,13 +37,17 @@ async function contact(request, env, url) {
   if (request.method !== "POST") return fail(405, "Method not allowed.");
 
   const origin = request.headers.get("Origin");
-  if (origin && origin !== url.origin) return fail(403, "Forbidden.");
+  if (!origin || origin !== url.origin) return fail(403, "Forbidden.");
 
-  if (Number(request.headers.get("Content-Length") || 0) > 20000) return fail(413, "Message is too long.");
+  if (Number(request.headers.get("Content-Length") || 0) > MAX_BODY) return fail(413, "Message is too long.");
+  const body = await readCapped(request, MAX_BODY);
+  if (body === null) return fail(413, "Message is too long.");
 
   let form;
   try {
-    form = await request.formData();
+    form = await new Response(body, {
+      headers: { "Content-Type": request.headers.get("Content-Type") || "" },
+    }).formData();
   } catch {
     return fail(400, "Invalid form data.");
   }
@@ -69,6 +84,9 @@ async function contact(request, env, url) {
     return fail(502, "Could not verify the check. Please try again.");
   }
   if (!verdict || verdict.success !== true) return fail(400, "Please complete the check and try again.");
+  // Optional TURNSTILE_HOSTNAMES (comma-separated) overrides the list, e.g. for local testing.
+  const hosts = env.TURNSTILE_HOSTNAMES ? env.TURNSTILE_HOSTNAMES.split(",").map((h) => h.trim()) : HOSTNAMES;
+  if (!hosts.includes(verdict.hostname)) return fail(400, "Please complete the check and try again.");
 
   try {
     await env.EMAIL.send({
@@ -90,4 +108,35 @@ function done(wantsJson, url) {
   return wantsJson
     ? Response.json({ ok: true })
     : Response.redirect(new URL("/thank-you/", url).toString(), 303);
+}
+
+// Reads the request body, giving up once it passes `max` bytes. Returns null when too large.
+async function readCapped(request, max) {
+  if (!request.body) return new Uint8Array(0);
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.byteLength;
+  }
+  return out;
+}
+
+function secure(response) {
+  const r = new Response(response.body, response);
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) r.headers.set(k, v);
+  return r;
 }
