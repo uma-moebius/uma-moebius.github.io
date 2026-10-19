@@ -93,7 +93,7 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
   .works__row { height: calc(var(--row) * 2.25); }
 }
 
-/* cursor dot (approved) */
+/* cursor dot */
 .sun-cursor { position:fixed; left:0; top:0; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:var(--candy);
   pointer-events:none; z-index:60; transform:translate(var(--cx,-99px),var(--cy,-99px));
   transition: width .2s, height .2s, margin .2s, background-color .2s, box-shadow .2s; }
