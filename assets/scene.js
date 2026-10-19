@@ -5,6 +5,9 @@
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
   var root = document.documentElement;
+  // one world clock: every periodic thing is a whole number of beats (or an integer split of one) of the 60 BPM heart
+  var BEAT = 1000, TAU = Math.PI * 2;
+  var AIR_BEAT = /[?&]airbeat=1/.test(location.search);   // optional, off by default: the SUN's air swells with the heartbeat (for comparison only)
   var cursor = document.querySelector(".sun-cursor");
   if (fine && !reduce) root.classList.add("has-sun-cursor");
 
@@ -47,9 +50,13 @@
   var label = pin.querySelector(".sunsec__label"), bio = pin.querySelector(".sunsec__bio"), links = pin.querySelector(".sunsec__links"), readout = pin.querySelector(".sunsec__readout");
   var ringEl = bg.querySelector(".scene__ring");
   // glyph roles (A.EDGE / A.AIR): the interior ramp holds no air or stroke characters — the dark side is ';' and '=' rows, not dust
+  // the interior set; its order is re-measured (ink coverage, JetBrains Mono 600) before the first atlas — 'sun' stays as one block
   var CHARS = " ;====+*sun%#@", LV = CHARS.length, WILD = "SUN01/#:<>*", GE = LV + WILD.length, GA = GE + A.EDGE.length;
   var GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
-  var COLORS = A.ramp([[0, "#2a1220"], [.28, "#6e1d43"], [.6, "#ff5c9a"], [.84, "#ff9cc2"], [1, "#ffe3ee"]], LV);
+  // four tones from the glyph level, capped at the SUN's light pink (no near-white); the glitch 'hot' tone is the cap too
+  var TONE4 = ["#3d1528", "#6e1d43", "#ff5c9a", "#ff9cc2"], COLORS = [];
+  for (var q4 = 0; q4 < LV; q4++) COLORS.push(TONE4[q4 <= 2 ? 0 : q4 <= 5 ? 1 : q4 <= 10 ? 2 : 3]);
+  var T_DEEP = 1, T_DIM = 3;   // atlas rows for the darkest two tones (air, mouth interior)
 
   var ring = [];
   for (var k = 0; k < 16; k++) for (var c = 0; c < 3; c++) {
@@ -63,6 +70,7 @@
     var r = bg.getBoundingClientRect(); W = r.width; H = r.height; small = W < 769;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     BASE = small ? 6 : 8;
+    CHARS = A.inkRamp(" ;====+*sun%#@", "sun", 600); GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
     ATS = A.atlas(GLYPHS, COLORS, BASE, BASE * 1.75, 600, dpr);          // rest: dense ball (line = 1.75 × cell width)
     ATZ = {}; warmZoom();                                                // dive: one atlas per device-pixel cell width → tiles blit 1:1, never rescaled
     fit();
@@ -106,7 +114,7 @@
     if (pa >= 1) thin = (window.WORKS_VIEW && window.WORKS_VIEW.empty) ? .9 : .9 + .1 * u; // empty Works: the thinned field stays
     if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
     var drift = reduce ? 0 : t;
-    var az = (-62 + 62 * nk) * Math.PI / 180 + Math.sin(drift * .00023) * .22, el = .1 + .42 * nk + Math.sin(drift * .00017 + 1) * .08;
+    var az = (-62 + 62 * nk) * Math.PI / 180 + Math.sin(drift * TAU / (27 * BEAT)) * .22, el = .1 + .42 * nk + Math.sin(drift * TAU / (37 * BEAT) + 1) * .08;
     var Ls = [Math.sin(az) * Math.cos(el), -Math.sin(el), Math.cos(az) * Math.cos(el)], Ld = [-.25, -.32, .91];
     var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
     var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
@@ -158,6 +166,36 @@
     var lo = Math.round(BASE * dpr), hi = Math.round(BASE * 3 * dpr) + 1, w = lo;
     (function step() { if (w > hi) return; zoomAtlas(w++); (window.requestIdleCallback || setTimeout)(step); })();
   }
+  // ---------- air that flows: small rigid shapes, whole-cell steps at a constant speed (no easing, no per-cell random swaps) ----------
+  // each band of rows is a strip that slides past the grid; the strip is cut into slots, and some slots hold one short shape
+  // (1–3 cells, one character). A cell shows whatever part of the strip is over it, so a shape keeps its outline and its
+  // character while it travels; bands at different heights move at different speeds, so the field shears slowly
+  function shapeAt(u, j, bw, bh, dens, seed) { // → the shape's character pick (0..1), or -1 for empty
+    var bx = Math.floor(u / bw), by = Math.floor(j / bh), h = A.hash(bx + seed, by * 1.7 + seed);
+    if (h >= dens) return -1;
+    var len = 1 + ((A.hash(bx * 1.3 + seed, by + 7) * 3) | 0), x0 = (A.hash(bx + 3, by * 2.1 + seed) * (bw - len + 1)) | 0;
+    var row = (A.hash(bx * .7, by + 11 + seed) * bh) | 0, tall = A.hash(bx, by + 13) < .3 && row < bh - 1;
+    var lu = u - bx * bw, lj = j - by * bh;
+    if (lu < x0 || lu >= x0 + len || (lj !== row && !(tall && lj === row + 1 && lu > x0))) return -1;
+    return A.hash(bx * 2.9 + seed, by + 5);
+  }
+  var RING_BAND = 3, RING_SPEED = 3, MOUTH_SPEED = 4;   // rows per band; cells per beat at the top / bottom of the ring; cells per beat at the mouth's mid-line
+  function ringAir(i, j, beats, ny, f, r2, rowH) { // around the SUN: upper bands drift one way, lower bands the other → reads as a slow swirl around it
+    var band = Math.floor(j / RING_BAND), jr = j - band * RING_BAND, bny = ny - (jr - (RING_BAND - 1) / 2) * rowH;   // a band moves at the speed of its middle row
+    var v = Math.round(-bny * RING_SPEED * 4) / 4, u = i - Math.floor(beats * v + A.hash(band, 3) * 64);
+    var swell = AIR_BEAT ? heart(beats * BEAT - Math.sqrt(r2) * 300) * .25 : 0;
+    var c = shapeAt(u, j, 6, RING_BAND, .2 + .55 * f + swell, 0);   // the soft envelope: more shapes near the rim, none past 1.15 R
+    if (c < 0) return -1;
+    return c < .45 ? 0 : c < .78 ? 1 : 2;                              // . · :
+  }
+  function mouthAir(i, j, beats, ex, depth, up) { // inside the mouth: both halves slide toward the centre line and vanish there
+    var side = ex < 0 ? 1 : -1, ax = ex < 0 ? -ex : ex; if (ax < .07 || depth < .22) return -1;
+    var v = Math.round(MOUTH_SPEED * (.5 + .5 * depth) * 4) / 4;      // deeper rows (nearer the slit's middle) are drawn in faster
+    var u = i - side * Math.floor(beats * v);
+    var c = shapeAt(u, j, 6, 2, .22 + .26 * depth, side > 0 ? 20 : 40);   // sparse: never a row of marks along the lips (no teeth, no lashes)
+    if (c < 0) return -1;
+    return up ? (c < .6 ? 0 : 3) : (c < .6 ? 4 : 5);                   // above the slit . ,  (weight at the bottom) / below ' `  (weight at the top)
+  }
   function drawField(t, st) {
     var E = (st.pa >= 1 || st.k > 0) ? 0 : energy, cw = BASE * st.z, ch = BASE * 1.75 * st.z;
     var dw = Math.max(1, Math.round(cw * dpr)), AT = st.z > 1.001 ? zoomAtlas(dw) : ATS, dh = AT.th;
@@ -165,26 +203,26 @@
     var ext = R * 1.16, ox = W / 2, oy = H / 2;
     var i0 = Math.floor((Math.max(0, cx - ext) - ox) / cw) - 1, i1 = Math.ceil((Math.min(W, cx + ext) - ox) / cw) + 1;
     var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(H, cy + ext) - oy) / ch) + 1;
-    var tick = Math.floor(t / 45), slow = Math.floor(t / 140), glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
-    var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = t * .0011, mslow = Math.floor(t / 240);
+    var tick = Math.floor(t / (BEAT / 20)), beats = t / BEAT, glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
+    var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = t * TAU / (6 * BEAT);
     var rimOn = R > cw * 3, rbw = ch * .5 / R, rlo = (1 - rbw) * (1 - rbw), rhi = (1 + rbw) * (1 + rbw), CAVA = 3 + (A.AIR.length - 3) * dk;   // as the dive zooms in, the deep air turns from dots into : , ' ` → read as type, not as specks
     // mouth as a signed field (px; + inside the open mouth, − on lips / sphere), so its outline is found like the rim
-    var cOpen = 0, cDy = 0, cLim = 0;
+    var cOpen = 0, cDy = 0, cLim = 0, cUp = false;
     function cav(nx, ny) {
       var ex = nx / ma, ax = ex < 0 ? -ex : ex; if (ax >= 1.25) { cOpen = 0; return -1e9; }
       var open = ax < 1 ? Math.pow(1 - ax * ax, P) : 0;
       // crooked, slowly breathing slit (asymmetric: no face, no teeth)
       var mid = my + M.tilt * ex * mb + wob * mb * (.18 * Math.sin(ex * 2.3 + .7) + .05 * Math.sin(ex * 5.1 + breath * .6));
-      var hgt = mb * open * (1 + wob * (.06 * Math.sin(breath + ex * 3.1) + .04 * Math.sin(breath * 1.7 - ex * 6.3)));
+      var hgt = mb * open * (1 + wob * (.06 * Math.sin(breath + ex * 3.1) + .04 * Math.sin(breath * 1.5 - ex * 6.3)));
       var dyS = ny - mid, lim = dyS < 0 ? hgt * 2 * M.up : hgt * 2 * (1 - M.up), dy = dyS < 0 ? -dyS : dyS; // upper lip lift vs jaw drop
-      cOpen = open; cDy = dy; cLim = lim;
+      cOpen = open; cDy = dy; cLim = lim; cUp = dyS < 0;
       return (lim - dy - (ax > 1 ? (ax - 1) * ma : 0)) * R;
     }
     function blit(gi, lvl, i, py, off) { g.drawImage(atlas, gi * tw, lvl * th, tw, th, Math.round((ox + i * cw + off) * dpr), py, dw, dh); }
     for (var j = j0; j < j1; j++) {
       var y = oy + (j + .5) * ch, ny = (y - cy) / R, off = 0, hot = false, py = Math.round((oy + j * ch) * dpr);
       if (py > cv.height || py + dh < 0) continue;
-      if (glitch) { var band = j >> 1, hb = A.hash(band, tick); if (hb < E * .55) { off = (A.hash(band * 3.1, tick + 7) - .5) * E * cw * 36; hot = hb < E * .16; } }
+      if (glitch) { var band = j >> 1, hb = A.hash(band, tick); if (hb < E * .55) { off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 36) * cw; hot = hb < E * .16; } }
       for (var i = i0; i < i1; i++) {
         if (thin > 0 && A.hash(i, j + 500) < thin) continue;
         var x = ox + (i + .5) * cw, nx = (x - cx) / R, r2 = nx * nx + ny * ny, lvl, gi;
@@ -217,12 +255,10 @@
                 }
               }
             }
-            if (s0 > 0) { // cavity: sparse, dark, deeper toward the middle — air characters only, in deep plum
-              var q = dy / lim, depth = (1 - q * q) * open, hc2 = A.hash(i * 2.7 + j * 9.1, mslow);
-              if (hc2 > .11 + .3 * (1 - depth) * (1 - depth)) continue;
-              var ha = A.hash(i * 5.3 + 11, j * 1.9);   // per cell, stable: which air character (no extra flicker)
-              var alo = Math.round(2 * dk); gi = GA + (depth > .6 ? alo + ((ha * (CAVA - alo)) | 0) : depth > .3 ? 1 + ((ha * 2) | 0) : 2); lvl = depth > .6 ? 5 : depth > .3 ? 6 : 8;
-              blit(gi, lvl, i, py, off); continue;
+            if (s0 > 0) { // cavity: sparse rigid patches of air sliding cell by cell toward the mouth centre (being drawn in)
+              var q = dy / lim, depth = (1 - q * q) * open, mg = mouthAir(i, j, beats, nx / ma, depth, cUp);
+              if (mg < 0) continue;
+              blit(GA + mg, T_DIM, i, py, off); continue;
             }
             var lw = lip * (.4 + .6 * open), e2 = dy - lim;
             if (e2 < lw) b = .62 + .3 * (1 - e2 / lw) * (.6 + .4 * open);          // soft lip edge, brighter
@@ -233,8 +269,8 @@
           gi = lvl;
         } else if (r2 < 1.32) { // air around the SUN
           var f = (1.15 - Math.sqrt(r2)) / .15; if (f <= 0) continue;
-          var hc = A.hash(i * 1.3 + j * 7.7, slow); if (hc > f * .5) continue;
-          lvl = hc < f * .12 ? 2 : 1; gi = GA + lvl - 1;
+          var ag = ringAir(i, j, beats, ny, f, r2, ch / R); if (ag < 0) continue;
+          gi = GA + ag; lvl = ag === 2 ? T_DIM : T_DEEP;
         } else continue;
         if (wildHit) gi = LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0);
         blit(gi, hot ? top : lvl, i, py, off);
@@ -257,7 +293,7 @@
 
   var calm = true;
   function wild(t) {
-    var E = energy, tick = Math.floor(t / 60);
+    var E = energy, tick = Math.floor(t / (BEAT / 16));
     if (E > .03) {
       calm = false;
       for (var n = 0; n < ring.length; n++) {
@@ -304,14 +340,15 @@
       var depth = hAt(px, py);
       cells.push({ i: i, j: j, c: c, depth: depth, edge: c < .7 || depth < .15, gx: gx * fs * .09, gy: gy * fs * .09, x: px, y: py, h: A.hash(i * 1.7, j * 3.3) });
     }
-    HW = { cw: cw, ch: ch, gx0: gx0, gy0: gy0, cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
+    HW = { cw: cw, ch: ch, gx0: Math.round(gx0 * dpr) / dpr, gy0: Math.round(gy0 * dpr) / dpr,   // on whole device pixels → tiles never overlap (draws can be per cell)
+           cells: cells, fs: fs, AT: A.atlas(HGLYPHS, HCOLORS, cw, ch, 600, dpr) };
   }
   // wordmark material: no line characters, ramp #6e1d43 → #ff5c9a → #ff9cc2 and never lighter (no white); light reads through character density
   var HCH = " .·:*sun%#@", HLV = HCH.length, HWILD = "SUN01#%@*", HGE = HLV + HWILD.length, HGLYPHS = HCH + HWILD + A.EDGE, HGLOW = .04; // at most 4% of the cells on the top tone
   var HCOLORS = A.ramp([[0, "#6e1d43"], [.55, "#ff5c9a"], [1, "#ff9cc2"]], HLV);
   // heartbeat: 60 BPM, a strong beat then a weaker one 180ms later (fast attack, slow decay), travelling out from the centre
   // as a wave that reaches the edges in 300ms; only the characters get denser (up to 2 levels), the tones never change
-  var HB_PERIOD = 1000, HB_GAP = 180, HB_SECOND = .45, HB_ATTACK = 30, HB_DECAY = 70, HB_WAVE = 300, HB_STEPS = 2;
+  var HB_PERIOD = BEAT, HB_GAP = 180, HB_SECOND = .45, HB_ATTACK = 30, HB_DECAY = 70, HB_WAVE = 300, HB_STEPS = 2;
   function pulse(x) { return x < 0 ? 0 : x < HB_ATTACK ? x / HB_ATTACK : Math.exp(-(x - HB_ATTACK) / HB_DECAY); }
   function heart(t) { var x = ((t % HB_PERIOD) + HB_PERIOD) % HB_PERIOD; return Math.min(1, pulse(x) + HB_SECOND * pulse(x - HB_GAP)); }
   function drawHero(t) {
@@ -341,7 +378,14 @@
       HW.cells.forEach(function (c) { c.dly = c.dly / far * HB_WAVE; });
       HW.lit = true;
     }
-    hg.setTransform(1, 0, 0, 1, 0, 0); hg.clearRect(0, 0, hcv.width, hcv.height);
+    hg.setTransform(1, 0, 0, 1, 0, 0);
+    // only the cells whose character changed are redrawn; a full redraw while rows can shift (glitch), during the intro,
+    // and whenever a tile does not sit on whole device pixels (neighbouring tiles could overlap by a pixel)
+    var full = glitch || intro < 1 || !HW.shown || HW.wasGlitch || Math.abs(cw * dpr - Math.round(cw * dpr)) > 1e-3 || !HW.snap;
+    if (!HW.shown) { HW.shown = new Int16Array(HW.cells.length); var on = function (v) { return Math.abs(v * dpr - Math.round(v * dpr)) < 1e-3; };
+      HW.snap = on(ch) && on(HW.gx0) && on(HW.gy0); }
+    if (full) { hg.clearRect(0, 0, hcv.width, hcv.height); HW.shown.fill(-1); }
+    HW.wasGlitch = glitch;
     var lastJ = -1, off = 0;
     for (var n = 0, cs = HW.cells; n < cs.length; n++) {
       var c = cs[n]; if (c.h > intro) continue;
@@ -352,7 +396,10 @@
       if (c.eg >= 0) gi = c.eg;                                             // the outline holds still; the letter beats inside it
       else if (!reduce) gi = Math.min(top, c.lvl + Math.round(heart(t - c.dly) * HB_STEPS));
       if (glitch && A.hash(c.i + c.j * 131, tick) < E * .3) gi = HLV + ((A.hash(c.i * 7 + c.j, tick + 3) * HWILD.length) | 0);
-      hg.drawImage(AT.canvas, gi * tw, c.tone * th, tw, th, Math.round((HW.gx0 + c.i * cw + off) * dpr), Math.round((HW.gy0 + c.j * ch) * dpr), tw, th);
+      if (!full && HW.shown[n] === gi) continue;
+      var hx = Math.round((HW.gx0 + c.i * cw + off) * dpr), hy = Math.round((HW.gy0 + c.j * ch) * dpr);
+      if (!full) hg.clearRect(hx, hy, tw, th);
+      hg.drawImage(AT.canvas, gi * tw, c.tone * th, tw, th, hx, hy, tw, th); HW.shown[n] = gi;
     }
   }
   if (h1 && !reduce) h1.addEventListener("pointerenter", function () { kick(.45); });

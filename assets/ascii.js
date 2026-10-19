@@ -15,6 +15,35 @@ window.ASCII = (function () {
     for (var r = 0; r < colors.length; r++) { g.fillStyle = colors[r]; for (var i = 0; i < chars.length; i++) g.fillText(chars[i], i * tw + tw / 2, r * th + th / 2 + dpr * .5); }
     return { canvas: c, tw: tw, th: th, cw: cw, ch: ch, n: chars.length };
   }
+  // ink coverage of each glyph (0..1 of its cell), measured once on our own offscreen canvas
+  var INK = {};
+  function ink(chars, weight) {
+    var key = (weight || 400) + "|", S = 48, cw = Math.round(S * adv()), ch = Math.round(S * 1.75), out = [], todo = "";
+    for (var i = 0; i < chars.length; i++) if (INK[key + chars[i]] === undefined && todo.indexOf(chars[i]) < 0) todo += chars[i];
+    if (todo) {
+      var c = document.createElement("canvas"); c.width = cw * todo.length; c.height = ch;
+      var g = c.getContext("2d"); g.font = (weight || 400) + " " + S + "px " + FAMILY; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff";
+      for (i = 0; i < todo.length; i++) g.fillText(todo[i], i * cw + cw / 2, ch / 2);
+      var d = g.getImageData(0, 0, c.width, ch).data;
+      for (i = 0; i < todo.length; i++) { var sum = 0;
+        for (var y = 0; y < ch; y++) for (var x = i * cw; x < (i + 1) * cw; x++) sum += d[(y * c.width + x) * 4 + 3];
+        INK[key + todo[i]] = sum / (cw * ch * 255); }
+    }
+    for (i = 0; i < chars.length; i++) out.push(INK[key + chars[i]]);
+    return out;
+  }
+  // a brightness ramp in measured ink order (stable: repeated characters stay together);
+  // `keep` (e.g. "sun") stays one block, placed where its mean ink falls, even though its letters are out of order
+  function inkRamp(chars, keep, weight) {
+    var lead = chars[0] === " " ? " " : "", body = chars.slice(lead.length), at = keep ? body.indexOf(keep) : -1;
+    if (at >= 0) body = body.slice(0, at) + body.slice(at + keep.length);
+    var v = ink(body, weight), idx = []; for (var i = 0; i < body.length; i++) idx.push(i);
+    idx.sort(function (a, b) { return v[a] - v[b] || a - b; });
+    var units = idx.map(function (i) { return { s: body[i], v: v[i] }; });
+    if (at >= 0) { var kv = ink(keep, weight).reduce(function (a, b) { return a + b; }, 0) / keep.length, n = 0;
+      while (n < units.length && units[n].v <= kv) n++; units.splice(n, 0, { s: keep, v: kv }); }
+    return lead + units.map(function (u) { return u.s; }).join("");
+  }
   function hex(h) { h = h.replace("#", ""); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
   function ramp(stops, n) {
     var out = [];
@@ -27,7 +56,7 @@ window.ASCII = (function () {
     return out;
   }
   function ready(cb) {
-    var done = false; function go() { if (!done) { done = true; ADV = null; cb(); } }
+    var done = false; function go() { if (!done) { done = true; ADV = null; INK = {}; cb(); } }
     // every face the layout measures (mono cells, the bio that bounds the SUN) must be in before the first fit
     if (document.fonts && document.fonts.load) Promise.all([document.fonts.load("400 13px " + FAMILY), document.fonts.load("600 13px " + FAMILY)]).then(function () { return document.fonts.ready; }).then(go, go);
     setTimeout(go, 1500); if (!document.fonts) go();
@@ -52,5 +81,5 @@ window.ASCII = (function () {
   function hash(a, b) { var h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); }
   function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
   function smooth(v) { v = clamp(v); return v * v * (3 - 2 * v); }
-  return { EDGE: EDGE, AIR: AIR, edge: edge, cellExt: cellExt, cross: cross, atlas: atlas, ramp: ramp, ready: ready, hash: hash, clamp: clamp, smooth: smooth, FAMILY: FAMILY };
+  return { EDGE: EDGE, AIR: AIR, edge: edge, cellExt: cellExt, cross: cross, atlas: atlas, ramp: ramp, ink: ink, inkRamp: inkRamp, ready: ready, hash: hash, clamp: clamp, smooth: smooth, FAMILY: FAMILY };
 })();
