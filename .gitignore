@@ -1,0 +1,4 @@
+.DS_Store
+.dev.vars*
+.wrangler/
+node_modules/

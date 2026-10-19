@@ -108,8 +108,11 @@
             <h2 class="contact__heading" id="contact-heading" data-decode>For commissions or collaborations.</h2>
             <a class="contact__mail" href="mailto:hello@yumatanemura.com">hello@yumatanemura.com</a>
           </div>
-          <form class="contact__form" id="contact-form" action="https://formspree.io/f/mbgdrwba" method="POST">
-            <input type="hidden" name="_next" value="https://yumatanemura.com/thank-you/">
+          <form class="contact__form" id="contact-form" action="/api/contact" method="POST">
+            <div hidden aria-hidden="true">
+              <label for="company">Company</label>
+              <input id="company" name="company" type="text" tabindex="-1" autocomplete="off">
+            </div>
             <div class="field">
               <label for="name">Name</label>
               <input id="name" name="name" type="text" autocomplete="name" placeholder="Your name" required>
@@ -122,6 +125,7 @@
               <label for="message">Message</label>
               <textarea id="message" name="message" rows="4" placeholder="What it is, and when it needs to exist." required></textarea>
             </div>
+            <div id="turnstile"></div>
             <p class="form-error" id="form-error" role="alert" hidden></p>
             <button class="send" type="submit">Send</button>
           </form>
@@ -137,6 +141,7 @@
 
   <script src="./assets/config.js"></script>
   <script src="./assets/main.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&amp;onload=onTurnstileLoad" async defer></script>
   <script src="./assets/ascii.js"></script>
   <script src="./assets/works-data.js"></script>
   <script src="./assets/works.js"></script>

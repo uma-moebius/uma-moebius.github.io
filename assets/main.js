@@ -5,12 +5,15 @@
   if (!form) return;
 
   var cfg = window.SITE_CONFIG || {};
-  var formId = (cfg.formspreeFormId || "").trim();
+  var siteKey = (cfg.turnstileSiteKey || "").trim();
   var error = document.getElementById("form-error");
+  var slot = document.getElementById("turnstile");
+  var widget = null;
 
-  if (formId) {
-    form.setAttribute("action", "https://formspree.io/f/" + formId);
-  }
+  window.onTurnstileLoad = function () {
+    if (!slot || !siteKey || !window.turnstile) return;
+    widget = window.turnstile.render(slot, { sitekey: siteKey, theme: "dark", size: "flexible" });
+  };
 
   form.addEventListener("submit", function (event) {
     event.preventDefault();
@@ -26,14 +29,13 @@
       return;
     }
 
-    var endpoint = form.getAttribute("action") || "";
-    var button = form.querySelector(".send");
-
-    if (!formId || endpoint.indexOf("formspree.io/f/") === -1) {
-      showError("This form is not ready to send yet.");
+    var data = new FormData(form);
+    if (!data.get("cf-turnstile-response")) {
+      showError("Please complete the check first.");
       return;
     }
 
+    var button = form.querySelector(".send");
     if (button) button.disabled = true;
 
     // A stalled request never rejects, so Send would stay disabled.
@@ -43,21 +45,24 @@
       controller.abort();
     }, sendWait);
 
-    fetch(endpoint, {
+    fetch(form.getAttribute("action") || "/api/contact", {
       method: "POST",
-      body: new FormData(form),
+      body: data,
       headers: { Accept: "application/json" },
       signal: controller.signal
     })
       .then(function (response) {
         window.clearTimeout(timer);
-        if (!response.ok) throw new Error("submit failed");
-        window.location.assign("/thank-you/");
+        return response.json().catch(function () { return {}; }).then(function (body) {
+          if (!response.ok || !body.ok) throw new Error(body.error || "Could not send. Please try again.");
+          window.location.assign("/thank-you/");
+        });
       })
-      .catch(function () {
+      .catch(function (e) {
         window.clearTimeout(timer);
         if (button) button.disabled = false;
-        showError("Could not send. Please try again.");
+        if (window.turnstile && widget !== null) window.turnstile.reset(widget);
+        showError(e && e.name !== "AbortError" && e.message ? e.message : "Could not send. Please try again.");
       });
   });
 
