@@ -32,8 +32,11 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
 
 /* scene: one pinned character field shared by SUN and Works */
 .scene { position: relative; }
-.scene__bg { position: sticky; top: 0; height: 100vh; height: 100svh; margin-bottom: -100vh; margin-bottom: -100svh; pointer-events: none; z-index: 0; overflow: hidden; }
+.scene__bg { position: sticky; top: 0; height: 100vh; height: 100svh; margin-bottom: -100vh; margin-bottom: -100svh; pointer-events: none; z-index: 0; overflow: hidden; overflow: clip visible; }
 .scene__canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* phones: the box stays the small viewport (scroll timing, text layout), the field is painted to the large one,
+   so it still reaches the bottom of the screen when the browser bars collapse; desktop: both are the same height */
+.scene__canvas { height: 100lvh; }
 .scene__ring { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: translate(var(--rx, 50vw), var(--ry, 50vh)) rotate(var(--rot, 0deg)); opacity: var(--ro, 1); }
 .scene__glyph { position: absolute; left: 0; top: 0; font-family: var(--mono); font-weight: 600; font-size: var(--rfs, 16px); line-height: 1; color: var(--candy);
   transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--rr, 300px) * -1)) translate(var(--gx, 0px), var(--gy, 0px)) rotate(var(--gr, 0deg)); }

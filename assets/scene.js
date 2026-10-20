@@ -79,11 +79,12 @@
     sp.style.setProperty("--a", (k * 22.5 + c * 4.4) + "deg"); ringEl.appendChild(sp); ring.push({ el: sp, c: "SUN"[c], wild: false });
   }
 
-  var W = 0, H = 0, dpr = 1, BASE = 8, ATS = null, ATZ = {}, R0 = 300, fcx = 0, fcy = 0, small = false, MQ = 1, MBW = 6;
+  var W = 0, H = 0, PH = 0, dpr = 1, BASE = 8, ATS = null, ATZ = {}, R0 = 300, fcx = 0, fcy = 0, small = false, MQ = 1, MBW = 6;
   function build() {
     dpr = Math.min(2, devicePixelRatio || 1);
     var r = bg.getBoundingClientRect(); W = r.width; H = r.height; small = W < 769;
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    PH = Math.max(H, cv.getBoundingClientRect().height);   // painted height: the large viewport on phones (H stays the layout box)
+    cv.width = Math.round(W * dpr); cv.height = Math.round(PH * dpr);
     BASE = small ? 6 : 8;
     CHARS = A.inkRamp(" ;====+*sun%#@", "sun", 600); GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
     ATS = A.atlas(GLYPHS, COLORS, BASE, BASE * 1.75, 600, dpr);          // rest: dense ball (line = 1.75 × cell width)
@@ -227,7 +228,7 @@
     var R = st.R, cx = st.cx, cy = st.cy, L0 = st.L[0], L1 = st.L[1], L2 = st.L[2], top = LV - 1, tw = AT.tw, th = AT.th, atlas = AT.canvas;
     var bs = st.bs, ext = R * 1.16 * bs, ox = W / 2, oy = H / 2;
     var i0 = Math.floor((Math.max(0, cx - ext) - ox) / cw) - 1, i1 = Math.ceil((Math.min(W, cx + ext) - ox) / cw) + 1;
-    var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(H, cy + ext) - oy) / ch) + 1;
+    var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(PH, cy + ext) - oy) / ch) + 1;
     var tick = Math.floor(t / (BEAT / 20)), beats = t / BEAT, glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
     var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = (t < 0 ? 0 : t) * TAU / (6 * BEAT), airOn = t >= 0;
     sunDk = st.k;
@@ -572,7 +573,7 @@
     document.fonts.load("800 100px \"Baloo 2\"").then(go, go); setTimeout(go, 2000);
   }
   A.ready(function () { readyHero(function () {
-    build(); buildHero(); drawDusk(); ready = true; CLK0 = performance.now();
+    build(); buildHero(); drawDusk(); rzKey = boxKey(); ready = true; CLK0 = performance.now();
     if (!reduce && firstVisit()) { silent = true; CLK0 += HUSH; }
     root.classList.add(hero && HW ? "wm-ascii" : "wm-plain");
     if (reduce) {
@@ -590,5 +591,7 @@
   }); });
   // a face that arrives late changes text boxes → refit so the SUN never overlaps the corner text
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", function () { if (ready) { fit(); if (reduce) render(0); } });
-  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!ready) return; build(); buildHero(); drawDusk(); if (reduce) { drawHero(0); render(0); } else wake(); }, 120); });
+  // phone bars collapsing fire resize without changing any box we draw into: skip the rebuild then (no redraw cost, no jump)
+  var rz, rzKey = ""; function boxKey() { return [innerWidth, bg.offsetHeight, cv.offsetHeight, devicePixelRatio].join(); }
+  addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (!ready) return; var key = boxKey(); if (key === rzKey) return; rzKey = key; build(); buildHero(); drawDusk(); if (reduce) { drawHero(0); render(0); } else wake(); }, 120); });
 })();
