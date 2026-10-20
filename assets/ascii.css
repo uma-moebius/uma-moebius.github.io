@@ -157,4 +157,27 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
   .works, .works.is-empty { height: 100vh; height: 100svh; margin-top: 0; scroll-margin-top: 0; }
   .works__row, .works__mark { transition: none; }
 }
+/* touch: hit areas of at least 44px without moving anything (the extra padding is taken back by a negative margin)
+   and no hover state that sticks after a tap: a press shows the hover look only while held */
+@media (pointer: coarse) {
+  .logo, .nav a { padding: 14px 4px; margin: -14px -4px; }
+  .sunsec__links a { display: inline-block; padding: 10px 6px; margin: -10px -6px; }
+  .contact__mail { padding: 14px 0; margin-bottom: -14px; margin-top: calc(var(--row) * 2 - 14px); }
+  .field input { box-sizing: content-box; padding: 10px 0; margin: -10px 0; position: relative; z-index: 1; }   /* above its dotted rule, so a tap on the rule lands in the field */
+  .send { height: 44px; border: solid transparent; border-width: 6px 0; background-clip: padding-box; margin-top: calc(var(--row) - 6px); margin-bottom: -6px; }
+  .works__row { height: 44px; }
+}
+@media (hover: none) {
+  .logo:hover, .contact__mail:hover, .sunsec__links a:hover { text-decoration: none; }
+  .nav a:hover { color: var(--mute); }
+  .send:hover:not(:disabled):not(:focus-visible):not(:active) { background-color: transparent; color: var(--candy); }
+  .logo:active, .contact__mail:active, .sunsec__links a:active { text-decoration: underline; text-underline-offset: 3px; }
+  .nav a:active { color: var(--blush); }
+  .send:active:not(:disabled) { background-color: var(--candy); color: var(--night); }
+}
+/* phones: the header keeps the logo and the three links on one line (it wrapped to two below 430px) */
+@media (max-width: 768px) {
+  .site-header .shell { column-gap: calc(var(--u) * 2); }
+  .nav { gap: calc(var(--u) * 2); }
+}
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }

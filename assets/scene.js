@@ -76,7 +76,7 @@
     sp.style.setProperty("--a", (k * 22.5 + c * 4.4) + "deg"); ringEl.appendChild(sp); ring.push({ el: sp, c: "SUN"[c], wild: false });
   }
 
-  var W = 0, H = 0, dpr = 1, BASE = 8, ATS = null, ATZ = {}, R0 = 300, fcx = 0, fcy = 0, small = false;
+  var W = 0, H = 0, dpr = 1, BASE = 8, ATS = null, ATZ = {}, R0 = 300, fcx = 0, fcy = 0, small = false, MQ = 1, MBW = 6;
   function build() {
     dpr = Math.min(2, devicePixelRatio || 1);
     var r = bg.getBoundingClientRect(); W = r.width; H = r.height; small = W < 769;
@@ -105,6 +105,9 @@
     var rfs = Math.max(11, Math.min(18, half * .045));
     R0 = (half - rfs) / 1.12;
     ringEl.style.setProperty("--rfs", rfs + "px");
+    // phones: the SUN is fewer cells across, so the mouth holds fewer air slots. Scale the slots, their speed and their share by the
+    // cells per radius (42 = a large screen, which keeps exactly the desktop rule) so the mouth reads equally alive
+    MQ = small || H < 500 ? Math.max(.5, Math.min(1, R0 / BASE / 42)) : 1; MBW = MQ < 1 ? Math.max(4, Math.round(6 * MQ)) : 6;
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
 
@@ -209,9 +212,9 @@
   }
   function mouthAir(i, j, beats, ex, depth, up) { // inside the mouth: both halves slide toward the centre line and vanish there
     var side = ex < 0 ? 1 : -1, ax = ex < 0 ? -ex : ex; if (ax < .07 || depth < .22) return -1;
-    var v = Math.round(MOUTH_SPEED * (.5 + .5 * depth) * 4) / 4;      // deeper rows (nearer the slit's middle) are drawn in faster
+    var v = Math.round(MOUTH_SPEED * MQ * (.5 + .5 * depth) * 4) / 4; // deeper rows (nearer the slit's middle) are drawn in faster; same pace in mouth widths on a phone
     var u = i - side * Math.floor(beats * v);
-    var c = shapeAt(u, j, 6, 2, .22 + .26 * depth, side > 0 ? 20 : 40);   // sparse: never a row of marks along the lips (no teeth, no lashes)
+    var c = shapeAt(u, j, MBW, 2, (.22 + .26 * depth) * (1.5 - .5 * MQ), side > 0 ? 20 : 40);   // sparse: never a row of marks along the lips (no teeth, no lashes)
     if (c < 0) return -1;
     return up ? (c < .6 ? 0 : 3) : (c < .6 ? 4 : 5);                   // above the slit . ,  (weight at the bottom) / below ' `  (weight at the top)
   }

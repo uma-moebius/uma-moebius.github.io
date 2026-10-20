@@ -340,3 +340,11 @@ textarea:focus-visible {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* touch: no grey tap flash; the back link gets a 44px hit area (taken back by a negative margin) and no hover that sticks after a tap */
+html { -webkit-tap-highlight-color: transparent; }
+@media (pointer: coarse) { .edge__back { display: inline-block; padding: 13px 6px; margin: -13px -6px; } }
+@media (hover: none) {
+  .edge__back:hover { text-decoration: none; }
+  .edge__back:active { text-decoration: underline; text-underline-offset: 3px; }
+}
