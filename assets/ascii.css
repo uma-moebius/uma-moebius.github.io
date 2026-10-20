@@ -37,6 +37,8 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
 /* phones: the box stays the small viewport (scroll timing, text layout), the field is painted to the large one,
    so it still reaches the bottom of the screen when the browser bars collapse; desktop: both are the same height */
 .scene__canvas { height: 100lvh; }
+/* the ring flies far past the screen as the mouth opens: its own box clips it to the painted field, so those glyphs never add to the page height */
+.scene__clip { position: absolute; left: 0; top: 0; width: 100%; height: 100%; height: 100lvh; overflow: hidden; }
 .scene__ring { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: translate(var(--rx, 50vw), var(--ry, 50vh)) rotate(var(--rot, 0deg)); opacity: var(--ro, 1); }
 .scene__glyph { position: absolute; left: 0; top: 0; font-family: var(--mono); font-weight: 600; font-size: var(--rfs, 16px); line-height: 1; color: var(--candy);
   transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--rr, 300px) * -1)) translate(var(--gx, 0px), var(--gy, 0px)) rotate(var(--gr, 0deg)); }
