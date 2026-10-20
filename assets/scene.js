@@ -57,7 +57,7 @@
   var COLORS = ["#3d1528", "#6e1d43", "#b83470", "#ff5c9a", "#ff9cc2"], ST = COLORS.length - 1;
   var SUN_TL = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4];   // glyph level → resting tone
   var DIVE_TL = [0, 0, 0, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4];  // during the dive the swallowed surface keeps its approved pinks (no middle tone)
-  var SUN_HOT = 1.05, SUN_HOT_BEAT = .92, sunDk = 0;   // light needed for the top tone at rest / on the beat: keeps it to the core of the highlight (≈4% / ≈8%)
+  var SUN_HOT = 1.05, SUN_HOT_BEAT = .92, sunDk = 0;   // light needed for the top tone (at rest; the beat value is unused: the heartbeat belongs to the wordmark)
   var T_DEEP = 0, T_DIM = 1;   // atlas rows for the darkest two tones (air, mouth interior)
   // tone of a sphere cell from its level, recomputed every frame (never accumulated); `up` = the beat lifts it by one
   function sunTone(lvl, b, i, j, up) {
@@ -118,6 +118,12 @@
     if (moS < 0) { moS = 0; moV = 0; } else if (moS > 1) { moS = 1; moV = 0; }
     return moS;
   }
+  // the ring breathes: one slow breath every 8 beats on the world clock, in a little shorter than out, eased at both turns
+  var BR_BEATS = 8, BR_IN = 3.5, BR_AMP = .055;   // beats per breath; beats breathing in; how far the ring opens, smallest to largest (share of its radius)
+  function breath(t) {
+    var x = ((t / BEAT) % BR_BEATS + BR_BEATS) % BR_BEATS;
+    return x < BR_IN ? .5 - .5 * Math.cos(Math.PI * x / BR_IN) : .5 + .5 * Math.cos(Math.PI * (x - BR_IN) / (BR_BEATS - BR_IN));
+  }
   function frameState(t) {
     var pa = reduce ? .3 : prog(sun), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
     var pf = reduce ? pa : springMo(pa, t); // everything that moves follows one sprung progress; text and anchors stay on raw scroll
@@ -137,7 +143,8 @@
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
-      mo: mo, m: mouth(mo, 0)
+      mo: mo, m: mouth(mo, 0),
+      bs: reduce ? 1 : 1 + BR_AMP * (breath(t) - .5) * (1 - A.clamp(k * 2.2))   // around the resting radius (static = the middle of a breath); fades out with the ring as the dive starts
     };
   }
 
@@ -212,13 +219,12 @@
     var E = (st.pa >= 1 || st.k > 0) ? 0 : energy, cw = BASE * st.z, ch = BASE * 1.75 * st.z;
     var dw = Math.max(1, Math.round(cw * dpr)), AT = st.z > 1.001 ? zoomAtlas(dw) : ATS, dh = AT.th;
     var R = st.R, cx = st.cx, cy = st.cy, L0 = st.L[0], L1 = st.L[1], L2 = st.L[2], top = LV - 1, tw = AT.tw, th = AT.th, atlas = AT.canvas;
-    var ext = R * 1.16, ox = W / 2, oy = H / 2;
+    var bs = st.bs, ext = R * 1.16 * bs, ox = W / 2, oy = H / 2;
     var i0 = Math.floor((Math.max(0, cx - ext) - ox) / cw) - 1, i1 = Math.ceil((Math.min(W, cx + ext) - ox) / cw) + 1;
     var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(H, cy + ext) - oy) / ch) + 1;
     var tick = Math.floor(t / (BEAT / 20)), beats = t / BEAT, glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
     var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = t * TAU / (6 * BEAT);
     sunDk = st.k;
-    var beatOn = !reduce && st.k === 0 && st.pa < 1 && (((t % BEAT) + BEAT) % BEAT) < 560;   // the SUN answers the heartbeat only while it is at rest
     var rimOn = R > cw * 3, rbw = ch * .5 / R, rlo = (1 - rbw) * (1 - rbw), rhi = (1 + rbw) * (1 + rbw), CAVA = 3 + (A.AIR.length - 3) * dk;   // as the dive zooms in, the deep air turns from dots into : , ' ` → read as type, not as specks
     // mouth as a signed field (px; + inside the open mouth, − on lips / sphere), so its outline is found like the rim
     var cOpen = 0, cDy = 0, cLim = 0, cUp = false;
@@ -255,7 +261,7 @@
               blit(GA + (hd > .4 + .5 * lit ? 0 : 1), hot ? ST : T_DEEP, i, py, off); continue;
             }
             gi = wildHit ? LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0) : GE + eg;
-            blit(gi, hot ? ST : sunTone(lvl, rb, i, j, beatOn && heart(t - rr * 300) > .4), i, py, off); continue;
+            blit(gi, hot ? ST : sunTone(lvl, rb, i, j, false), i, py, off); continue;
           }
         }
         if (r2 <= 1) {
@@ -294,13 +300,13 @@
             var fade = A.smooth((Math.sqrt(r2) - .88) / .12) * (1 - dk) * (1 - lvl / 6), hz = A.hash(i + 377.7, j * 2.3 + 1.1);
             if (hz < fade) { if (hz < fade * .45) continue; gi = GA + (hz < fade * .75 ? 0 : 1); lvl = -1; }
           }
-        } else if (r2 < 1.32) { // air around the SUN
-          var f = (1.15 - Math.sqrt(r2)) / .15; if (f <= 0) continue;
+        } else if (r2 < 1.32 * bs * bs) { // air around the SUN: its outer edge opens and closes with the ring
+          var f = (1.15 * bs - Math.sqrt(r2)) / (.15 + 1.15 * (bs - 1)); if (f <= 0) continue; if (f > 1) f = 1;
           var ag = ringAir(i, j, beats, ny, f, r2, ch / R); if (ag < 0) continue;
           gi = GA + ag; lvl = ag === 2 ? -2 : -1;
         } else continue;
         if (wildHit) gi = LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0);
-        blit(gi, hot ? ST : lvl === -1 ? T_DEEP : lvl === -2 ? T_DIM : sunTone(lvl, b, i, j, beatOn && heart(t - Math.sqrt(r2) * 300) > .4), i, py, off);
+        blit(gi, hot ? ST : lvl === -1 ? T_DEEP : lvl === -2 ? T_DIM : sunTone(lvl, b, i, j, false), i, py, off);
       }
     }
   }
@@ -309,7 +315,7 @@
     // corner text fades before the dive starts, so the growing sphere never covers it
     pin.style.setProperty("--fade", (1 - A.clamp((st.pa - (SUN_END - .02)) / .03)).toFixed(3));
     ringEl.style.setProperty("--rx", st.cx + "px"); ringEl.style.setProperty("--ry", st.cy + "px");
-    ringEl.style.setProperty("--rr", (st.R * 1.12) + "px");
+    ringEl.style.setProperty("--rr", (Math.round(st.R * 1.12 * st.bs * dpr * 4) / (dpr * 4)) + "px");   // quarter device pixels: a steady glide
     ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : (st.a * (1 - A.clamp(st.k * 2.2))).toFixed(3));
     ringEl.style.setProperty("--rot", ringRot.toFixed(2) + "deg");
     var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
