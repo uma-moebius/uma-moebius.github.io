@@ -53,10 +53,22 @@
   // the interior set; its order is re-measured (ink coverage, JetBrains Mono 600) before the first atlas — 'sun' stays as one block
   var CHARS = " ;====+*sun%#@", LV = CHARS.length, WILD = "SUN01/#:<>*", GE = LV + WILD.length, GA = GE + A.EDGE.length;
   var GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
-  // four tones from the glyph level, capped at the SUN's light pink (no near-white); the glitch 'hot' tone is the cap too
-  var TONE4 = ["#3d1528", "#6e1d43", "#ff5c9a", "#ff9cc2"], COLORS = [];
-  for (var q4 = 0; q4 < LV; q4++) COLORS.push(TONE4[q4 <= 2 ? 0 : q4 <= 5 ? 1 : q4 <= 10 ? 2 : 3]);
-  var T_DEEP = 1, T_DIM = 3;   // atlas rows for the darkest two tones (air, mouth interior)
+  // the same five tones as the wordmark, capped at the light pink (never white); atlas rows are tones, not levels
+  var COLORS = ["#3d1528", "#6e1d43", "#b83470", "#ff5c9a", "#ff9cc2"], ST = COLORS.length - 1;
+  var SUN_TL = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4];   // glyph level → resting tone
+  var DIVE_TL = [0, 0, 0, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4];  // during the dive the swallowed surface keeps its approved pinks (no middle tone)
+  var SUN_HOT = 1.05, SUN_HOT_BEAT = .92, sunDk = 0;   // light needed for the top tone at rest / on the beat: keeps it to the core of the highlight (≈4% / ≈8%)
+  var T_DEEP = 0, T_DIM = 1;   // atlas rows for the darkest two tones (air, mouth interior)
+  // tone of a sphere cell from its level, recomputed every frame (never accumulated); `up` = the beat lifts it by one
+  function sunTone(lvl, b, i, j, up) {
+    var dive = sunDk > 0 && A.hash(i + 5.1, j + 3.7) < sunDk / .3;    // the first 30% of the dive hands each cell over to the dive pinks
+    var tn = (dive ? DIVE_TL : SUN_TL)[lvl], ok = b >= (up ? SUN_HOT_BEAT : SUN_HOT);
+    if (tn === undefined) tn = ST;
+    if (dive) return tn;
+    if (tn === ST && !ok) tn = ST - 1;
+    if (up && tn < ST) { tn++; if (tn === ST && (lvl < SUN_TL.length - 3 || !ok)) tn = ST - 1; }
+    return tn;
+  }
 
   var ring = [];
   for (var k = 0; k < 16; k++) for (var c = 0; c < 3; c++) {
@@ -205,6 +217,8 @@
     var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(H, cy + ext) - oy) / ch) + 1;
     var tick = Math.floor(t / (BEAT / 20)), beats = t / BEAT, glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
     var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = t * TAU / (6 * BEAT);
+    sunDk = st.k;
+    var beatOn = !reduce && st.k === 0 && st.pa < 1 && (((t % BEAT) + BEAT) % BEAT) < 560;   // the SUN answers the heartbeat only while it is at rest
     var rimOn = R > cw * 3, rbw = ch * .5 / R, rlo = (1 - rbw) * (1 - rbw), rhi = (1 + rbw) * (1 + rbw), CAVA = 3 + (A.AIR.length - 3) * dk;   // as the dive zooms in, the deep air turns from dots into : , ' ` → read as type, not as specks
     // mouth as a signed field (px; + inside the open mouth, − on lips / sphere), so its outline is found like the rim
     var cOpen = 0, cDy = 0, cLim = 0, cUp = false;
@@ -219,8 +233,9 @@
       return (lim - dy - (ax > 1 ? (ax - 1) * ma : 0)) * R;
     }
     function blit(gi, lvl, i, py, off) { g.drawImage(atlas, gi * tw, lvl * th, tw, th, Math.round((ox + i * cw + off) * dpr), py, dw, dh); }
+    var lipCol = {};   // the mouth field is not an exact distance: remember which cells already carry a lip crossing (per column / in this row)
     for (var j = j0; j < j1; j++) {
-      var y = oy + (j + .5) * ch, ny = (y - cy) / R, off = 0, hot = false, py = Math.round((oy + j * ch) * dpr);
+      var y = oy + (j + .5) * ch, ny = (y - cy) / R, off = 0, hot = false, py = Math.round((oy + j * ch) * dpr), lipRow = -9;
       if (py > cv.height || py + dh < 0) continue;
       if (glitch) { var band = j >> 1, hb = A.hash(band, tick); if (hb < E * .55) { off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 36) * cw; hot = hb < E * .16; } }
       for (var i = i0; i < i1; i++) {
@@ -229,12 +244,18 @@
         var wildHit = glitch && A.hash(i + j * 131, tick) < E * .4;
         // rim: the cells the sphere outline actually passes through (one per row / column) take a stroke along it
         if (rimOn && r2 > rlo && r2 < rhi) {
-          var rr = Math.sqrt(r2), ux = nx / rr, uy = ny / rr, sd = (rr - 1) * R, ext = A.cellExt(ux, uy, cw, ch);
-          if (sd > -ext && sd <= ext) {
+          var rr = Math.sqrt(r2), ux = nx / rr, uy = ny / rr, sd = (rr - 1) * R, eg = A.stroke(ux, uy, sd, cw, ch);
+          if (eg >= 0) {
             var rb = shade(ux * .999, uy * .999, .998, L0, L1, L2, Math.atan2(ux, .04) + rot, dk, phase);
             lvl = Math.round((rb > 1 ? 1 : rb < 0 ? 0 : rb) * top); lvl = lvl < 4 ? 4 : lvl > top - 1 ? top - 1 : lvl;  // the dark side keeps a dim contour
-            gi = wildHit ? LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0) : GE + A.edge(ux, uy, A.cross(uy, sd, ch));
-            blit(gi, hot ? top : lvl, i, py, off); continue;
+            // shadow side: the contour thins out and breaks into air, so the terminator stays soft (full line wherever it is lit)
+            var lit = Math.max(dk, A.smooth((rb - .08) / .3)), hd = A.hash(i + 913.1, j * 1.7 + 5.3);
+            if (!wildHit && hd > .15 + .85 * lit) {
+              if (hd > .5 + .5 * lit) continue;
+              blit(GA + (hd > .4 + .5 * lit ? 0 : 1), hot ? ST : T_DEEP, i, py, off); continue;
+            }
+            gi = wildHit ? LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0) : GE + eg;
+            blit(gi, hot ? ST : sunTone(lvl, rb, i, j, beatOn && heart(t - rr * 300) > .4), i, py, off); continue;
           }
         }
         if (r2 <= 1) {
@@ -246,12 +267,14 @@
               var hx = cw * .5 / R, hy = ch * .5 / R;
               var gx = (cav(nx + hx, ny) - cav(nx - hx, ny)) / cw, gy = (cav(nx, ny + hy) - cav(nx, ny - hy)) / ch, gl = Math.hypot(gx, gy);
               if (gl > 1e-6) {
-                var mnx = gx / gl, mny = gy / gl, ds = s0 / gl, mext = A.cellExt(mnx, mny, cw, ch);
-                if (ds > -mext && ds <= mext) { // the lip line: a stroke along it, in the lip tone
+                var mnx = gx / gl, mny = gy / gl, ds = s0 / gl, meg = A.stroke(mnx, mny, ds, cw, ch);
+                if (meg >= 3 ? lipRow === i - 1 : meg >= 0 && lipCol[i] === j - 1) meg = -1;   // the neighbour already drew this crossing
+                if (meg >= 3) lipRow = i; else if (meg >= 0) lipCol[i] = j;
+                if (meg >= 0) { // the lip line: one stroke per crossing, in the lip tone
                   var lb = .62 + .3 * (.6 + .4 * open);
                   lvl = Math.min(top - 3, Math.round(lb * top));   // the lip line stays pink: a crisp line, not a white drawn outline
-                  gi = wildHit ? LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0) : GE + A.edge(mnx, mny, A.cross(mny, ds, ch));
-                  blit(gi, hot ? top : lvl, i, py, off); continue;
+                  gi = wildHit ? LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0) : GE + meg;
+                  blit(gi, hot ? ST : sunTone(lvl, lb, i, j, false), i, py, off); continue;
                 }
               }
             }
@@ -267,13 +290,17 @@
           lvl = Math.round((b > 1 ? 1 : b < 0 ? 0 : b) * top);
           if (lvl <= 0) continue;
           gi = lvl;
+          if (lvl <= 5 && r2 > .77 && dk < 1) { // the dark rows near the shadow-side contour break into air too: no hard '=' edge against the dark
+            var fade = A.smooth((Math.sqrt(r2) - .88) / .12) * (1 - dk) * (1 - lvl / 6), hz = A.hash(i + 377.7, j * 2.3 + 1.1);
+            if (hz < fade) { if (hz < fade * .45) continue; gi = GA + (hz < fade * .75 ? 0 : 1); lvl = -1; }
+          }
         } else if (r2 < 1.32) { // air around the SUN
           var f = (1.15 - Math.sqrt(r2)) / .15; if (f <= 0) continue;
           var ag = ringAir(i, j, beats, ny, f, r2, ch / R); if (ag < 0) continue;
-          gi = GA + ag; lvl = ag === 2 ? T_DIM : T_DEEP;
+          gi = GA + ag; lvl = ag === 2 ? -2 : -1;
         } else continue;
         if (wildHit) gi = LV + ((A.hash(i * 7 + j, tick + 3) * WILD.length) | 0);
-        blit(gi, hot ? top : lvl, i, py, off);
+        blit(gi, hot ? ST : lvl === -1 ? T_DEEP : lvl === -2 ? T_DIM : sunTone(lvl, b, i, j, beatOn && heart(t - Math.sqrt(r2) * 300) > .4), i, py, off);
       }
     }
   }
@@ -470,7 +497,7 @@
   // ---------- footer: a small setting sun on a character horizon (static; same material) ----------
   var dusk = document.querySelector(".dusk");
   function drawDusk() {
-    if (!dusk) return;
+    if (!dusk) return; sunDk = 0;
     var r = dusk.getBoundingClientRect(), Wd = Math.round(r.width), Hd = Math.round(r.height); if (Wd < 10) return;
     dusk.width = Math.round(Wd * dpr); dusk.height = Math.round(Hd * dpr);
     var dg = dusk.getContext("2d"), cw = small ? 4 : 5, ch = cw * 1.75, AT = A.atlas(GLYPHS, COLORS, cw, ch, 600, dpr), top = LV - 1;
@@ -481,19 +508,20 @@
       var x = gx0 + (i + .5) * cw, y = (j + .5) * ch, lvl;
       if (j === hz) { // horizon line of characters, fading to the edges
         var ef = 1 - Math.abs(x - cx) / (Wd / 2); if (A.hash(i, 77) > ef * 1.4) continue; lvl = ef > .55 ? GE + 1 : GA + 1;   // a stroke '-', thinning into air '·'
-        dg.drawImage(AT.canvas, lvl * AT.tw, (ef > .7 ? 6 : 3) * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
+        dg.drawImage(AT.canvas, lvl * AT.tw, (ef > .7 ? 3 : 1) * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
         continue;
       }
       var nx = (x - cx) / Rd, ny = (y - cy) / Rd, r2 = nx * nx + ny * ny, rr = Math.sqrt(r2);
       if (rr > 0) { var ux = nx / rr, uy = ny / rr, sd = (rr - 1) * Rd; // the rim: same stroke rule as the SUN
-        if (sd > -A.cellExt(ux, uy, cw, ch) && sd <= A.cellExt(ux, uy, cw, ch)) {
+        var feg = A.stroke(ux, uy, sd, cw, ch);
+        if (feg >= 0) {
           var rb = A.clamp(shade(ux * .999, uy * .999, .998, L0, L1, L2, Math.atan2(ux, .04), 0, 0)); lvl = Math.max(4, Math.min(top - 1, Math.round(rb * top)));
-          dg.drawImage(AT.canvas, (GE + A.edge(ux, uy, A.cross(uy, sd, ch))) * AT.tw, lvl * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
+          dg.drawImage(AT.canvas, (GE + feg) * AT.tw, sunTone(lvl, rb, i, j, false) * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
           continue;
         } }
       if (r2 > 1) continue;
-      lvl = Math.round(A.clamp(shade(nx, ny, r2, L0, L1, L2, Math.atan2(nx, Math.sqrt(1 - r2)), 0, 0)) * top); if (lvl <= 0) continue;
-      dg.drawImage(AT.canvas, lvl * AT.tw, lvl * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
+      var fb = shade(nx, ny, r2, L0, L1, L2, Math.atan2(nx, Math.sqrt(1 - r2)), 0, 0); lvl = Math.round(A.clamp(fb) * top); if (lvl <= 0) continue;
+      dg.drawImage(AT.canvas, lvl * AT.tw, sunTone(lvl, fb, i, j, false) * AT.th, AT.tw, AT.th, Math.round((gx0 + i * cw) * dpr), Math.round(j * ch * dpr), AT.tw, AT.th);
     }
   }
 

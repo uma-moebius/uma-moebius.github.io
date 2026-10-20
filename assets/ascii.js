@@ -78,8 +78,22 @@ window.ASCII = (function () {
   function cross(ny, sd, ch) { var d = ny < 0 ? (ny > -.05 ? -.05 : ny) : (ny < .05 ? .05 : ny); return -sd / d / ch; }
   // half-width of the band (along the normal) that holds exactly one cell per row (steep outline) or per column (shallow one)
   function cellExt(nx, ny, cw, ch) { var ax = nx < 0 ? -nx : nx, ay = ny < 0 ? -ny : ny; return (ax * cw > ay * ch ? ax * cw : ay * ch) * .5; }
+  // one stroke per edge crossing (SUN rim, mouth outline, footer sun): an outline that climbs at least one row every two
+  // columns owns exactly one cell per row and draws / | \ ; a flatter one owns one cell per column and draws ¯ - _ by where
+  // it crosses. A cell that would only repeat its neighbour's crossing gets -1 and stays free (interior or air).
+  // n = outline normal (toward the empty side), sd = signed distance (px, + on the empty side)
+  function stroke(nx, ny, sd, cw, ch) {
+    var ax = nx < 0 ? -nx : nx, ay = ny < 0 ? -ny : ny, ext;
+    if (ax * cw * 2 >= ay * ch) {
+      ext = ax * cw * .5; if (!(sd > -ext && sd <= ext)) return -1;
+      var a = Math.atan2(-nx, -ny) * 57.29578; if (a < 0) a += 180; if (a >= 180) a -= 180;
+      return a >= 70 && a < 110 ? 4 : a < 90 ? 3 : 5;
+    }
+    ext = ay * ch * .5; if (!(sd > -ext && sd <= ext)) return -1;
+    var oy = cross(ny, sd, ch); return oy < -.2 ? 2 : oy > .2 ? 0 : 1;
+  }
   function hash(a, b) { var h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); }
   function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
   function smooth(v) { v = clamp(v); return v * v * (3 - 2 * v); }
-  return { EDGE: EDGE, AIR: AIR, edge: edge, cellExt: cellExt, cross: cross, atlas: atlas, ramp: ramp, ink: ink, inkRamp: inkRamp, ready: ready, hash: hash, clamp: clamp, smooth: smooth, FAMILY: FAMILY };
+  return { EDGE: EDGE, AIR: AIR, edge: edge, stroke: stroke, cellExt: cellExt, cross: cross, atlas: atlas, ramp: ramp, ink: ink, inkRamp: inkRamp, ready: ready, hash: hash, clamp: clamp, smooth: smooth, FAMILY: FAMILY };
 })();
