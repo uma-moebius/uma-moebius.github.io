@@ -47,7 +47,7 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
 .sunsec__bio, .sunsec__links { position: absolute; bottom: calc(var(--row) * 3); margin: 0; font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 1.5); }
 .sunsec__bio { left: var(--edge); }
 .sunsec__links { right: var(--edge); text-align: right; }
-.sunsec__links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+html:not(.ripple) .sunsec__links a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .sunsec__readout { position: absolute; left: 0; right: 0; top: calc(var(--row) * 3.5); margin: 0; text-align: center; color: var(--hint); }
 @media (max-width: 768px) {
   .sunsec__bio, .sunsec__links { top: calc(var(--row) * 5); bottom: auto; }
@@ -135,7 +135,7 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
   background: transparent; color: var(--candy); font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 2); letter-spacing: 0;
   transition: background-color .12s, color .12s; }
 .send::before { content: "[ " / ""; } .send::after { content: " ]" / ""; }
-.send:hover:not(:disabled), .send:focus-visible { background: var(--candy); color: var(--night); outline: none; }   /* inverse video */
+html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: var(--candy); color: var(--night); outline: none; }   /* inverse video: keyboard focus (and hover where the ripple does not play) */
 .send:active:not(:disabled) { transform: none; }
 .send:disabled { opacity: .55; }
 .site-footer { display: block; margin-top: calc(var(--row) * 8); min-height: 0; background: none; color: var(--hint); text-align: center; padding-bottom: calc(var(--row) * 2); }
@@ -171,9 +171,9 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
   .logo:hover, .contact__mail:hover, .sunsec__links a:hover { text-decoration: none; }
   .nav a:hover { color: var(--mute); }
   .send:hover:not(:disabled):not(:focus-visible):not(:active) { background-color: transparent; color: var(--candy); }
-  .logo:active, .contact__mail:active, .sunsec__links a:active { text-decoration: underline; text-underline-offset: 3px; }
-  .nav a:active { color: var(--blush); }
-  .send:active:not(:disabled) { background-color: var(--candy); color: var(--night); }
+  html:not(.ripple) .logo:active, html:not(.ripple) .contact__mail:active, html:not(.ripple) .sunsec__links a:active { text-decoration: underline; text-underline-offset: 3px; }
+  html:not(.ripple) .nav a:active { color: var(--blush); }
+  html:not(.ripple) .send:active:not(:disabled) { background-color: var(--candy); color: var(--night); }
 }
 /* phones: the header keeps the logo and the three links on one line (it wrapped to two below 430px) */
 @media (max-width: 768px) {

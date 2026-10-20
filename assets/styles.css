@@ -99,9 +99,9 @@ textarea:focus-visible {
   color: var(--blush);
 }
 
-.logo:hover,
-.about__links a:hover,
-.contact__mail:hover {
+/* hover decoration only where the character ripple does not play (no script, reduced motion) */
+html:not(.ripple) .logo:hover,
+html:not(.ripple) .contact__mail:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -116,7 +116,7 @@ textarea:focus-visible {
   color: var(--mute);
 }
 
-.nav a:hover {
+html:not(.ripple) .nav a:hover {
   color: var(--blush);
 }
 
@@ -336,7 +336,7 @@ textarea:focus-visible {
   font-size: 16px;
 }
 
-.edge__back:hover {
+html:not(.ripple) .edge__back:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -346,5 +346,5 @@ html { -webkit-tap-highlight-color: transparent; }
 @media (pointer: coarse) { .edge__back { display: inline-block; padding: 13px 6px; margin: -13px -6px; } }
 @media (hover: none) {
   .edge__back:hover { text-decoration: none; }
-  .edge__back:active { text-decoration: underline; text-underline-offset: 3px; }
+  html:not(.ripple) .edge__back:active { text-decoration: underline; text-underline-offset: 3px; }
 }
