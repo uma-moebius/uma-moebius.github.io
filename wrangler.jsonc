@@ -6,6 +6,7 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
+    "not_found_handling": "404-page",
     "run_worker_first": ["/api/*"]
   },
   // No recipient here: the address comes from the CONTACT_TO secret.
