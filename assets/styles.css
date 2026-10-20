@@ -348,3 +348,9 @@ html { -webkit-tap-highlight-color: transparent; }
   .edge__back:hover { text-decoration: none; }
   html:not(.ripple) .edge__back:active { text-decoration: underline; text-underline-offset: 3px; }
 }
+
+/* page to page (same origin): one short, quiet cross-fade; browsers without cross-document view transitions simply navigate */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: ease; }
+}
