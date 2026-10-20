@@ -7,6 +7,9 @@
   var root = document.documentElement;
   // one world clock: every periodic thing is a whole number of beats (or an integer split of one) of the 60 BPM heart
   var BEAT = 1000, TAU = Math.PI * 2;
+  // the first beat: on the first visit of a session, opened at the top, the world waits in near-silence and starts on one heartbeat.
+  // The clock's zero is that beat (an accent, beat 0 of 4), so the heart, the ring's first inhale and the air all start together
+  var HUSH = 900, CLK0 = 0, silent = false;   // ms of silence before the first beat; the world clock's zero (page time); waiting for it
   var AIR_BEAT = /[?&]airbeat=1/.test(location.search);   // optional, off by default: the SUN's air swells with the heartbeat (for comparison only)
   var cursor = document.querySelector(".sun-cursor");
   if (fine && !reduce) root.classList.add("has-sun-cursor");
@@ -134,7 +137,7 @@
     var thin = A.clamp((pf - DIVE_END) / (1 - DIVE_END)) * .9, u = A.clamp(pw / .2);
     if (pa >= 1) thin = (window.WORKS_VIEW && window.WORKS_VIEW.empty) ? .9 : .9 + .1 * u; // empty Works: the thinned field stays
     if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
-    var drift = reduce ? 0 : t;
+    var drift = reduce || t < 0 ? 0 : t;   // before the first beat the light holds still
     var az = (-62 + 62 * nk) * Math.PI / 180 + Math.sin(drift * TAU / (27 * BEAT)) * .22, el = .1 + .42 * nk + Math.sin(drift * TAU / (37 * BEAT) + 1) * .08;
     var Ls = [Math.sin(az) * Math.cos(el), -Math.sin(el), Math.cos(az) * Math.cos(el)], Ld = [-.25, -.32, .91];
     var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
@@ -147,7 +150,7 @@
       cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
       mo: mo, m: mouth(mo, 0),
-      bs: reduce ? 1 : 1 + BR_AMP * (breath(t) - .5) * (1 - A.clamp(k * 2.2))   // around the resting radius (static = the middle of a breath); fades out with the ring as the dive starts
+      bs: reduce ? 1 : 1 + BR_AMP * (breath(t < 0 ? 0 : t) - .5) * (1 - A.clamp(k * 2.2))   // around the resting radius (static = the middle of a breath); fades out with the ring as the dive starts
     };
   }
 
@@ -226,7 +229,7 @@
     var i0 = Math.floor((Math.max(0, cx - ext) - ox) / cw) - 1, i1 = Math.ceil((Math.min(W, cx + ext) - ox) / cw) + 1;
     var j0 = Math.floor((Math.max(0, cy - ext) - oy) / ch) - 1, j1 = Math.ceil((Math.min(H, cy + ext) - oy) / ch) + 1;
     var tick = Math.floor(t / (BEAT / 20)), beats = t / BEAT, glitch = E > .02, dk = st.k, phase = st.k * 7 + rot * 2.5, thin = st.thin;
-    var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = t * TAU / (6 * BEAT);
+    var M = st.m, mouth = st.mo > 0 && M.on, ma = M.ma, mb = M.mb, my = M.my, lip = M.lip, P = M.prof, wob = M.wob, breath = (t < 0 ? 0 : t) * TAU / (6 * BEAT), airOn = t >= 0;
     sunDk = st.k;
     var rimOn = R > cw * 3, rbw = ch * .5 / R, rlo = (1 - rbw) * (1 - rbw), rhi = (1 + rbw) * (1 + rbw), CAVA = 3 + (A.AIR.length - 3) * dk;   // as the dive zooms in, the deep air turns from dots into : , ' ` → read as type, not as specks
     // mouth as a signed field (px; + inside the open mouth, − on lips / sphere), so its outline is found like the rim
@@ -288,6 +291,7 @@
               }
             }
             if (s0 > 0) { // cavity: sparse rigid patches of air sliding cell by cell toward the mouth centre (being drawn in)
+              if (!airOn) continue;
               var q = dy / lim, depth = (1 - q * q) * open, mg = mouthAir(i, j, beats, nx / ma, depth, cUp);
               if (mg < 0) continue;
               blit(GA + mg, T_DIM, i, py, off); continue;
@@ -303,7 +307,7 @@
             var fade = A.smooth((Math.sqrt(r2) - .88) / .12) * (1 - dk) * (1 - lvl / 6), hz = A.hash(i + 377.7, j * 2.3 + 1.1);
             if (hz < fade) { if (hz < fade * .45) continue; gi = GA + (hz < fade * .75 ? 0 : 1); lvl = -1; }
           }
-        } else if (r2 < 1.32 * bs * bs) { // air around the SUN: its outer edge opens and closes with the ring
+        } else if (r2 < 1.32 * bs * bs && airOn) { // air around the SUN: its outer edge opens and closes with the ring
           var f = (1.15 * bs - Math.sqrt(r2)) / (.15 + 1.15 * (bs - 1)); if (f <= 0) continue; if (f > 1) f = 1;
           var ag = ringAir(i, j, beats, ny, f, r2, ch / R); if (ag < 0) continue;
           gi = GA + ag; lvl = ag === 2 ? -2 : -1;
@@ -347,7 +351,7 @@
 
   // ---------- hero: the Baloo 2 wordmark sampled into small characters (same atlas system as the SUN, no outline layer) ----------
   var hero = document.querySelector(".hero"), h1 = document.querySelector(".wordmark"), hcv = document.querySelector(".hero__canvas");
-  var hg = hcv ? hcv.getContext("2d") : null, HW = null, heroVis = true, heroT0 = 0;
+  var hg = hcv ? hcv.getContext("2d") : null, HW = null, heroVis = true;
   function buildHero() {
     HW = null; if (!hg || !h1) return;
     var hb = hcv.getBoundingClientRect(), r = h1.getBoundingClientRect(), cs = getComputedStyle(h1), fs = parseFloat(cs.fontSize);
@@ -414,7 +418,7 @@
   function drawHero(t) {
     if (!HW) return;
     var E = Math.min(.5, energy) * .7, AT = HW.AT, top = HLV - 1, tw = AT.tw, th = AT.th, cw = HW.cw, ch = HW.ch;
-    var tick = Math.floor(t / 50), glitch = E > .03, intro = reduce ? 1 : A.clamp((t - heroT0) / 1100);
+    var tick = Math.floor(t / 50), glitch = E > .03;
     var cs = HW.cells, N = cs.length, n, c;
     if (!HW.lit) { // tone and resting character per cell, from the letterform density under a fixed light (never time, hover or recovery)
       var az = -.9, el = .55, L0 = Math.sin(az) * Math.cos(el), L1 = -Math.sin(el), L2 = Math.cos(az) * Math.cos(el), fsK = 6 / HW.fs, letters = [];
@@ -458,9 +462,9 @@
     var dt = Math.min(100, Math.max(0, t - HW.lastT)); HW.lastT = t;
     var hold = Math.pow(HB_HOLD, dt / 16.7), P = HW.P, code = HW.code, NT = HTONES.length;
     hg.setTransform(1, 0, 0, 1, 0, 0);
-    // only the cells whose character changed are redrawn; a full redraw while rows can shift (glitch), during the intro,
+    // only the cells whose character changed are redrawn; a full redraw while rows can shift (glitch),
     // and whenever a tile does not sit on whole device pixels (neighbouring tiles could overlap by a pixel)
-    var full = glitch || intro < 1 || !HW.shown || HW.wasGlitch || Math.abs(cw * dpr - Math.round(cw * dpr)) > 1e-3 || !HW.snap;
+    var full = glitch || !HW.shown || HW.wasGlitch || Math.abs(cw * dpr - Math.round(cw * dpr)) > 1e-3 || !HW.snap;
     if (!HW.shown) { HW.shown = new Int16Array(N); var on = function (v) { return Math.abs(v * dpr - Math.round(v * dpr)) < 1e-3; };
       HW.snap = on(ch) && on(HW.gx0) && on(HW.gy0); }
     if (full) { hg.clearRect(0, 0, hcv.width, hcv.height); HW.shown.fill(-1); }
@@ -469,8 +473,9 @@
       c = cs[n];
       // pressure: rises at once with the travelling beat, then lets go over ~0.3s; tone and character are recomputed from the fixed base every frame
       var lt = t - c.dly, p = 0;
-      if (!reduce) { var tg = press(lt); p = P[n] * hold; if (tg > p) p = tg; if (p < .004) p = 0; P[n] = p; }
       var gi, tn;
+      if (silent && lt < 0) { P[n] = 0; code[n] = c.ring ? 0 : (c.eg >= 0 ? c.eg : c.lvl) * NT; continue; }   // not yet reached by the first beat: unlit
+      if (!reduce) { var tg = press(lt); p = P[n] * hold; if (tg > p) p = tg; if (p < .004) p = 0; P[n] = p; }
       if (c.ring) {                                                       // the swell past the outline: air characters only, never bright
         var a = p * (c.ring === 1 ? 1 : (accentAt(lt) > 0 || p > 1 ? .75 : 0)) - .12 * c.h;
         gi = a > .85 ? HGA + 2 : a > .55 ? HGA + 1 : a > .3 ? HGA : 0; tn = a > .85 ? 2 : a > .55 ? 1 : 0;
@@ -488,8 +493,7 @@
     for (n = 0; n < N; n++) {
       c = cs[n];
       var k2 = code[n];
-      if (!reduce && c.inN >= 0 && accentAt(t - c.dly) > .45) k2 = code[c.inN];   // accent: characters slide one cell outward, whole, no tween
-      if (c.h > intro) continue;
+      if (!reduce && c.inN >= 0 && !(silent && t - c.dly < 0) && accentAt(t - c.dly) > .45) k2 = code[c.inN];   // accent: characters slide one cell outward, whole, no tween
       if (c.edge && c.eg < 0 && c.h < .25) continue;                      // edges without a clear direction: sparser
       if (c.j !== lastJ) { lastJ = c.j; off = 0;
         if (glitch) { var band = c.j >> 1, hb = A.hash(band + 40, tick); if (hb < E * .5) off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 8) * cw; } }
@@ -549,19 +553,27 @@
     energy *= Math.pow(.9, dt / 16.7); if (energy < .01) energy = 0;
     // no idle spin: rotation only from input (pointer velocity + scroll)
     rot += energy * dt * .0035 + scrollAcc * .0009; ringRot += energy * dt * .25 + scrollAcc * .05; scrollAcc = 0;
-    if (visible) render(t);
-    if (heroVis) drawHero(t);
-    wild(t);
+    var wt = t - CLK0; if (silent && wt > HB_WAVE + 200) silent = false;   // once the first beat has crossed the whole name
+    if (visible) render(wt);
+    if (heroVis) drawHero(wt);
+    wild(wt);
     if ((visible || heroVis || energy > 0 || !calm) && !document.hidden) requestAnimationFrame(frame); else { running = false; lastT = 0; }
   }
   function wake() { if (ready && !running && !reduce && !document.hidden) { running = true; requestAnimationFrame(frame); } }
+  // the first beat plays once per session, and only when the page opens at its top (no hash, not restored mid-page)
+  function firstVisit() {
+    var seen = true;
+    try { seen = !!sessionStorage.getItem("first-beat"); sessionStorage.setItem("first-beat", "1"); } catch (e) {}
+    return !seen && !location.hash && scrollY <= 0;
+  }
   function readyHero(cb) { // Baloo 2 must be loaded before the letterforms are sampled
     if (!document.fonts || !document.fonts.load) return cb();
     var done = false, go = function () { if (!done) { done = true; cb(); } };
     document.fonts.load("800 100px \"Baloo 2\"").then(go, go); setTimeout(go, 2000);
   }
   A.ready(function () { readyHero(function () {
-    build(); buildHero(); drawDusk(); ready = true; heroT0 = performance.now();
+    build(); buildHero(); drawDusk(); ready = true; CLK0 = performance.now();
+    if (!reduce && firstVisit()) { silent = true; CLK0 += HUSH; }
     root.classList.add(hero && HW ? "wm-ascii" : "wm-plain");
     if (reduce) {
       drawHero(0); render(0);
