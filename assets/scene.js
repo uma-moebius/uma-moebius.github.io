@@ -48,7 +48,14 @@
 
   // ---------- scene ----------
   var scene = document.querySelector(".scene"); if (!scene) return;
-  var bg = scene.querySelector(".scene__bg"), cv = scene.querySelector(".scene__canvas"), g = cv.getContext("2d");
+  var bg = scene.querySelector(".scene__bg"), cv = scene.querySelector(".scene__canvas"), g = null;
+  // the field draws through WebGL where it runs on the GPU, else through Canvas 2D; both copy the same atlas tiles to the same pixels
+  var GPU = window.ASCII_GL ? window.ASCII_GL(cv, to2d, repaint, reduce) : null;
+  if (!GPU) g = cv.getContext("2d") || fresh();
+  cv.dataset.renderer = GPU ? GPU.kind : "2d";
+  function fresh() { var c = cv.cloneNode(false); cv.parentNode.replaceChild(c, cv); cv = c; return c.getContext("2d"); }   // a canvas once given to WebGL can never draw 2D
+  function to2d() { GPU = null; g = fresh(); cv.dataset.renderer = "2d"; if (ready) { build(); repaint(); } }
+  function repaint() { if (!ready) return; if (reduce) render(0); else wake(); }
   var sun = scene.querySelector(".sunsec"), pin = sun.querySelector(".sunsec__pin"), works = scene.querySelector(".works");
   var label = pin.querySelector(".sunsec__label"), bio = pin.querySelector(".sunsec__bio"), links = pin.querySelector(".sunsec__links"), readout = pin.querySelector(".sunsec__readout");
   var ringEl = bg.querySelector(".scene__ring");
@@ -84,7 +91,7 @@
     dpr = Math.min(2, devicePixelRatio || 1);
     var r = bg.getBoundingClientRect(); W = r.width; H = r.height; small = W < 769;
     PH = Math.max(H, cv.getBoundingClientRect().height);   // painted height: the large viewport on phones (H stays the layout box)
-    cv.width = Math.round(W * dpr); cv.height = Math.round(PH * dpr);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(PH * dpr); if (GPU) GPU.size(cv.width, cv.height);
     BASE = small ? 6 : 8;
     CHARS = A.inkRamp(" ;====+*sun%#@", "sun", 600); GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
     ATS = A.atlas(GLYPHS, COLORS, BASE, BASE * 1.75, 600, dpr);          // rest: dense ball (line = 1.75 × cell width)
@@ -245,7 +252,8 @@
       cOpen = open; cDy = dy; cLim = lim; cUp = dyS < 0;
       return (lim - dy - (ax > 1 ? (ax - 1) * ma : 0)) * R;
     }
-    function blit(gi, lvl, i, py, off) { g.drawImage(atlas, gi * tw, lvl * th, tw, th, Math.round((ox + i * cw + off) * dpr), py, dw, dh); }
+    function blit(gi, lvl, i, py, off) { var px = Math.round((ox + i * cw + off) * dpr); if (GPU) GPU.add(gi, lvl, px, py); else g.drawImage(atlas, gi * tw, lvl * th, tw, th, px, py, dw, dh); }
+    if (GPU) GPU.begin(AT, dw, dh, st.a);
     var lipCol = {};   // the mouth field is not an exact distance: remember which cells already carry a lip crossing (per column / in this row)
     for (var j = j0; j < j1; j++) {
       var y = oy + (j + .5) * ch, ny = (y - cy) / R, off = 0, hot = false, py = Math.round((oy + j * ch) * dpr), lipRow = -9;
@@ -317,6 +325,7 @@
         blit(gi, hot ? ST : lvl === -1 ? T_DEEP : lvl === -2 ? T_DIM : sunTone(lvl, b, i, j, false), i, py, off);
       }
     }
+    if (GPU) GPU.end();
   }
 
   function drawUI(t, st) {
@@ -544,9 +553,15 @@
   function render(t) {
     var st = frameState(t);
     diving = st.k > 0 && st.pa < 1;
-    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-    g.globalAlpha = st.a; if (st.thin < 1) drawField(t, st); g.globalAlpha = 1;
-    if (window.WORKS_VIEW) window.WORKS_VIEW.draw(g, dpr, W / 2, H / 2, st.pw);
+    var WV = window.WORKS_VIEW;
+    if (GPU) {
+      GPU.clear(); if (st.thin < 1) drawField(t, st);
+      if (WV) GPU.layer(function (lg) { WV.draw(lg, dpr, W / 2, H / 2, st.pw); });
+    } else {
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
+      g.globalAlpha = st.a; if (st.thin < 1) drawField(t, st); g.globalAlpha = 1;
+      if (WV) WV.draw(g, dpr, W / 2, H / 2, st.pw);
+    }
     drawUI(t, st);
   }
   function frame(t) {
