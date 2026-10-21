@@ -108,6 +108,7 @@
     var bpm = 60 + 112 * heat; S.phase += dt * bpm / 60;
     if (heat < .05) { var err = t - S.phase; err -= Math.round(err); S.phase += err * Math.min(1, dt * .8); }   // calm again: back on the world's beat
     var beat = press(S.phase);
+    var hold = g2 * r, pant = Math.sin(t * Math.PI * 2 * 1.4);   // held open at the visitor: it pants, its heart hammers, it trembles
 
     // ---------- body ----------
     var shrink = .17 * F + .07 * bCoil + .15 * ten * (1 - r);   // scrolled at, it cowers: smaller and smaller as the strain builds
@@ -125,13 +126,13 @@
         ca = Bv.ux; sa = Bv.uy; qa = lerp(qa, 1 + .22 * Math.max(0, bL), Math.max(0, bL)); qp = lerp(qp, 1 - .09 * Math.max(0, bL), Math.max(0, bL));
       }
     }
-    var shiver = .016 * F + .022 * bCoil + .03 * ten * (1 - r) + .006 * r;
+    var shiver = .016 * F + .022 * bCoil + .03 * ten * (1 - r) + .006 * r + .008 * hold * (.6 + .4 * beat);
     // the attack's lunge: the creature comes at the visitor, its opening nearly filling the frame
     var gap = .55 + .32, Sfill = Math.max(1.3, H * (small ? .66 : .74) / (R * gap));
     var cx = cx0 + ox, cy = cy0 + oy;
     if (a > 0) {
       var sA = r > 0 ? lerp(1 - .08 * (1 - r) + .22 * r, Sfill, g2) + S.punch * .2 : 1;
-      scale = lerp(scale, sA * (1 + .03 * beat), wA);
+      scale = lerp(scale, sA * (1 + .03 * beat + .012 * hold * pant), wA);
       cx = lerp(cx, lerp(cx0, W / 2, g2), wA); cy = lerp(cy, lerp(cy0, H * .5 + R * sA * ((.55 - .32) * .5 * r + .05), g2), wA);   // centre the opening, not the body
       qa = lerp(qa, 1 + .06 * ten * (1 - r), wA); qp = lerp(qp, 1 - .09 * ten * (1 - r), wA);   // braced: hunched wide and low ca = lerp(ca, 1, wA); sa = lerp(sa, 0, wA);
     }
@@ -146,7 +147,7 @@
     if (a > 0 || r > 0) {
       var th = -.2; T.tc = Math.cos(th); T.ts = Math.sin(th); T.c0 = -.05; T.u0 = .32; T.U = 1.55; T.sU = S.seed; T.sL = S.seed + 37; T.sC = S.seed * .1;
       T.HU = .55; T.HL = .32; T.attack = true;
-      T.open = r * (.62 + .38 * g2) * (1 + .05 * beat * g2);
+      T.open = r * (.62 + .38 * g2) * (1 + .07 * beat * g2 + .06 * hold * pant);
       var reachU = 2.4 * out3((t - S.ripT0) / .11) * (S.ripOn ? 1 : r);
       T.f0 = T.u0 - reachU; T.f1 = T.u0 + reachU;
       T.crease = Math.max(ten, r); T.on = true;
