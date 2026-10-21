@@ -155,8 +155,8 @@
     // the old dive no longer plays: k stays 0. After the SUN's rest comes the attack (sun-fear.js), its end state is held, then the field thins into Works
     var rise = birthOn() ? 1 : A.smooth(pf / .16), nk = A.clamp(pf / SUN_END), k = 0, atk = reduce ? 0 : A.clamp((pf - SUN_END) / (ATK_END - SUN_END));
     // no torn field is left behind Works: the SUN itself recedes, scarred, and stays dimmed behind Works until the scene scrolls away
-    var thin = 0, u = A.clamp(pw / .2), rec = reduce ? 0 : A.clamp((pf - REC0) / (REC1 - REC0)), wtop = works.getBoundingClientRect().top;
-    var dim = reduce ? 1 : (1 - .55 * A.smooth(1 - wtop / H)) * A.smooth((works.getBoundingClientRect().bottom - H * .35) / (H * .5));   // and gone before Contact
+    var thin = 0, u = A.clamp(pw / .2), rec = reduce ? 0 : A.clamp((pf - REC0) / (REC1 - REC0));
+    var dim = reduce ? 1 : (1 - .55 * A.smooth((pa - REC1) / (1 - REC1))) * A.smooth((works.getBoundingClientRect().bottom - H * .35) / (H * .5));   // dimmed once it has receded, gone before Contact
     if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
     var drift = reduce || t < 0 ? 0 : t;   // before the first beat the light holds still
     var az = (-62 + 62 * nk) * Math.PI / 180 + Math.sin(drift * TAU / (27 * BEAT)) * .22, el = .1 + .42 * nk + Math.sin(drift * TAU / (37 * BEAT) + 1) * .08;
