@@ -5,7 +5,7 @@
    SUN of the scene (same centre and radius), and the scene takes over from there. Reduced motion: the formed name, still. */
 (function () {
   "use strict";
-  var A = window.ASCII, root = document.documentElement;
+  var A = window.ASCII, FL = window.FLESH, root = document.documentElement;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var TONES = ["#3d1528", "#6e1d43", "#b83470", "#ff5c9a", "#ff9cc2"];
   var MONO = A ? A.FAMILY : '"JetBrains Mono", ui-monospace, monospace';
@@ -15,7 +15,7 @@
   // the scene reads this: x = how far the scene's own SUN has taken over (0 = the birth owns the screen)
   var STATE = window.BIRTH = { on: !reduce, x: reduce ? 1 : 0, still: reduce };
   function off() { STATE.on = false; STATE.x = 1; root.classList.remove("birth"); }
-  if (!A || !cv || !scene || !sun || !bg) { off(); return; }
+  if (!A || !FL || !cv || !scene || !sun || !bg) { off(); return; }
 
   function clamp(v, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b; return v < a ? a : v > b ? b : v; }
   function sm(v) { v = clamp(v); return v * v * (3 - 2 * v); }
@@ -25,27 +25,21 @@
   function back(v) { v = clamp(v); var c = 1.9; return 1 + (c + 1) * Math.pow(v - 1, 3) + c * Math.pow(v - 1, 2); }
   function smin(a, b, k) { if (k <= 0) return Math.min(a, b); var h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; }
 
-  // ---------- glyphs ----------
-  var RAMP = " .\u00b7:+*sun%#@", EDGE = "_-\u00af/|\\", AIR = ".\u00b7:,'`", THORN = "/\\|-<>^v";
+  // ---------- glyphs: the flesh material (flesh.js), shared with the SUN ----------
   var GLYPHS, gi = {}, AT = null, GPU = null, g = null;
-  function inkOrder(chars) {
-    var v = A.ink(chars, 600), idx = []; for (var i = 0; i < chars.length; i++) idx.push(i);
-    idx.sort(function (a, b) { return v[a] - v[b] || a - b; }); return idx.map(function (i) { return chars[i]; }).join("");
-  }
 
   // ---------- layout ----------
   var L = {};
   function geo() { var s = window.SCENE_GEO && window.SCENE_GEO(); return s; }
   function layout() {
     var r = (reduce ? cv : bg).getBoundingClientRect(), W = r.width, H = r.height, PH = Math.max(H, cv.getBoundingClientRect().height);
-    var dpr = Math.min(2, devicePixelRatio || 1), mobile = W < 600, cw = mobile ? 4 : 7, ch = cw * 1.75;
+    var dpr = Math.min(2, devicePixelRatio || 1), mobile = W < 600, cw = FL.cellW(W), ch = cw * 1.75;
     var sg = geo() || { cx: W / 2, cy: H / 2, R: mobile ? W * .39 : H * .34 };
     L = { W: W, H: H, PH: PH, dpr: dpr, mobile: mobile, cw: cw, ch: ch, cols: Math.ceil(W / cw), rows: Math.ceil(PH / ch),
           tx: W / 2, ty: mobile ? H * .46 : H / 2, sx: sg.cx, sy: sg.cy, R: sg.R };
     L.cx = L.tx; L.cy = L.ty;
     cv.width = Math.round(W * dpr); cv.height = Math.round(PH * dpr); if (GPU) GPU.size(cv.width, cv.height);
-    var interior = inkOrder(RAMP.slice(1)); GLYPHS = " " + interior + EDGE + AIR + THORN;
-    gi = { ramp: 1, nramp: interior.length, edge: 1 + interior.length, air: 1 + interior.length + EDGE.length, thorn: 1 + interior.length + EDGE.length + AIR.length };
+    var GL = FL.glyphs(); GLYPHS = GL.chars; gi = GL.gi;
     AT = A.atlas(GLYPHS, TONES, cw, ch, 600, dpr);
     buildText(); buildTree();
     var n = L.cols * L.rows;
@@ -197,10 +191,7 @@
     }
     INV = { inv: inv, ma: mas, q: qs, Xmax: Xmax, m: m };
   }
-  function fleshNoise(x, y, t) {
-    return Math.sin(x * .0105 + t * 1.25 + Math.sin(y * .016 - t * .8) * 1.8) * Math.sin(y * .0125 - t * 1.05 + Math.sin(x * .0085 + t * .6) * 1.6)
-         + .45 * Math.sin(x * .023 - y * .019 + t * 1.9 + Math.sin(x * .004 + t) * 2);
-  }
+  var fleshNoise = FL.noise;
   // signed distance of the body at screen point (x, y), morph m, time t; `calm` (0..1) stills the flesh into the SUN's clean circle
   var OUT = { d: 0, fold: 0, dep: 0 };
   function body(x, y, m, t, beat, calm) {
@@ -266,8 +257,6 @@
   var M0 = .03, M1 = .75, CALM0 = .72, CALM1 = .85, RING0 = .78, RING1 = .92, HAND0 = .92, HAND1 = .99;
 
   // ---------- frame ----------
-  var LIGHT = (function () { var l = [-.55, -.7, .6], n = Math.hypot(l[0], l[1], l[2]); return [l[0] / n, l[1] / n, l[2] / n]; })();
-  var HALF = (function () { var h = [LIGHT[0], LIGHT[1], LIGHT[2] + 1], n = Math.hypot(h[0], h[1], h[2]); return [h[0] / n, h[1] / n, h[2] / n]; })();
   var HEART0 = 3.15;   // first heartbeat (s): the moment the name is whole
   function render(t, ps) {
     var cols = L.cols, rows = L.rows, cw = L.cw, ch = L.ch, D = L.D, Hh = L.Hh, FO = L.fold, code = L.code;
@@ -292,40 +281,14 @@
         if (wT > 0) { var o = body(p[0], p[1], 0, t, 0, 0); d = lerp(dm, o.d, wT); } else d = dm;
       } else { var o2 = body(p[0], p[1], m, tt, beat, calm); d = o2.d; fold = o2.fold; dep = o2.dep; }
       D[k] = d; FO[k] = fold;
-      var xx = clamp(-d / dep); Hh[k] = Math.sqrt(1 - (1 - xx) * (1 - xx)) * dep;
+      Hh[k] = FL.height(d, dep);
     }
     // shade
     var out = code, lift = beat * .13 * (1 - .5 * sm(m * 2)), dust = inBirth ? (1 - sm((t - 1.2) / 1.4)) : 0, flow = Math.floor(tt * 3);
     for (j = j0; j < j1; j++) for (i = 0; i < cols; i++) {
       k = j * cols + i; var dd = D[k], c = 0;
-      if (dd <= 0) {
-        var il = i > 0 ? k - 1 : k, ir = i < cols - 1 ? k + 1 : k, ju = j > 0 ? k - cols : k, jd = j < rows - 1 ? k + cols : k;
-        var gx = (D[ir] - D[il]) / ((ir - il) * cw || 1), gy = (D[jd] - D[ju]) / (((jd - ju) / cols) * ch || 1), gn = Math.hypot(gx, gy) || 1;
-        var nx = gx / gn, ny = gy / gn, ext = .5 * (Math.abs(nx) * cw + Math.abs(ny) * ch);
-        var hx = (Hh[ir] - Hh[il]) / ((ir - il) * cw || 1), hy = (Hh[jd] - Hh[ju]) / (((jd - ju) / cols) * ch || 1);
-        var n0 = -hx, n1 = -hy, n2 = 1, nl = Math.hypot(n0, n1, n2); n0 /= nl; n1 /= nl; n2 /= nl;
-        var dif = Math.max(0, n0 * LIGHT[0] + n1 * LIGHT[1] + n2 * LIGHT[2]), spec = Math.pow(Math.max(0, n0 * HALF[0] + n1 * HALF[1] + n2 * HALF[2]), 18);
-        var tex = .5 + .5 * Math.sin((i * cw) * .045 + Math.sin((j * ch) * .03 + tt * .4) * 2.2) * Math.sin((j * ch) * .05 - tt * .3);
-        var rim = Math.max(0, n0 * .62 + n1 * .55 + n2 * .2) * (1 - n2) * 1.4;   // warm light from below-right: the underside stays flesh, not void
-        var b = .16 + .66 * dif + .42 * spec + .1 * tex + .3 * rim + lift - .4 * FO[k];
-        if (dd > -ext * 1.05) { // the outline: a stroke along it
-          var an = Math.atan2(-nx, ny) * 57.2958; if (an < 0) an += 180; if (an >= 180) an -= 180;
-          var oyc = clamp(dd / (ny || 1e-3) / ch, -1, 1), eg;
-          if (an < 28 || an >= 152) eg = oyc < -.2 ? 0 : oyc > .2 ? 2 : 1; else if (an >= 68 && an < 112) eg = 4; else eg = an < 90 ? 5 : 3;
-          c = (gi.edge + eg) * 8 + (b > .62 ? 3 : b > .34 ? 2 : 1);
-        } else {
-          var lv = clamp(b * .92 + .08), gidx = gi.ramp + Math.min(gi.nramp - 1, Math.max(2, Math.round(lv * (gi.nramp - 1))));
-          var tn2 = spec > .78 || b > 1.06 ? 4 : b > .6 ? 3 : b > .33 ? 2 : 1;
-          if (FO[k] > .45) tn2 = Math.max(0, tn2 - 2);
-          c = gidx * 8 + tn2;
-        }
-      } else {
-        var band = cw * (2.6 + beat * 3.2 + (inBirth ? 1.4 : 0));
-        if (dd < band) {
-          var hh = hash(i * 1.31 + flow * .17, j * 2.7 - flow * .11);
-          if (hh < .16 * (1 - dd / band) + beat * .1) c = (gi.air + ((hh * 37) | 0) % 6) * 8 + (dd < band * .4 && beat > .4 ? 1 : 0);
-        }
-      }
+      if (dd <= 0) c = FL.cell(D, Hh, FO, k, i, j, cols, rows, cw, ch, tt, lift, gi);
+      else c = FL.air(dd, i, j, cw, beat, inBirth ? 1.4 : 0, flow, gi);
       out[k] = c;
     }
     if (dust > 0) for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) { // drifting dust before the cells have eaten it
@@ -421,7 +384,7 @@
     layout();
     // opened at the top: the cells are born; arriving mid-page (a link, a restored scroll): the name is already whole
     var atTop = !location.hash && scrollY <= 2;
-    t0 = performance.now() - (atTop ? 0 : HEART0 * 1000);
+    t0 = performance.now() - (atTop ? 0 : HEART0 * 1000); STATE.t0 = t0;   // the SUN keeps the flesh on this clock after the handoff
     PH.ps = rawProgress(); ring(0, geo()); ringShown = -1;
     addEventListener("scroll", wake, { passive: true });
     addEventListener("pointermove", function (e) { if (e.pointerType === "mouse") ptr = { x: e.clientX, y: e.clientY }; wake(); }, { passive: true });
