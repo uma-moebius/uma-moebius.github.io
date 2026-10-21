@@ -121,6 +121,15 @@
     MQ = small || H < 500 ? Math.max(.5, Math.min(1, R0 / BASE / 42)) : 1; MBW = MQ < 1 ? Math.max(4, Math.round(6 * MQ)) : 6;
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
+  // the opening (birth.js) takes the first stretch of About's pinned scroll; About's own timeline starts after it, unchanged
+  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null, lastBs = 1;
+  function birthOn() { return BR && BR.on && root.classList.contains("birth"); }
+  function progSun() {
+    if (!birthOn()) return prog(sun);
+    var r = sun.getBoundingClientRect(), b = Math.max(0, r.height - 2.8 * H), span = r.height - b - H;
+    return span > 0 ? A.clamp((-r.top - b) / span) : 1;
+  }
+  window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0, bs: lastBs } : null; };
 
   var rot = 0, ringRot = 0, lastRead = "";
   var SUN_END = .36, DIVE_END = .8, moS = 0, moV = 0, moT = 0;
@@ -139,9 +148,9 @@
     return x < BR_IN ? .5 - .5 * Math.cos(Math.PI * x / BR_IN) : .5 + .5 * Math.cos(Math.PI * (x - BR_IN) / (BR_BEATS - BR_IN));
   }
   function frameState(t) {
-    var pa = reduce ? .3 : prog(sun), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
+    var pa = reduce ? .3 : progSun(), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
     var pf = reduce ? pa : springMo(pa, t); // everything that moves follows one sprung progress; text and anchors stay on raw scroll
-    var rise = A.smooth(pf / .16), nk = A.clamp(pf / SUN_END), k = reduce ? 0 : A.smooth((pf - SUN_END) / (DIVE_END - SUN_END));
+    var rise = birthOn() ? 1 : A.smooth(pf / .16), nk = A.clamp(pf / SUN_END), k = reduce ? 0 : A.smooth((pf - SUN_END) / (DIVE_END - SUN_END));
     var thin = A.clamp((pf - DIVE_END) / (1 - DIVE_END)) * .9, u = A.clamp(pw / .2);
     if (pa >= 1) thin = (window.WORKS_VIEW && window.WORKS_VIEW.empty) ? .9 : .9 + .1 * u; // empty Works: the thinned field stays
     if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
@@ -153,12 +162,12 @@
     // mouth: a thin crooked slit appears as the dive starts and opens wide, centred on the sphere = on the zoom axis
     var mo = reduce ? 0 : A.smooth((k - .1) / .85);
     return {
-      pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : rise,   // static mode: shown only once the field is pinned
+      pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : birthOn() ? BR.x : rise,   // static mode: shown only once the field is pinned
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: fcx + (W / 2 - fcx) * k, cy: fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
       mo: mo, m: mouth(mo, 0),
-      bs: reduce ? 1 : 1 + BR_AMP * (breath(t < 0 ? 0 : t) - .5) * (1 - A.clamp(k * 2.2))   // around the resting radius (static = the middle of a breath); fades out with the ring as the dive starts
+      bs: lastBs = reduce ? 1 : 1 + BR_AMP * (breath(t < 0 ? 0 : t) - .5) * (1 - A.clamp(k * 2.2))   // around the resting radius (static = the middle of a breath); fades out with the ring as the dive starts
     };
   }
 
@@ -330,10 +339,10 @@
 
   function drawUI(t, st) {
     // corner text fades before the dive starts, so the growing sphere never covers it
-    pin.style.setProperty("--fade", (1 - A.clamp((st.pa - (SUN_END - .02)) / .03)).toFixed(3));
+    pin.style.setProperty("--fade", ((1 - A.clamp((st.pa - (SUN_END - .02)) / .03)) * (birthOn() ? BR.x : 1)).toFixed(3));
     ringEl.style.setProperty("--rx", st.cx + "px"); ringEl.style.setProperty("--ry", st.cy + "px");
     ringEl.style.setProperty("--rr", (Math.round(st.R * 1.12 * st.bs * dpr * 4) / (dpr * 4)) + "px");   // quarter device pixels: a steady glide
-    ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : (st.a * (1 - A.clamp(st.k * 2.2))).toFixed(3));
+    ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : ((birthOn() ? 1 : st.a) * (1 - A.clamp(st.k * 2.2))).toFixed(3));
     ringEl.style.setProperty("--rot", ringRot.toFixed(2) + "deg");
     var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
     var txt = hh + ":" + mm + " · ALT " + String(Math.round(st.nk * 62)).padStart(2, "0") + "° · AZ " + String(Math.round(90 + st.nk * 90)).padStart(3, "0") + "°";
@@ -362,8 +371,9 @@
   // ---------- hero: the Baloo 2 wordmark sampled into small characters (same atlas system as the SUN, no outline layer) ----------
   var hero = document.querySelector(".hero"), h1 = document.querySelector(".wordmark"), hcv = document.querySelector(".hero__canvas");
   var hg = hcv ? hcv.getContext("2d") : null, HW = null, heroVis = true;
+  var BIRTH_HERO = !!window.BIRTH;   // the opening draws the name (and, under reduced motion, its still form in the hero)
   function buildHero() {
-    HW = null; if (!hg || !h1) return;
+    HW = null; if (!hg || !h1 || BIRTH_HERO) return;
     var hb = hcv.getBoundingClientRect(), r = h1.getBoundingClientRect(), cs = getComputedStyle(h1), fs = parseFloat(cs.fontSize);
     var CW = Math.ceil(hb.width), CH = Math.ceil(hb.height); if (CW < 10 || CH < 10) return;
     hcv.width = Math.round(CW * dpr); hcv.height = Math.round(CH * dpr);
@@ -555,11 +565,11 @@
     diving = st.k > 0 && st.pa < 1;
     var WV = window.WORKS_VIEW;
     if (GPU) {
-      GPU.clear(); if (st.thin < 1) drawField(t, st);
+      GPU.clear(); if (st.thin < 1 && st.a > 0) drawField(t, st);
       if (WV) GPU.layer(function (lg) { WV.draw(lg, dpr, W / 2, H / 2, st.pw); });
     } else {
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-      g.globalAlpha = st.a; if (st.thin < 1) drawField(t, st); g.globalAlpha = 1;
+      g.globalAlpha = st.a; if (st.thin < 1 && st.a > 0) drawField(t, st); g.globalAlpha = 1;
       if (WV) WV.draw(g, dpr, W / 2, H / 2, st.pw);
     }
     drawUI(t, st);
@@ -590,7 +600,7 @@
   A.ready(function () { readyHero(function () {
     build(); buildHero(); drawDusk(); rzKey = boxKey(); ready = true; CLK0 = performance.now();
     if (!reduce && firstVisit()) { silent = true; CLK0 += HUSH; }
-    root.classList.add(hero && HW ? "wm-ascii" : "wm-plain");
+    root.classList.add(hero && (HW || BIRTH_HERO) ? "wm-ascii" : "wm-plain");
     if (reduce) {
       drawHero(0); render(0);
       addEventListener("scroll", function () { render(0); }, { passive: true }); // static frame; redraw only to keep Works hover/confirm in sync

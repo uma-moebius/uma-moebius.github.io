@@ -186,3 +186,11 @@ html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: 
   .nav { gap: calc(var(--u) * 2); }
 }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+
+/* the opening: the name is born, beats and is kneaded into the SUN inside About's pinned field, before About's own timeline.
+   The hero box steps aside (its h1 stays for assistive tech); About gets three more screens of scroll at its start */
+.birth__canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; height: 100lvh; display: block; visibility: hidden; }
+html.birth .birth__canvas { visibility: visible; }
+html.birth .hero { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html.birth .sunsec { height: 580vh; height: 580svh; scroll-margin-top: -300vh; scroll-margin-top: -300svh; }
+html.birth .sunsec__pin > * { opacity: var(--fade, 0); }
