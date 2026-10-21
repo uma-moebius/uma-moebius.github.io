@@ -1,9 +1,12 @@
 /* The SUN is me, met by chance. A visitor coming close frightens it: it shrinks, shivers and turns away while its heart
    races, and its flesh pushes out thorns, longest toward the visitor and longer the longer it stays. Leave and they sink back,
    and it calms back to 60 BPM and watches. Scrolling on, it cowers, then its flesh parts slowly into a mouth with thick lips,
-   strands of the same flesh stretching between them, thinning, sagging and snapping one by one.
+   strands of the same flesh stretching between them, thinning, sagging and snapping one by one. Then it eats the visitor:
+   it lunges, the mouth grows past the screen's edges and the lips close over it. Dark inside. Sated, it comes back up at its
+   calm size, the heart still a little quick, and settles.
    This file is the model only (no drawing). scene.js asks it for one state per frame.
-   window.SUN_ATTACK.progress (0..1) is how far its mouth is open, .held turns true once it gapes fully, and a "sun:attack" event fires with detail.held on every change. */
+   window.SUN_ATTACK.progress (0..1) is how far its mouth is open, .held turns true once it gapes fully, .eaten once the lips
+   have closed over the visitor; "sun:attack" fires with detail { held, eaten } on every change, and "sun:eaten" when it eats. */
 (function () {
   "use strict";
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -31,7 +34,7 @@
   function press(ph) { var x = ph - Math.floor(ph); return Math.min(1, pulse(x, .03, .075) + .45 * pulse(x - .18, .03, .075)); }
 
   // ---------- state ----------
-  var S = { last: -1, F: 0, dwell: 0, phase: 0, held: false, eaten: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [], gulp: 0 };
+  var S = { last: -1, F: 0, dwell: 0, phase: 0, held: false, eaten: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [], gulp: 0, back: -1 };
   // the strands of flesh across the open mouth: where they hang (across its width), how wide, and how far open it is when each one snaps
   var STR = [[-.6, 1.5, .34], [-.38, 2.4, .58], [-.17, 1.8, .8], [.02, 2.8, .95], [.2, 1.6, .5], [.4, 2.2, .7], [.6, 1.4, .42]];
   var EXPORT = window.SUN_ATTACK = { progress: 0, held: false, eaten: false, recede: 0 };
@@ -108,6 +111,9 @@
     }
     if (rc > 0) { scale = lerp(scale, 1 + .034 * heat * beat, rc); cx = lerp(cx, cx0, rc); cy = lerp(cy, cy0, rc); qa = lerp(qa, 1, rc); qp = lerp(qp, 1, rc); ca = lerp(ca, 1, rc); sa = lerp(sa, 0, rc); }
     var ql = Math.hypot(ca, sa) || 1;
+    // sated: as it comes back up it gives one slow, full swell and settles
+    if (done && rc0 > 0) { if (S.back < 0) S.back = t; var tb = t - S.back; scale *= 1 + .06 * Math.exp(-tb / 1.1) * Math.sin(Math.min(tb * 2.6, 20)); qp *= 1 - .03 * Math.exp(-tb / 1.1) * Math.sin(Math.min(tb * 2.6, 20)); }
+    else if (!done) S.back = -1;
     if (le !== 0) { // the lunge: the gap is brought to the middle of the screen and grows until it is all the visitor sees
       var sF = Math.max(W / (2 * .6 * R), H / (2 * .34 * R)) * 1.05, sc = le > 0 ? Math.pow(sF, le) * (1 + .3 * shut) : 1 + le;
       var tx = W / 2 - g.left, ty = H / 2 - g.top - (.12 + .06) * R * scale * sc, lk = clamp(le);

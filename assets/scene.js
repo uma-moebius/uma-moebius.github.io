@@ -1,7 +1,7 @@
 /* One character field — the opening's name kneaded into the SUN (birth.js) → the SUN, in the very same flesh (flesh.js: same cells,
-   glyphs, light and tones), so the sphere never turns into another drawing. A visitor nearing frightens it and it bites (sun-fear.js);
-   scrolling on, the same body cowers and braces, then calms and stays dimmed behind
-   Works → a setting sun at the footer. Input velocity drives glitch. */
+   glyphs, light and tones), so the sphere never turns into another drawing. A visitor nearing frightens it and its flesh
+   pushes out thorns (sun-fear.js); scrolling on, the same body opens into a sticky mouth, lunges and eats the visitor, comes
+   back sated and stays dimmed behind Works → a setting sun at the footer. Input velocity drives glitch. */
 (function () {
   var A = window.ASCII;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
