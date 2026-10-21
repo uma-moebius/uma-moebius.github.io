@@ -133,7 +133,7 @@
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0, bs: lastBs } : null; };
 
   var rot = 0, ringRot = 0, lastRead = "", lastJolt = "";
-  var SUN_END = .36, ATK_END = .62, DIVE_END = .8, moS = 0, moV = 0, moT = 0;   // rest → attack → its end state held → thins into Works
+  var SUN_END = .36, ATK_END = .62, REC0 = .74, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → attack → its end state held → recedes, scarred, into Works
   var FEAR = reduce ? null : window.SUN_FEAR || null, bgL = 0, bgT = 0;
   function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
     var dt = moT ? Math.min(.05, (t - moT) / 1000) : 0, w = 1 / .12; moT = t;
@@ -154,8 +154,9 @@
     var pf = reduce ? pa : springMo(pa, t); // everything that moves follows one sprung progress; text and anchors stay on raw scroll
     // the old dive no longer plays: k stays 0. After the SUN's rest comes the attack (sun-fear.js), its end state is held, then the field thins into Works
     var rise = birthOn() ? 1 : A.smooth(pf / .16), nk = A.clamp(pf / SUN_END), k = 0, atk = reduce ? 0 : A.clamp((pf - SUN_END) / (ATK_END - SUN_END));
-    var thin = A.clamp((pf - DIVE_END) / (1 - DIVE_END)), u = A.clamp(pw / .2);
-    if (pa >= 1) thin = 1;
+    // no torn field is left behind Works: the SUN itself recedes, scarred, and stays dimmed behind Works until the scene scrolls away
+    var thin = 0, u = A.clamp(pw / .2), rec = reduce ? 0 : A.clamp((pf - REC0) / (REC1 - REC0)), wtop = works.getBoundingClientRect().top;
+    var dim = reduce ? 1 : (1 - .55 * A.smooth(1 - wtop / H)) * A.smooth((works.getBoundingClientRect().bottom - H * .35) / (H * .5));   // and gone before Contact
     if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
     var drift = reduce || t < 0 ? 0 : t;   // before the first beat the light holds still
     var az = (-62 + 62 * nk) * Math.PI / 180 + Math.sin(drift * TAU / (27 * BEAT)) * .22, el = .1 + .42 * nk + Math.sin(drift * TAU / (37 * BEAT) + 1) * .08;
@@ -163,8 +164,8 @@
     var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
     var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
     var aIn = reduce ? 0 : birthOn() ? BR.x : rise;
-    var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0 }) : null;
-    return { f: f, atk: atk,
+    var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0, rec: rec }) : null;
+    return { f: f, atk: atk, dim: dim,
       pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : birthOn() ? BR.x : rise,   // static mode: shown only once the field is pinned
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: f ? f.R : R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: f ? f.cx : fcx + (W / 2 - fcx) * k, cy: f ? f.cy : fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
@@ -198,7 +199,7 @@
     var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n); SG = new Float32Array(n); SC = new Float32Array(n); STH = new Uint8Array(n);
   }
   // while the opening hands over, the SUN is drawn whole under it: both are the same pixels, so the fade shows no seam
-  function sunAlpha(st) { return birthOn() ? (BR.x > 0 ? 1 : 0) : st.a; }
+  function sunAlpha(st) { return (birthOn() ? (BR.x > 0 ? 1 : 0) : st.a) * st.dim; }
   function drawSun(t, st) {
     var FS = st.f, R = st.R, cx = st.cx, cy = st.cy, cw = scw, ch = sch, cols = scols, rows = srows, gi = FG.gi, tt = st.tt;
     var E = st.pa >= 1 || (birthOn() && BR.x < 1) ? 0 : energy, tick = Math.floor(t / (BEAT / 20)), glitch = E > .02, thin = st.thin;
@@ -279,7 +280,7 @@
         var pin = tCr * (1 - .6 * A.smooth(tOpen / .15));
         dd *= 1 + 1.1 * pin * Math.exp(-(dd / (creW * 2.6)) * (dd / (creW * 2.6)));
         FM.cr = pin * Math.exp(-(dd / creW) * (dd / creW)); var rd = (dd < 0 ? -dd : dd) - creW * 2.2; FM.ridge = tCr * Math.exp(-(rd / creW) * (rd / creW));
-        if (tOpen < .012 && tCr > .25) FM.crack = dd * R;   // before it gives: a hairline along the line
+        if (tOpen < .012 && (tCr > .25 || TR.scar > 0)) FM.crack = dd * R;   // before it gives: a hairline along the line
       }
       var v2 = vc + dd; px = uu * tc - v2 * tsn; py = uu * tsn + v2 * tc;   // the lips peel back: the flesh beyond them is carried away from the line
       return (Math.sqrt(px * px + py * py) - 1) * R - sh;
@@ -303,7 +304,7 @@
         if (thin > 0 && A.hash(i, j + 500) < thin) continue;
         k = j * cols + i; var dd = SD[k], c = 0;
         if (dd <= 0) {
-          if (SC[k] < 1e8) { var leg = A.stroke(-tsn, tc, SC[k], cw, ch); if (leg >= 0 && A.hash(i * 1.7 + 3, j + tick * .37) < tCr * tCr * .9) { blit(gi.edge + leg, 0, i, j, off); continue; } }
+          if (SC[k] < 1e8) { var leg = A.stroke(-tsn, tc, SC[k], cw, ch); if (leg >= 0 && A.hash(i * 1.7 + 3, j + tick * .37) < Math.max(tCr * tCr * .9, TR.scar * 1.1)) { blit(gi.edge + leg, 0, i, j, off); continue; } }
           if (STH[k] > 2) { blit(gi.thorn + (STH[k] === 3 ? 7 : 6), 4, i, j, off); continue; }   // the point of a fang: v from above, ^ from below
           c = FL.cell(SD, SH, SF, k, i, j, cols, rows, cw, ch, tt, lift0 + SL[k], gi);
         } else if (SG[k] > 0) { // inside the opening: the wet inner wall just past the lips, then the dark
@@ -337,7 +338,7 @@
     ringEl.style.setProperty("--rx", st.cx + "px"); ringEl.style.setProperty("--ry", st.cy + "px");
     var F = st.f; agit = F ? F.agit : 0;
     ringEl.style.setProperty("--rr", (Math.round(st.R * 1.12 * st.bs * (F ? F.ringK : 1) * dpr * 4) / (dpr * 4)) + "px");   // quarter device pixels: a steady glide
-    ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : ((birthOn() ? 1 : st.a) * (1 - A.clamp(st.k * 2.2)) * (F ? F.ringO : 1)).toFixed(3));
+    ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : ((birthOn() ? 1 : st.a) * (1 - A.clamp(st.k * 2.2)) * (F ? F.ringO : 1) * st.dim).toFixed(3));
     var jk = F && (Math.abs(F.jx) > .3 || Math.abs(F.jy) > .3) ? "translate(" + F.jx.toFixed(1) + "px," + F.jy.toFixed(1) + "px)" : "";
     if (jk !== lastJolt) { bg.style.transform = jk; lastJolt = jk; }   // the screen jolts when the flesh rips
     ringEl.style.setProperty("--rot", ringRot.toFixed(2) + "deg");
