@@ -1,6 +1,6 @@
 /* One character field — the opening's name kneaded into the SUN (birth.js) → the SUN, in the very same flesh (flesh.js: same cells,
    glyphs, light and tones), so the sphere never turns into another drawing. A visitor nearing frightens it and it bites (sun-fear.js);
-   scrolling on, the same body rips open and lunges at the visitor; that end state is held (the handoff) → the field thins into
+   scrolling on, the same body cowers and braces, then calms and stays dimmed behind
    Works → a setting sun at the footer. Input velocity drives glitch. */
 (function () {
   var A = window.ASCII;
@@ -133,7 +133,7 @@
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0, bs: lastBs } : null; };
 
   var rot = 0, ringRot = 0, lastRead = "", lastJolt = "";
-  var SUN_END = .36, ATK_END = .62, REC0 = .74, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → attack → its end state held → recedes, scarred, into Works
+  var SUN_END = .36, ATK_END = .62, REC0 = .74, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → scroll pressure → its end state held → calms into Works
   var FEAR = reduce ? null : window.SUN_FEAR || null, bgL = 0, bgT = 0;
   function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
     var dt = moT ? Math.min(.05, (t - moT) / 1000) : 0, w = 1 / .12; moT = t;
@@ -154,7 +154,7 @@
     var pf = reduce ? pa : springMo(pa, t); // everything that moves follows one sprung progress; text and anchors stay on raw scroll
     // the old dive no longer plays: k stays 0. After the SUN's rest comes the attack (sun-fear.js), its end state is held, then the field thins into Works
     var rise = birthOn() ? 1 : A.smooth(pf / .16), nk = A.clamp(pf / SUN_END), k = 0, atk = reduce ? 0 : A.clamp((pf - SUN_END) / (ATK_END - SUN_END));
-    // no torn field is left behind Works: the SUN itself recedes, scarred, and stays dimmed behind Works until the scene scrolls away
+    // the SUN itself calms and stays dimmed behind Works until the scene scrolls away
     var thin = 0, u = A.clamp(pw / .2), rec = reduce ? 0 : A.clamp((pf - REC0) / (REC1 - REC0));
     var dim = reduce ? 1 : (1 - .55 * A.smooth((pa - REC1) / (1 - REC1))) * A.smooth((works.getBoundingClientRect().bottom - H * .35) / (H * .5));   // dimmed once it has receded, gone before Contact
     if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
@@ -189,14 +189,13 @@
   }
 
   // ---------- the SUN in the opening's flesh (flesh.js): one grid from the screen's top left, the same glyphs, light and tones ----------
-  // fear, the bite and the rip are deformations of that one body: its signed distance field is squashed, shaken and cut, never redrawn
+  // everything it does is a deformation of that one body: its signed distance field is squashed and shaken, never redrawn
   var FL = window.FLESH, FG = null, FAT = null, SWILD = "SUN01/#:<>*", SWG = 0, scw = 7, sch = 12.25, scols = 0, srows = 0;
-  var SD = null, SH = null, SF = null, SL = null, SG = null, SC = null, LUTV = new Float32Array(1025), LUTU = new Float32Array(1025), LUTL = new Float32Array(1025),
-      LTU = new Float32Array(1025), LTL = new Float32Array(1025), LPU = new Float32Array(1025), LPL = new Float32Array(1025), STH = null;
+  var SD = null, SH = null, SF = null, SL = null;
   function buildFlesh() {
     scw = FL.cellW(W); sch = scw * 1.75; scols = Math.ceil(W / scw); srows = Math.ceil(PH / sch);
     FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
-    var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n); SG = new Float32Array(n); SC = new Float32Array(n); STH = new Uint8Array(n);
+    var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n);
   }
   // while the opening hands over, the SUN is drawn whole and the opening steps aside: both are the same pixels, so there is no seam
   function sunAlpha(st) { return (birthOn() ? (BR.x > 0 ? 1 : 0) : st.a) * st.dim; }
@@ -204,95 +203,30 @@
     if (BR && birthOn() && BR.x > 0) BR.sunDrawn = true;   // the opening may now step aside: this frame is the SUN
     var FS = st.f, R = st.R, cx = st.cx, cy = st.cy, cw = scw, ch = sch, cols = scols, rows = srows, gi = FG.gi, tt = st.tt;
     var E = st.pa >= 1 || (birthOn() && BR.x < 1) ? 0 : energy, tick = Math.floor(t / (BEAT / 20)), glitch = E > .02, thin = st.thin;
-    var TR = FS && FS.tear.on ? FS.tear : null, shv = 0, fl = 0, bt = 0, na = 0;
+    var shv = 0, bt = 0, na = 0;
     if (FS) {
-      shv = FS.shiver; fl = FS.flash || 0; bt = FS.beat * FS.heat; na = cw * 1.3 * FS.agit;   // the racing heart swells it; fear kneads the surface again
-      if (fl > .02) { E = Math.max(E, fl * .9); glitch = true; }   // the instant it rips: bands of the field tear sideways
+      shv = FS.shiver; bt = FS.beat * FS.heat; na = cw * 1.3 * FS.agit;   // the racing heart swells it; fear kneads the surface again
       var sj = Math.floor(t / 25); cx += (A.hash(sj, 1.3) - .5) * shv * R * 1.3; cy += (A.hash(sj, 2.9) - .5) * shv * R * 1.3;   // a fine, fast tremble
     }
-    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) * (1 + (TR ? (TR.HU + TR.HL) * TR.open * 1.4 : 0)) + cw * 6 + na;
+    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + cw * 6 + na;
     var i0 = Math.max(0, Math.floor((cx - ext) / cw) - 2), i1 = Math.min(cols, Math.ceil((cx + ext) / cw) + 2);
     var j0 = Math.max(0, Math.floor((cy - ext) / ch) - 2), j1 = Math.min(rows, Math.ceil((cy + ext) / ch) + 2);
     var fca = FS ? FS.ca : 1, fsa = FS ? FS.sa : 0, fqa = FS ? FS.qa : 1, fqp = FS ? FS.qp : 1, tsh1 = t * .09, tsh2 = t * .13;
-    var tc = TR ? TR.tc : 1, tsn = TR ? TR.ts : 0, tOpen = TR ? TR.open : 0, tCr = TR ? TR.crease : 0, creW = Math.max(.05, ch * 1.1 / R);
-    // the tear's line and lips, in body units along (u) and across (v) it: a meandering crack, ragged lips that never repeat (no teeth)
-    function zig(u, sd, stp) { var xx = u / stp + sd, kk = Math.floor(xx), ff = xx - kk, a0 = A.hash(kk, sd), a1 = A.hash(kk + 1, sd); return (a0 + (a1 - a0) * ff) * 2 - 1; }
-    function rag(u, sd) { var z = .5 * zig(u, sd, .083) + .22 * zig(u, sd + 9.7, .029); return z * Math.abs(z) * 1.3 + .35 * Math.sin(u * 6.3 + sd) * Math.sin(u * 2.7 - sd * .3); }
-    function vcF(u) { return TR.c0 + .06 * Math.sin(u * 2.1 + TR.sC) + .024 * zig(u, TR.sC + 3.1, .11); }
-    var GP = [0, 0];
-    function gape(u) { // → [upper lift, jaw drop] at u
-      if (tOpen < .002) { GP[0] = GP[1] = 0; return GP; }
-      var w = A.smooth((u - TR.f0 + .05 * zig(u, 7.7, .05)) / .12) * A.smooth((TR.f1 - u + .05 * zig(u, 8.8, .05)) / .12), pr = 1 - (u / TR.U) * (u / TR.U);
-      if (w <= 0 || pr <= 0) { GP[0] = GP[1] = 0; return GP; }
-      pr = Math.sqrt(pr) * w * tOpen;
-      GP[0] = pr * TR.HU * (1 + .5 * rag(u, TR.sU)) * (1 + .32 * u); GP[1] = pr * TR.HL * (1 + .5 * rag(u, TR.sL)) * (1 - .22 * u);
-      return GP;
-    }
-    // the line and both lips change along u only: sample them once a frame (u in -1.7..1.7) instead of once a cell
-    // teeth: once it gapes, both lips are lined with fangs of the same flesh, upper and lower interleaved, uneven, a few missing
-    var tsp = TR ? Math.max(cw * 3.6 / R, (TR.HU + TR.HL) * tOpen * .12) : 1, tOn = A.smooth((tOpen - .08) / .2), TPR = 0;
-    function tooth(u, hgap, side) {
-      var xq = u / tsp + side * .5 + (side ? TR.sL : TR.sU) * .013, kq = Math.floor(xq), fq = xq - kq, h = A.hash(kq * 1.7 + side * 9.3, TR.sC);
-      TPR = 1 - Math.abs(fq - .5) * 2; if (h < .12 || tOn <= 0) return 0;
-      return hgap * (.13 + .17 * h) * tOn * Math.max(0, TPR * 1.15 - .15);   // pointed, a sliver of gap between neighbours
-    }
-    var LU = 1.7, LN = 1024, lv = null, lh = null, ll = null;
-    if (TR) { lv = LUTV; lh = LUTU; ll = LUTL;
-      for (var q0 = 0; q0 <= LN; q0++) { var u0 = -LU + 2 * LU * q0 / LN, g0 = gape(u0); lv[q0] = vcF(u0); lh[q0] = g0[0]; ll[q0] = g0[1];
-        var hg = g0[0] + g0[1]; LTU[q0] = tooth(u0, hg, 0); LPU[q0] = TPR; LTL[q0] = tooth(u0, hg, 1); LPL[q0] = TPR; } }
-    function lut(a, u) { var x = (u + LU) / (2 * LU) * LN; if (x <= 0) return a[0]; if (x >= LN) return a[LN]; var q1 = x | 0, f1 = x - q1; return a[q1] + (a[q1 + 1] - a[q1]) * f1; }
-    var STR = [[-.78, .2], [-.38, .34], [.06, .52], [.44, .27], [.83, .64]];   // strands of flesh across the opening: where, and how wide it gets before each snaps
-    var FM = { cr: 0, ridge: 0, gap: 0, crack: 1e9, th: 0 };
+    var FM = { lift: 0 };
     function sdf(x, y) { // signed distance (px) of the deformed body at (x, y)
       var px = (x - cx) / R, py = (y - cy) / R;
       var a1 = (px * fca + py * fsa) / fqa, p1 = (-px * fsa + py * fca) / fqp; px = a1 * fca - p1 * fsa; py = a1 * fsa + p1 * fca;   // squashed away from the visitor / stretched at it
-      var sh = 0;   // the shiver ripples the outline only: the lit surface inside stays the same smooth flesh
-      if (shv > 0) { var rr0 = Math.sqrt(px * px + py * py); if (rr0 > .7) { var an = Math.atan2(py, px); sh = shv * (.6 * Math.sin(an * 17 + tsh1) + .4 * Math.sin(an * 29 - tsh2)) * A.smooth((rr0 - .7) / .25) * R; } }
-      FM.cr = 0; FM.ridge = 0; FM.gap = 0; FM.crack = 1e9; FM.th = 0;
-      if (!TR) return (Math.sqrt(px * px + py * py) - 1) * R - sh;
-      var uu = px * tc + py * tsn, vv = -px * tsn + py * tc, vc = lut(lv, uu), dv = vv - vc, hu = lut(lh, uu), hl = lut(ll, uu);
-      if (dv > -hu && dv < hl) {
-        var r2e = uu * uu + vc * vc, tu = lut(LTU, uu), tl = lut(LTL, uu), hut = hu - tu, hlt = hl - tl;
-        if (dv <= -hut || dv >= hlt) { // a tooth: flesh hanging from the lip into the opening
-          var up2 = dv <= -hut, dtt = (up2 ? dv + hut : hlt - dv) * R;
-          if (r2e >= 1) dtt = Math.max(dtt, (Math.sqrt(r2e) - 1) * R);
-          FM.th = up2 ? 1 : 2; if (lut(up2 ? LPU : LPL, uu) > .72 && dtt > -ch * .9) FM.th += 2;   // 3 / 4: the tip
-          return dtt - sh;
-        }
-        hu = hut; hl = hlt;
-        // inside the opening: empty, measured to the nearer lip or tooth (and to the silhouette beyond the ends)
-        var cd = Math.min(dv + hu, hl - dv) * R, d = r2e >= 1 ? Math.max(cd, (Math.sqrt(r2e) - 1) * R) : cd;
-        if (r2e < 1) {
-          FM.gap = cd;
-          var q = (dv + hu) / (hu + hl);
-          for (var sn = 0; sn < STR.length; sn++) { // strands of the same flesh stretch across, thin, snap and shrink back into the lips
-            var so = TR.attack ? STR[sn][1] : STR[sn][1] * .7 + .12, gone = (tOpen - so) / .18;
-            if (gone >= 1 || (!TR.attack && sn % 2)) continue;
-            if (gone > 0 && q > .42 * (1 - gone) && q < 1 - .42 * (1 - gone)) continue;
-            var su = TR.u0 + STR[sn][0] + .045 * Math.sin(Math.PI * q) * (sn % 2 ? 1 : -1);
-            var ds = Math.abs(uu - su) * R - cw * (tOpen < so * .7 ? 1.1 : .6) * (1 - .45 * Math.sin(Math.PI * q));
-            if (ds < d) d = ds;
-          }
-        }
-        return d;
-      }
-      var up = dv <= -hu, dd = up ? dv + hu : dv - hl;
-      if (tCr > 0) { // straining flesh: rows squeezed toward the line, a dark groove, lit ridges either side
-        var pin = tCr * (1 - .6 * A.smooth(tOpen / .15));
-        dd *= 1 + 1.1 * pin * Math.exp(-(dd / (creW * 2.6)) * (dd / (creW * 2.6)));
-        FM.cr = pin * Math.exp(-(dd / creW) * (dd / creW)); var rd = (dd < 0 ? -dd : dd) - creW * 2.2; FM.ridge = tCr * Math.exp(-(rd / creW) * (rd / creW));
-        if (tOpen < .012 && (tCr > .25 || TR.scar > 0)) FM.crack = dd * R;   // before it gives: a hairline along the line
-      }
-      var v2 = vc + dd; px = uu * tc - v2 * tsn; py = uu * tsn + v2 * tc;   // the lips peel back: the flesh beyond them is carried away from the line
-      return (Math.sqrt(px * px + py * py) - 1) * R - sh;
+      var sh = 0, rr0 = Math.sqrt(px * px + py * py);   // the shiver ripples the outline only: the lit surface inside stays the same smooth flesh
+      if (shv > 0 && rr0 > .7) { var an = Math.atan2(py, px); sh = shv * (.6 * Math.sin(an * 17 + tsh1) + .4 * Math.sin(an * 29 - tsh2)) * A.smooth((rr0 - .7) / .25) * R; }
+      FM.lift = 0;
+      return (rr0 - 1) * R - sh;
     }
-    SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0); SG.fill(0); SC.fill(1e9);
-    var dep = R * .95, swell = bt * cw * 1.6, lift0 = bt * .065 + .45 * fl, flow = Math.floor(tt * 3), j, i, k;
+    SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0);
+    var dep = R * .95, swell = bt * cw * 1.6, lift0 = bt * .065, flow = Math.floor(tt * 3), j, i, k;
     for (j = j0; j < j1; j++) for (i = i0; i < i1; i++) {
-      k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, d = sdf(x, y);
-      SG[k] = FM.gap; SC[k] = FM.crack; STH[k] = FM.th;
-      d -= swell; if (na > 0) d += na * FL.noise(x, y, tt);
-      SD[k] = d; SH[k] = FL.height(d, dep); SF[k] = FM.cr; SL[k] = FM.th ? .3 : .38 * FM.ridge;   // teeth catch more light
+      k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, d = sdf(x, y) - swell;
+      if (na > 0) d += na * FL.noise(x, y, tt);
+      SD[k] = d; SH[k] = FL.height(d, dep); SL[k] = FM.lift;
     }
     var tw = FAT.tw, th = FAT.th, atlas = FAT.canvas;
     if (GPU) GPU.begin(FAT, tw, th, sunAlpha(st));
@@ -303,31 +237,11 @@
       if (glitch) { var band = j >> 1, hb = A.hash(band, tick); if (hb < E * .55) { off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 36) * cw; hot = hb < E * .16; } }
       for (i = i0; i < i1; i++) {
         if (thin > 0 && A.hash(i, j + 500) < thin) continue;
-        k = j * cols + i; var dd = SD[k], c = 0;
-        if (dd <= 0) {
-          if (SC[k] < 1e8) { var leg = A.stroke(-tsn, tc, SC[k], cw, ch); if (leg >= 0 && A.hash(i * 1.7 + 3, j + tick * .37) < Math.max(tCr * tCr * .9, TR.scar * 1.1)) { blit(gi.edge + leg, 0, i, j, off); continue; } }
-          if (STH[k] > 2) { blit(gi.thorn + (STH[k] === 3 ? 7 : 6), 4, i, j, off); continue; }   // the point of a fang: v from above, ^ from below
-          c = FL.cell(SD, SH, SF, k, i, j, cols, rows, cw, ch, tt, lift0 + SL[k], gi);
-        } else if (SG[k] > 0) { // inside the opening: the wet inner wall just past the lips, then the dark
-          var kw = SG[k] / (cw * (1.1 + 3 * Math.min(1, tOpen))), hw = A.hash(i + .7, j * 1.3);
-          if (kw < .3) { if (hw < .8) c = (gi.ramp + 3) * 8 + 2; }
-          else if (kw < .8) { if (hw < .3) c = (gi.ramp + 1 + ((A.hash(i, j) * 2) | 0)) * 8 + 1; }
-          else if (A.hash(i * 2.1, j + .4) < .012) c = (gi.air + 1) * 8;
-        } else c = FL.air(dd, i, j, cw, bt, 0, flow, gi);
+        k = j * cols + i; var dd = SD[k], c = dd <= 0 ? FL.cell(SD, SH, SF, k, i, j, cols, rows, cw, ch, tt, lift0 + SL[k], gi) : FL.air(dd, i, j, cw, bt, 0, flow, gi);
         if (!c) continue;
         var g2 = c >> 3, tone = c & 7;
         if (glitch && A.hash(i + j * 131, tick) < E * .4) g2 = SWG + ((A.hash(i * 7 + j, tick + 3) * SWILD.length) | 0);
         blit(g2, hot ? 4 : tone, i, j, off);
-      }
-    }
-    if (FS && FS.debris.length) { // torn-off flesh flying from the rip, in the same glyphs and tones
-      var top = gi.ramp + gi.nramp - 1;
-      for (var q = 0; q < FS.debris.length; q++) {
-        var dg = FS.debris[q], di = Math.floor(dg.x / cw), dj = Math.floor(dg.y / ch);
-        var gl = dg.k < .4 ? gi.edge + ((dg.h * 6) | 0) : dg.k < .75 ? SWG + [5, 6, 8, 9, 10][(dg.h * 5) | 0] : top - ((dg.h * 2) | 0), tn = dg.u < .25 ? 4 : dg.u < .6 ? 3 : 2;
-        blit(gl, tn, di, dj, 0);
-        for (var cn = 1; cn < dg.n; cn++) blit(top - 1 - ((A.hash(q + cn, 2) * 4) | 0), dg.u < .4 ? 3 : 2, di + ((A.hash(q, cn) * 3) | 0) - 1, dj + ((A.hash(cn, q + .5) * 3) | 0) - 1, 0);   // a clump, not a speck
-        var sp2 = Math.hypot(dg.vx, dg.vy); if (sp2 > 500) blit(gi.air + 1, 2, Math.round(di - dg.vx / sp2 * 1.2), Math.round(dj - dg.vy / sp2 * 1.2), 0);
       }
     }
     if (GPU) GPU.end();
@@ -341,7 +255,7 @@
     ringEl.style.setProperty("--rr", (Math.round(st.R * 1.12 * st.bs * (F ? F.ringK : 1) * dpr * 4) / (dpr * 4)) + "px");   // quarter device pixels: a steady glide
     ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : ((birthOn() ? 1 : st.a) * (1 - A.clamp(st.k * 2.2)) * (F ? F.ringO : 1) * st.dim).toFixed(3));
     var jk = F && (Math.abs(F.jx) > .3 || Math.abs(F.jy) > .3) ? "translate(" + F.jx.toFixed(1) + "px," + F.jy.toFixed(1) + "px)" : "";
-    if (jk !== lastJolt) { bg.style.transform = jk; lastJolt = jk; }   // the screen jolts when the flesh rips
+    if (jk !== lastJolt) { bg.style.transform = jk; lastJolt = jk; }   // the screen jolts when the SUN strikes
     ringEl.style.setProperty("--rot", ringRot.toFixed(2) + "deg");
     var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
     var txt = hh + ":" + mm + " · ALT " + String(Math.round(st.nk * 62)).padStart(2, "0") + "° · AZ " + String(Math.round(90 + st.nk * 90)).padStart(3, "0") + "°";
