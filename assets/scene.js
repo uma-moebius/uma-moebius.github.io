@@ -220,7 +220,7 @@
         for (var n = n0; n <= n1; n++) { var e = 1 - Math.abs(n / TN * TAU - th0) / w; if (e <= 0) continue; e = L * Math.pow(e, 1.35); var m = ((n % TN) + TN) % TN; if (e > THL[m]) THL[m] = e; }
       }
     }
-    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + (FS ? R * (FS.mouth.HU + FS.mouth.HL) : 0) + cw * 6 + na;
+    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + (FS ? R * (FS.mouth.HU + FS.mouth.HL) + Math.abs(FS.pk.dx) + Math.abs(FS.pk.dy) : 0) + cw * 6 + na;
     var i0 = Math.max(0, Math.floor((cx - ext) / cw) - 2), i1 = Math.min(cols, Math.ceil((cx + ext) / cw) + 2);
     var j0 = Math.max(0, Math.floor((cy - ext) / ch) - 2), j1 = Math.min(rows, Math.ceil((cy + ext) / ch) + 2);
     var fca = FS ? FS.ca : 1, fsa = FS ? FS.sa : 0, fqa = FS ? FS.qa : 1, fqp = FS ? FS.qp : 1, tsh1 = t * .09, tsh2 = t * .13;
@@ -249,7 +249,10 @@
       }
       return best;
     }
+    var PKk = FS ? FS.pk : null, pkOn = PKk && (Math.abs(PKk.dx) + Math.abs(PKk.dy) > .3), pkx = 0, pky = 0, pks = 1;
+    if (pkOn) { pkx = cx + PKk.x; pky = cy + PKk.y; pks = 1 / (PKk.s * PKk.s); }
     function sdf(x, y) { // signed distance (px) of the deformed body at (x, y)
+      if (pkOn) { var ex = x - pkx, ey = y - pky, f = Math.exp(-(ex * ex + ey * ey) * pks); x -= PKk.dx * f; y -= PKk.dy * f; }   // touched: the flesh is drawn out
       var px = (x - cx) / R, py = (y - cy) / R;
       var a1 = (px * fca + py * fsa) / fqa, p1 = (-px * fsa + py * fca) / fqp; px = a1 * fca - p1 * fsa; py = a1 * fsa + p1 * fca;   // squashed away from the visitor / stretched at it
       FM.gap = 0; FM.hb = 0; FM.fold = 0; FM.lip = 1e9;

@@ -34,13 +34,13 @@
   function press(ph) { var x = ph - Math.floor(ph); return Math.min(1, pulse(x, .03, .075) + .45 * pulse(x - .18, .03, .075)); }
 
   // ---------- state ----------
-  var S = { last: -1, F: 0, dwell: 0, phase: 0, held: false, eaten: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [], gulp: 0, back: -1 };
+  var S = { last: -1, F: 0, dwell: 0, phase: 0, held: false, eaten: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [], gulp: 0, back: -1, att: false, D: [0, 0], Dv: [0, 0], C: [0, 0], pl: null };
   // the strands of flesh across the open mouth: where they hang (across its width), how wide, and how far open it is when each one snaps
   var STR = [[-.6, 1.5, .34], [-.38, 2.4, .58], [-.17, 1.8, .8], [.02, 2.8, .95], [.2, 1.6, .5], [.4, 2.2, .7], [.6, 1.4, .42]];
   var EXPORT = window.SUN_ATTACK = { progress: 0, held: false, eaten: false, recede: 0 };
   var OUT = { cx: 0, cy: 0, R: 1, ca: 1, sa: 0, qa: 1, qp: 1, shiver: 0, beat: 0, bpm: 60, jx: 0, jy: 0, agit: 0, ringK: 1, ringO: 1, fear: 0,
               attack: 0, heat: 0, tense: 0, thorn: { g: 0, lx: 1, ly: 0, len: .3 },
-              mouth: { open: 0, W: .5, HU: 0, HL: 0, y: .12, wob: 0, str: [] }, dark: 0, vis: 1, inside: 0 };
+              mouth: { open: 0, W: .5, HU: 0, HL: 0, y: .12, wob: 0, str: [] }, dark: 0, vis: 1, inside: 0, pk: { x: 0, y: 0, dx: 0, dy: 0, s: 1 } };
   for (var si = 0; si < STR.length; si++) { S.snap.push(-1); OUT.mouth.str.push({ u: STR[si][0], w: STR[si][1], st: 0, rt: 0 }); }
 
 
@@ -61,6 +61,17 @@
     // a smoothed look direction (where the visitor is)
     if (ptr && live > 0) { S.wx = approach(S.wx, ux, 8, dt); S.wy = approach(S.wy, uy, 8, dt); }
     var wl = Math.hypot(S.wx, S.wy), lx = wl > 1e-3 ? S.wx / wl : 1, ly = wl > 1e-3 ? S.wy / wl : 0;
+
+    // ---------- touch: as in the opening, flesh touched is carried along, tears free past a limit and wobbles back ----------
+    var lim = R * .5 * .95, held0 = ptr && !ptr.end && live > .5;
+    if (held0 && S.pl) {
+      var vx = ptr.x - S.pl.x, vy = ptr.y - S.pl.y;
+      if (!S.att && (vx || vy) && dist < R * .97) { S.att = true; S.C = [dx - S.D[0], dy - S.D[1]]; S.Dv = [0, 0]; }
+      if (S.att) { S.D[0] += vx; S.D[1] += vy; if (Math.hypot(S.D[0], S.D[1]) > lim) { S.att = false; S.Dv = [vx / dt * .35, vy / dt * .35]; } }
+    } else if (S.att) { S.att = false; S.Dv = [0, 0]; }
+    if (!S.att) { var w2 = 2 * Math.PI * 1.05, z2 = .16; for (var q = 0; q < 2; q++) { S.Dv[q] += (-w2 * w2 * S.D[q] - 2 * z2 * w2 * S.Dv[q]) * dt; S.D[q] += S.Dv[q] * dt; } }
+    S.pl = held0 ? { x: ptr.x, y: ptr.y } : null;
+    var PK = OUT.pk; PK.x = S.C[0]; PK.y = S.C[1]; PK.dx = S.D[0]; PK.dy = S.D[1]; PK.s = R * .5;
 
     // ---------- thorns (pointer driven): they push out with the visitor's nearness, faster and longer as it lingers ----------
     var linger = Math.min(1, S.dwell / 1.6), want = clamp(p * 1.15) * (1 + .35 * linger);
