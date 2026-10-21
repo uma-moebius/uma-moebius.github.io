@@ -191,7 +191,7 @@
   // ---------- the SUN in the opening's flesh (flesh.js): one grid from the screen's top left, the same glyphs, light and tones ----------
   // everything it does is a deformation of that one body: its signed distance field is squashed and shaken, never redrawn
   var FL = window.FLESH, FG = null, FAT = null, SWILD = "SUN01/#:<>*", SWG = 0, scw = 7, sch = 12.25, scols = 0, srows = 0;
-  var SD = null, SH = null, SF = null, SL = null;
+  var SD = null, SH = null, SF = null, SL = null, THL = new Float32Array(1024), TN = 1024;
   function buildFlesh() {
     scw = FL.cellW(W); sch = scw * 1.75; scols = Math.ceil(W / scw); srows = Math.ceil(PH / sch);
     FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
@@ -208,7 +208,19 @@
       shv = FS.shiver; bt = FS.beat * FS.heat; na = cw * 1.3 * FS.agit;   // the racing heart swells it; fear kneads the surface again
       var sj = Math.floor(t / 25); cx += (A.hash(sj, 1.3) - .5) * shv * R * 1.3; cy += (A.hash(sj, 2.9) - .5) * shv * R * 1.3;   // a fine, fast tremble
     }
-    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + cw * 6 + na;
+    // thorns: the flesh itself is pushed out into spikes; their outward reach by angle is laid out once a frame
+    var TH = FS ? FS.thorn : null, thG = TH ? TH.g : 0, thOn = thG > .002;
+    if (thOn) {
+      THL.fill(0); var pa0 = Math.atan2(TH.ly, TH.lx);
+      for (var q = 0; q < 40; q++) {
+        var th0 = q / 40 * TAU + (A.hash(q, 7.7) - .5) * .12, fc = Math.max(0, Math.cos(th0 - pa0)), f2 = Math.pow(fc, 2.2);
+        var L = thG * TH.len * (.14 + .86 * f2) * (.6 + .8 * A.hash(q, 3.1)) * (1 + .07 * Math.sin(t * .011 + q * 2.3) + .1 * bt);   // longest toward the visitor; they quiver
+        if (L < .004) continue;
+        var w = cw * (2.6 + 3.4 * fc) / R * (.8 + .4 * A.hash(q, 5.3)), n0 = Math.floor((th0 - w) / TAU * TN), n1 = Math.ceil((th0 + w) / TAU * TN);
+        for (var n = n0; n <= n1; n++) { var e = 1 - Math.abs(n / TN * TAU - th0) / w; if (e <= 0) continue; e = L * Math.pow(e, 1.35); var m = ((n % TN) + TN) % TN; if (e > THL[m]) THL[m] = e; }
+      }
+    }
+    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + cw * 6 + na;
     var i0 = Math.max(0, Math.floor((cx - ext) / cw) - 2), i1 = Math.min(cols, Math.ceil((cx + ext) / cw) + 2);
     var j0 = Math.max(0, Math.floor((cy - ext) / ch) - 2), j1 = Math.min(rows, Math.ceil((cy + ext) / ch) + 2);
     var fca = FS ? FS.ca : 1, fsa = FS ? FS.sa : 0, fqa = FS ? FS.qa : 1, fqp = FS ? FS.qp : 1, tsh1 = t * .09, tsh2 = t * .13;
@@ -219,6 +231,13 @@
       var sh = 0, rr0 = Math.sqrt(px * px + py * py);   // the shiver ripples the outline only: the lit surface inside stays the same smooth flesh
       if (shv > 0 && rr0 > .7) { var an = Math.atan2(py, px); sh = shv * (.6 * Math.sin(an * 17 + tsh1) + .4 * Math.sin(an * 29 - tsh2)) * A.smooth((rr0 - .7) / .25) * R; }
       FM.lift = 0;
+      if (thOn && rr0 > .8) { // a thorn rises out of the rim (the lit surface inside is left alone)
+        var xa = (Math.atan2(py, px) / TAU + 1) * TN, ia = Math.floor(xa), fa = xa - ia, e0 = THL[ia % TN], e1 = THL[(ia + 1) % TN], ex = (e0 + (e1 - e0) * fa) * A.smooth((rr0 - .85) / .15);
+        if (ex > 0) { // radial distance → distance to the flank (spikes are steep: divide by the slope)
+          var sl = (e1 - e0) * TN / TAU / rr0; if (rr0 > 1) FM.lift = .22;
+          return ((rr0 - 1 - ex) * R - sh) / Math.sqrt(1 + sl * sl);
+        }
+      }
       return (rr0 - 1) * R - sh;
     }
     SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0);
