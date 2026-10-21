@@ -133,7 +133,7 @@
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0, bs: lastBs } : null; };
 
   var rot = 0, ringRot = 0, lastRead = "", lastJolt = "";
-  var SUN_END = .36, ATK_END = .58, REC0 = .74, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → scroll pressure → its end state held → calms into Works
+  var SUN_END = .36, ATK_END = .58, ENG_END = .68, REC0 = .82, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → it cowers and its mouth opens → it lunges → the gulp, inside → sated, into Works
   var FEAR = reduce ? null : window.SUN_FEAR || null, bgL = 0, bgT = 0;
   function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
     var dt = moT ? Math.min(.05, (t - moT) / 1000) : 0, w = 1 / .12; moT = t;
@@ -164,7 +164,7 @@
     var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
     var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
     var aIn = reduce ? 0 : birthOn() ? BR.x : rise;
-    var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0, rec: rec }) : null;
+    var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0, rec: rec, eng: reduce ? 0 : A.clamp((pf - ATK_END) / (ENG_END - ATK_END)), gulp: pf >= ENG_END ? 1 : pf < ENG_END - .04 ? -1 : 0 }) : null;
     return { f: f, atk: atk, dim: dim,
       pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : birthOn() ? BR.x : rise,   // static mode: shown only once the field is pinned
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: f ? f.R : R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
@@ -294,8 +294,15 @@
       var wv = FL.noise(i * cw * .6, j * ch * .6, tt * .5);
       return wv > .7 && h < .5 ? (nr + 1 + ((h * 4) | 0)) * 8 + (md < cw * 5 ? 1 : 0) : 0;
     }
+    var dark = FS ? FS.dark : 0, hide = FS ? 1 - FS.vis : 0, ins = FS ? FS.inside : 0;
+    function inside(i, j) { // swallowed: nothing but the dark of its insides, the walls just visible as they squeeze
+      var x = i * cw, y = j * ch, wv = Math.sin(y * .011 - tt * 1.1 + Math.sin(x * .006 + tt * .3) * 2.4) * .6 + .4 * FL.noise(x * .5, y * .5, tt * .4), h = A.hash(i * 3.7, j * 1.9 + flow * .07);
+      if (wv < .55 || h > ins * (wv - .55) * 1.6) return 0;
+      return (gi.ramp + 1 + ((h * 5) | 0)) * 8 + (wv > .9 && h < .2 ? 1 : 0);
+    }
     var tw = FAT.tw, th = FAT.th, atlas = FAT.canvas;
     if (GPU) GPU.begin(FAT, tw, th, sunAlpha(st));
+    if (ins > 0) { var ii, jj, cc; for (jj = 0; jj < rows; jj++) for (ii = 0; ii < cols; ii++) { var kk = jj * cols + ii; if (hide < 1 && SD[kk] <= 0) continue; cc = inside(ii, jj); if (cc) blit(cc >> 3, cc & 7, ii, jj, 0); } }
     function blit(g2, tone, i, j, off) { var px = Math.round((i * cw + off) * dpr), py = Math.round(j * ch * dpr); if (GPU) GPU.add(g2, tone, px, py); else g.drawImage(atlas, g2 * tw, tone * th, tw, th, px, py, tw, th); }
     for (j = j0; j < j1; j++) {
       var off = 0, hot = false;
@@ -308,7 +315,11 @@
         else if (SM[k] > 0) c = throat(SM[k], i, j);   // inside the mouth: dark, only the wet inner wall catches a little light
         else c = FL.air(dd, i, j, cw, bt, 0, flow, gi);
         if (!c) continue;
+        if (hide > 0 && A.hash(i * 1.3, j * 7.1) < hide) continue;
         var g2 = c >> 3, tone = c & 7;
+        if (dark > 0) { // the light goes out as the lips close over the visitor
+          var cap = 4 - dark * 4.6 + (A.hash(i, j * 3.3) < .3 ? 1 : 0); if (cap < 0) continue; if (tone > cap) tone = cap | 0;
+        }
         if (glitch && A.hash(i + j * 131, tick) < E * .4) g2 = SWG + ((A.hash(i * 7 + j, tick + 3) * SWILD.length) | 0);
         blit(g2, hot ? 4 : tone, i, j, off);
       }

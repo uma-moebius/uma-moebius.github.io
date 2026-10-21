@@ -31,13 +31,13 @@
   function press(ph) { var x = ph - Math.floor(ph); return Math.min(1, pulse(x, .03, .075) + .45 * pulse(x - .18, .03, .075)); }
 
   // ---------- state ----------
-  var S = { last: -1, F: 0, dwell: 0, phase: 0, held: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [] };
+  var S = { last: -1, F: 0, dwell: 0, phase: 0, held: false, eaten: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [], gulp: 0 };
   // the strands of flesh across the open mouth: where they hang (across its width), how wide, and how far open it is when each one snaps
   var STR = [[-.6, 1.5, .34], [-.38, 2.4, .58], [-.17, 1.8, .8], [.02, 2.8, .95], [.2, 1.6, .5], [.4, 2.2, .7], [.6, 1.4, .42]];
-  var EXPORT = window.SUN_ATTACK = { progress: 0, held: false, recede: 0 };
+  var EXPORT = window.SUN_ATTACK = { progress: 0, held: false, eaten: false, recede: 0 };
   var OUT = { cx: 0, cy: 0, R: 1, ca: 1, sa: 0, qa: 1, qp: 1, shiver: 0, beat: 0, bpm: 60, jx: 0, jy: 0, agit: 0, ringK: 1, ringO: 1, fear: 0,
               attack: 0, heat: 0, tense: 0, thorn: { g: 0, lx: 1, ly: 0, len: .3 },
-              mouth: { open: 0, W: .5, HU: 0, HL: 0, y: .12, wob: 0, str: [] } };
+              mouth: { open: 0, W: .5, HU: 0, HL: 0, y: .12, wob: 0, str: [] }, dark: 0, vis: 1, inside: 0 };
   for (var si = 0; si < STR.length; si++) { S.snap.push(-1); OUT.mouth.str.push({ u: STR[si][0], w: STR[si][1], st: 0, rt: 0 }); }
 
 
@@ -76,7 +76,13 @@
       else if (S.snap[k] >= 0 && mo < so - .12) S.snap[k] = -1;   // closed again: the lips stick together once more
       o.st = clamp(mo / so); o.rt = S.snap[k] < 0 ? 0 : sm((t - S.snap[k]) / 1.4);
     }
-    M.open = mo; M.W = .46 + .36 * mo; M.HU = .3 * mo; M.HL = .42 * mo; M.y = .12;
+    // ---------- then it eats: it lunges, the open mouth growing past the screen's edges, and the lips close over the visitor ----------
+    var rc0 = sm(g.rec || 0);
+    if (g.gulp > 0) S.gulp = Math.min(1, S.gulp + dt / 1.1 * (1 + 4 * rc0)); else if (g.gulp < 0) S.gulp = Math.max(0, S.gulp - dt / .8);
+    var gp = S.gulp, done = gp >= .97, cl = clamp(gp / .55), shut = cl * cl * cl;   // slow, then the lips slam together
+    var eng = done ? 0 : sm(g.eng || 0), le = eng < .12 ? -.05 * sm(eng / .12) : io((eng - .12) / .88);   // it draws back a little, then lunges
+    var mopen = mo * (1 - shut);
+    M.open = mopen; M.W = .46 + .36 * mo; M.HU = .3 * mopen; M.HL = .42 * mopen; M.y = .12;
     M.wob = .02 * mo + .025 * S.kick;   // the lips tremble heavily, more when a strand lets go
 
     // ---------- heart ----------
@@ -102,16 +108,28 @@
     }
     if (rc > 0) { scale = lerp(scale, 1 + .034 * heat * beat, rc); cx = lerp(cx, cx0, rc); cy = lerp(cy, cy0, rc); qa = lerp(qa, 1, rc); qp = lerp(qp, 1, rc); ca = lerp(ca, 1, rc); sa = lerp(sa, 0, rc); }
     var ql = Math.hypot(ca, sa) || 1;
+    if (le !== 0) { // the lunge: the gap is brought to the middle of the screen and grows until it is all the visitor sees
+      var sF = Math.max(W / (2 * .6 * R), H / (2 * .34 * R)) * 1.05, sc = le > 0 ? Math.pow(sF, le) * (1 + .3 * shut) : 1 + le;
+      var tx = W / 2 - g.left, ty = H / 2 - g.top - (.12 + .06) * R * scale * sc, lk = clamp(le);
+      cx = lerp(cx, tx, lk); cy = lerp(cy, ty, lk); scale *= sc;
+    }
 
 
     OUT.cx = cx; OUT.cy = cy; OUT.R = R * scale; OUT.ca = ca / ql; OUT.sa = sa / ql; OUT.qa = qa; OUT.qp = qp; OUT.shiver = shiver; OUT.beat = beat; OUT.bpm = bpm;
-    OUT.jx = 0; OUT.jy = 0; OUT.fear = F; OUT.heat = heat; OUT.attack = a;
+    var thud = gp > .55 && gp < .8 ? Math.exp(-(gp - .55) * 18) * Math.cos((gp - .55) * 60) : 0;   // the lips meet: one heavy thud
+    OUT.jx = 0; OUT.jy = 7 * thud; OUT.fear = F; OUT.heat = heat; OUT.attack = a;
+    OUT.dark = done ? 1 - sm(rc0 / .8) : sm((gp - .5) / .3);
+    OUT.vis = done ? (rc0 > 0 ? 1 : 0) : 1 - sm((gp - .75) / .2);   // sated, it comes back up out of the dark
+    OUT.inside = sm((gp - .6) / .3) * (1 - sm(rc0 / .7));
     OUT.agit = lerp(Math.max(F * .55, ten * .85, mo * .25), .08, rc);
-    OUT.ringK = lerp(1 - .12 * F - .16 * ten, 1, rc); OUT.ringO = 1; OUT.tense = ten * (1 - rc);   // the ring draws in and holds its breath
+    OUT.ringK = lerp(1 - .12 * F - .16 * ten, 1, rc); OUT.ringO = done ? sm((rc0 - .3) / .7) : 1 - sm(eng / .35); OUT.tense = ten * (1 - rc);   // the ring draws in and holds its breath
     // handoff
-    var held = mo > .98 && rc <= 0;
-    EXPORT.progress = mo; EXPORT.recede = rc;   // progress: how far the mouth is open
-    if (held !== S.held) { S.held = held; EXPORT.held = held; try { dispatchEvent(new CustomEvent("sun:attack", { detail: { held: held } })); } catch (e) {} }
+    var held = mopen > .98 && rc <= 0, eaten = gp >= .56;
+    EXPORT.progress = mopen; EXPORT.recede = rc;   // progress: how far the mouth is open
+    if (held !== S.held || eaten !== S.eaten) {
+      var ate = eaten && !S.eaten; S.held = held; S.eaten = eaten; EXPORT.held = held; EXPORT.eaten = eaten;
+      try { dispatchEvent(new CustomEvent("sun:attack", { detail: { held: held, eaten: eaten } })); if (ate) dispatchEvent(new CustomEvent("sun:eaten")); } catch (e) {}
+    }
     return OUT;
   }
   window.SUN_FEAR = { step: step };
