@@ -94,7 +94,7 @@
     var rc0 = sm(g.rec || 0);
     if (g.gulp > 0) S.gulp = Math.min(1, S.gulp + dt / 1.1 * (1 + 4 * rc0)); else if (g.gulp < 0) S.gulp = Math.max(0, S.gulp - dt / .8);
     var gp = S.gulp, done = gp >= .97, cl = clamp(gp / .55), shut = cl * cl * cl;   // slow, then the lips slam together
-    var eng = done ? 0 : sm(g.eng || 0), le = eng < .12 ? -.05 * sm(eng / .12) : io((eng - .12) / .88);   // it draws back a little, then lunges
+    var eng = done ? 0 : sm(g.eng || 0), le = eng < .12 ? -.05 * sm(eng / .12) : Math.pow(clamp((eng - .12) / .88), 1.6);   // it draws back a little, then lunges
     var mopen = mo * (1 - shut);
     M.open = mopen; M.W = .46 + .36 * mo; M.HU = .3 * mopen; M.HL = .42 * mopen; M.y = .12;
     M.wob = .02 * mo + .025 * S.kick;   // the lips tremble heavily, more when a strand lets go
@@ -126,7 +126,7 @@
     if (done && rc0 > 0) { if (S.back < 0) S.back = t; var tb = t - S.back; scale *= 1 + .06 * Math.exp(-tb / 1.1) * Math.sin(Math.min(tb * 2.6, 20)); qp *= 1 - .03 * Math.exp(-tb / 1.1) * Math.sin(Math.min(tb * 2.6, 20)); }
     else if (!done) S.back = -1;
     if (le !== 0) { // the lunge: the gap is brought to the middle of the screen and grows until it is all the visitor sees
-      var sF = Math.max(W / (2 * .6 * R), H / (2 * .34 * R)) * 1.05, sc = le > 0 ? Math.pow(sF, le) * (1 + .3 * shut) : 1 + le;
+      var sF = Math.max(W / (2 * .62 * R), H / (2 * .42 * R)), sc = le > 0 ? Math.pow(sF, le) * (1 + .3 * shut) : 1 + le;
       var tx = W / 2 - g.left, ty = H / 2 - g.top - (.12 + .06) * R * scale * sc, lk = clamp(le);
       cx = lerp(cx, tx, lk); cy = lerp(cy, ty, lk); scale *= sc;
     }
