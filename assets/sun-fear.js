@@ -39,7 +39,7 @@
   var EXPORT = window.SUN_ATTACK = { progress: 0, held: false };
   var OUT = { flash: 0, cx: 0, cy: 0, R: 1, ca: 1, sa: 0, qa: 1, qp: 1, shiver: 0, beat: 0, bpm: 60, jx: 0, jy: 0, agit: 0, ringK: 1, ringO: 1, fear: 0,
               tear: { on: false, tc: 1, ts: 0, c0: 0, u0: 0, f0: 0, f1: 0, open: 0, HU: .55, HL: .32, U: 1.5, crease: 0, sU: 0, sL: 0, sC: 0, attack: false },
-              debris: null, attack: 0 };
+              debris: null, attack: 0, heat: 0 };
 
   function jolt(t, amp) { S.jolts.push({ t: t, amp: amp, a: Math.random() * 6.28 }); }
   function burst(t, n, tr, cx, cy, Rs, speed) { // glyph debris thrown off both lips along the tear
@@ -163,7 +163,7 @@
       var k = Math.exp(-2.4 * dt); d.vx *= k; d.vy = d.vy * k + 900 * unit * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.u = u / d.life; return true; });
 
     OUT.cx = cx; OUT.cy = cy; OUT.R = R * scale; OUT.ca = ca / ql; OUT.sa = sa / ql; OUT.qa = qa; OUT.qp = qp; OUT.shiver = shiver; OUT.beat = beat; OUT.bpm = bpm;
-    OUT.jx = jx; OUT.jy = jy; OUT.flash = Math.max(S.ripOn ? Math.exp(-Math.max(0, t - S.ripT0 - .02) / .09) : 0, B && B.hit ? .55 * Math.exp(-Math.max(0, t - B.t0 - .16) / .07) : 0); OUT.fear = F; OUT.attack = a; OUT.debris = S.debris;
+    OUT.jx = jx; OUT.jy = jy; OUT.flash = Math.max(S.ripOn ? Math.exp(-Math.max(0, t - S.ripT0 - .02) / .09) : 0, B && B.hit ? .55 * Math.exp(-Math.max(0, t - B.t0 - .16) / .07) : 0); OUT.fear = F; OUT.heat = heat; OUT.attack = a; OUT.debris = S.debris;
     OUT.agit = Math.max(F * .55, ten * (1 - r) * .85, bAct * .7);
     OUT.ringK = (1 - .12 * Math.max(F, ten)) * (1 + 1.6 * r) ; OUT.ringO = 1 - r;
     // handoff
