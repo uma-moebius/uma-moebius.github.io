@@ -198,9 +198,10 @@
     FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
     var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n); SG = new Float32Array(n); SC = new Float32Array(n); STH = new Uint8Array(n);
   }
-  // while the opening hands over, the SUN is drawn whole under it: both are the same pixels, so the fade shows no seam
+  // while the opening hands over, the SUN is drawn whole and the opening steps aside: both are the same pixels, so there is no seam
   function sunAlpha(st) { return (birthOn() ? (BR.x > 0 ? 1 : 0) : st.a) * st.dim; }
   function drawSun(t, st) {
+    if (BR && birthOn() && BR.x > 0) BR.sunDrawn = true;   // the opening may now step aside: this frame is the SUN
     var FS = st.f, R = st.R, cx = st.cx, cy = st.cy, cw = scw, ch = sch, cols = scols, rows = srows, gi = FG.gi, tt = st.tt;
     var E = st.pa >= 1 || (birthOn() && BR.x < 1) ? 0 : energy, tick = Math.floor(t / (BEAT / 20)), glitch = E > .02, thin = st.thin;
     var TR = FS && FS.tear.on ? FS.tear : null, shv = 0, fl = 0, bt = 0, na = 0;
@@ -561,7 +562,7 @@
   var running = false, visible = false, lastT = 0, ready = false;
   function render(t) {
     var bb = bg.getBoundingClientRect(); bgL = bb.left; bgT = bb.top;
-    var st = frameState(t);
+    var st = frameState(t); if (BR) BR.sunDrawn = false;
     diving = st.atk > 0 && st.pa < 1;
     var WV = window.WORKS_VIEW;
     if (GPU) {

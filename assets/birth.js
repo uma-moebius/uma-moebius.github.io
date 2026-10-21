@@ -364,8 +364,9 @@
     STATE.x = x;
     ring(clamp((ps - RING0) / (RING1 - RING0)), sg);
     var settled = raw >= 1 && Math.abs(PH.ps - 1) < 1e-3 && Math.abs(PH.pv) < 1e-3 && x >= 1;
-    if (x >= 1) { if (!hidden) { cv.style.visibility = "hidden"; hidden = true; } }
-    else { if (hidden) { cv.style.visibility = ""; hidden = false; } cv.style.opacity = (1 - x).toFixed(3); render(t, ps); }
+    // no crossfade: once the scene has drawn the SUN (the same pixels, same flesh) the opening simply steps aside
+    if (x >= 1 || (x > 0 && STATE.sunDrawn)) { if (!hidden) { cv.style.visibility = "hidden"; hidden = true; } }
+    else { if (hidden) { cv.style.visibility = ""; hidden = false; } render(t, ps); }
     if (settled || document.hidden) { running = false; last = -1; return; }
     requestAnimationFrame(frame);
   }
