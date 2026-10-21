@@ -169,7 +169,7 @@
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: f ? f.R : R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: f ? f.cx : fcx + (W / 2 - fcx) * k, cy: f ? f.cy : fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
-      tt: reduce ? 0 : t / 1000,   // the flesh's clock
+      tt: reduce ? 0 : BR && BR.t0 !== undefined ? (t + CLK0 - BR.t0) / 1000 : t / 1000,   // the flesh's own clock: the opening's, so the surface carries straight on
       bs: lastBs = reduce ? 1 : 1 + BR_AMP * (breath(t < 0 ? 0 : t) - .5) * (1 - A.clamp(k * 2.2))   // around the resting radius (static = the middle of a breath); fades out with the ring as the dive starts
     };
   }
@@ -196,10 +196,11 @@
     FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
     var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n); SG = new Float32Array(n); SC = new Float32Array(n);
   }
-  function sunAlpha(st) { return st.a; }
+  // while the opening hands over, the SUN is drawn whole under it: both are the same pixels, so the fade shows no seam
+  function sunAlpha(st) { return birthOn() ? (BR.x > 0 ? 1 : 0) : st.a; }
   function drawSun(t, st) {
     var FS = st.f, R = st.R, cx = st.cx, cy = st.cy, cw = scw, ch = sch, cols = scols, rows = srows, gi = FG.gi, tt = st.tt;
-    var E = st.pa >= 1 ? 0 : energy, tick = Math.floor(t / (BEAT / 20)), glitch = E > .02, thin = st.thin;
+    var E = st.pa >= 1 || (birthOn() && BR.x < 1) ? 0 : energy, tick = Math.floor(t / (BEAT / 20)), glitch = E > .02, thin = st.thin;
     var TR = FS && FS.tear.on ? FS.tear : null, shv = 0, fl = 0, bt = 0, na = 0;
     if (FS) {
       shv = FS.shiver; fl = FS.flash || 0; bt = FS.beat * FS.heat; na = cw * 1.3 * FS.agit;   // the racing heart swells it; fear kneads the surface again

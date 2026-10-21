@@ -111,7 +111,7 @@
 
     // ---------- body ----------
     var shrink = .17 * F + .07 * bCoil + .08 * ten * (1 - r);
-    var scale = (1 - shrink) * (1 + (.012 + .022 * heat) * beat);
+    var scale = (1 - shrink) * (1 + .034 * heat * beat);   // calm, the SUN is as still as the opening left it; the beat swells it only when it is stirred
     // fear: shy away from the visitor, squashed away from it; calm: watch it a little
     var shy = (.2 * F) * (1 - Math.max(0, bL)), watch = .05 * (1 - F) * (ptr && live > 0 ? 1 : 0) * live;
     var ox = (-lx * shy + lx * watch) * R, oy = (-ly * shy + ly * watch) * R;
