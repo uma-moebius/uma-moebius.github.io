@@ -1,7 +1,6 @@
 /* One character field — the opening's name kneaded into the SUN (birth.js) → the SUN, in the very same flesh (flesh.js: same cells,
-   glyphs, light and tones), so the sphere never turns into another drawing. A visitor nearing frightens it and its flesh
-   pushes out thorns (sun-fear.js); scrolling on, the same body opens into a sticky mouth, lunges and eats the visitor, comes
-   back sated and stays dimmed behind Works → a setting sun at the footer. Input velocity drives glitch. */
+   glyphs, light and tones), so the sphere never turns into another drawing. Calm, its heart pushes thorns out of the rim
+   (sun-fear.js); scrolling on, it is taken in (dark inside), comes back sated and stays dimmed behind Works → a setting sun at the footer. Input velocity drives glitch. */
 (function () {
   var A = window.ASCII;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -69,7 +68,7 @@
   var SUN_TL = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4];   // glyph level → resting tone
   var DIVE_TL = [0, 0, 0, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4];  // during the dive the swallowed surface keeps its approved pinks (no middle tone)
   var SUN_HOT = 1.05, SUN_HOT_BEAT = .92, sunDk = 0;   // light needed for the top tone (at rest; the beat value is unused: the heartbeat belongs to the wordmark)
-  var T_DEEP = 0, T_DIM = 1;   // atlas rows for the darkest two tones (air, mouth interior)
+  var T_DEEP = 0, T_DIM = 1;   // atlas rows for the darkest two tones
   // tone of a sphere cell from its level, recomputed every frame (never accumulated); `up` = the beat lifts it by one
   function sunTone(lvl, b, i, j, up) {
     var dive = sunDk > 0 && A.hash(i + 5.1, j + 3.7) < sunDk / .3;    // the first 30% of the dive hands each cell over to the dive pinks
@@ -81,7 +80,7 @@
     return tn;
   }
 
-  var W = 0, H = 0, PH = 0, dpr = 1, BASE = 8, R0 = 300, fcx = 0, fcy = 0, small = false, MQ = 1, MBW = 6;
+  var W = 0, H = 0, PH = 0, dpr = 1, BASE = 8, R0 = 300, fcx = 0, fcy = 0, small = false;
   function build() {
     dpr = Math.min(2, devicePixelRatio || 1);
     var r = bg.getBoundingClientRect(); W = r.width; H = r.height; small = W < 769;
@@ -109,9 +108,6 @@
     } else { x0 = 8; x1 = W - 8; y0 = ro.b + 16; y1 = H - 16; fcx = (x0 + x1) / 2; fcy = (y0 + y1) / 2; half = Math.min(x1 - x0, y1 - y0) / 2; }
     var pad = Math.max(11, Math.min(18, half * .045));   // the margin around the sphere (keeps its size)
     R0 = (half - pad) / 1.12;
-    // phones: the SUN is fewer cells across, so the mouth holds fewer air slots. Scale the slots, their speed and their share by the
-    // cells per radius (42 = a large screen, which keeps exactly the desktop rule) so the mouth reads equally alive
-    MQ = small || H < 500 ? Math.max(.5, Math.min(1, R0 / BASE / 42)) : 1; MBW = MQ < 1 ? Math.max(4, Math.round(6 * MQ)) : 6;
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
   // the opening (birth.js) takes the first stretch of About's pinned scroll; About's own timeline starts after it, unchanged
@@ -124,8 +120,8 @@
   }
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0 } : null; };
 
-  var rot = 0, lastRead = "", lastJolt = "";
-  var SUN_END = .36, ATK_END = .58, ENG_END = .68, REC0 = .82, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → it cowers and its mouth opens → it lunges → the gulp, inside → sated, into Works
+  var rot = 0, lastRead = "";
+  var SUN_END = .36, ATK_END = .58, ENG_END = .68, REC0 = .82, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → (held) → taken in, dark inside → sated, into Works
   var FEAR = reduce ? null : window.SUN_FEAR || null, bgL = 0, bgT = 0;
   function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
     var dt = moT ? Math.min(.05, (t - moT) / 1000) : 0, w = 1 / .12; moT = t;
@@ -150,7 +146,7 @@
     var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
     var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
     var aIn = reduce ? 0 : birthOn() ? BR.x : rise;
-    var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0, rec: rec, eng: reduce ? 0 : A.clamp((pf - ATK_END) / (ENG_END - ATK_END)), gulp: pf >= ENG_END ? 1 : pf < ENG_END - .04 ? -1 : 0 }) : null;
+    var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0, rec: rec, gulp: pf >= ENG_END ? 1 : pf < ENG_END - .04 ? -1 : 0 }) : null;
     return { f: f, atk: atk, dim: dim,
       pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : birthOn() ? BR.x : rise,   // static mode: shown only once the field is pinned
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: f ? f.R : R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
@@ -176,11 +172,11 @@
   // ---------- the SUN in the opening's flesh (flesh.js): one grid from the screen's top left, the same glyphs, light and tones ----------
   // everything it does is a deformation of that one body: its signed distance field is squashed and shaken, never redrawn
   var FL = window.FLESH, FG = null, FAT = null, SWILD = "SUN01/#:<>*", SWG = 0, scw = 7, sch = 12.25, scols = 0, srows = 0;
-  var SD = null, SH = null, SF = null, SL = null, SM = null, THL = new Float32Array(1024), TN = 1024;
+  var SD = null, SH = null, SF = null, SL = null, THL = new Float32Array(1024), TN = 1024;
   function buildFlesh() {
     scw = FL.cellW(W); sch = scw * 1.75; scols = Math.ceil(W / scw); srows = Math.ceil(PH / sch);
     FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
-    var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n); SM = new Float32Array(n);
+    var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n);
   }
   // while the opening hands over, the SUN is drawn whole and the opening steps aside: both are the same pixels, so there is no seam
   function sunAlpha(st) { return (birthOn() ? (BR.x > 0 ? 1 : 0) : st.a) * st.dim; }
@@ -205,58 +201,17 @@
         for (var n = n0; n <= n1; n++) { var e = 1 - Math.abs(n / TN * TAU - th0) / w; if (e <= 0) continue; e = L * Math.pow(e, 1.35); var m = ((n % TN) + TN) % TN; if (e > THL[m]) THL[m] = e; }
       }
     }
-    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + (FS ? R * (FS.mouth.HU + FS.mouth.HL) + Math.abs(FS.pk.dx) + Math.abs(FS.pk.dy) : 0) + cw * 6 + na;
+    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + (FS ? Math.abs(FS.pk.dx) + Math.abs(FS.pk.dy) : 0) + cw * 6 + na;
     var i0 = Math.max(0, Math.floor((cx - ext) / cw) - 2), i1 = Math.min(cols, Math.ceil((cx + ext) / cw) + 2);
     var j0 = Math.max(0, Math.floor((cy - ext) / ch) - 2), j1 = Math.min(rows, Math.ceil((cy + ext) / ch) + 2);
     var fca = FS ? FS.ca : 1, fsa = FS ? FS.sa : 0, fqa = FS ? FS.qa : 1, fqp = FS ? FS.qp : 1, tsh1 = t * .09, tsh2 = t * .13;
-    var FM = { lift: 0, gap: 0, hb: 0, fold: 0, lip: 1e9 };
-    // the mouth: the flesh parts along a soft lens below the middle; the lips roll thick, strands of flesh hang across the gap
-    var MO = FS ? FS.mouth : null, mOn = MO && MO.open > .003, mW = 1, mHU = 0, mHL = 0, mY = 0, mWb = 0, mS = null, lipW = cw * 2.4, tm = t * .0011;
-    if (mOn) { mW = MO.W; mHU = MO.HU; mHL = MO.HL; mY = MO.y; mWb = MO.wob; mS = MO.str; lipW = Math.max(cw * 2.4, R * .075); }
-    function strands(u, q, gh) { // signed distance (px) to the strands at (u across the mouth, q 0 = upper lip .. 1 = lower lip)
-      var best = 1e4, sq = Math.sin(Math.PI * q);
-      for (var n = 0; n < mS.length; n++) {
-        var o = mS[n]; if (o.rt >= 1) continue;
-        var su = o.u * mW + (.05 * sq * sq + .012 * Math.sin(tm * 1.7 + n * 2.1) * sq) * (n & 1 ? 1 : -1) * o.st;   // they bow and sway, heavy
-        var w0 = o.w * cw * (1 + .5 * (R / 300 - 1) * (R > 300 ? 1 : 0)), dx = Math.abs(u - su) * R, d;
-        if (o.rt <= 0) { // still whole: thinner toward the middle the further it is drawn out, sagging fat at the bottom
-          var w = w0 * (1 - .82 * o.st * o.st * sq) * (1 + .35 * o.st * q * q);
-          d = dx - w;
-        } else { // snapped: the halves sink back into the lips, each with a heavy drop at its end
-          var r = o.rt, qu = .5 * (1 - r) + .06 * (1 - r) * (1 - r), ql = .5 + .5 * r - .04 * (1 - r), du, dl;
-          var wu = w0 * (.9 - .5 * q / Math.max(qu, .01)), bu = w0 * (1.15 - .5 * r);
-          du = Math.max(dx - wu, (q - qu) * gh); var bx = dx, by = (q - qu) * gh; du = Math.min(du, Math.sqrt(bx * bx + by * by) - bu);
-          var wl = w0 * (.9 - .5 * (1 - q) / Math.max(1 - ql, .01)), bl = w0 * (1 - .5 * r);
-          dl = Math.max(dx - wl, (ql - q) * gh); by = (q - ql) * gh; dl = Math.min(dl, Math.sqrt(bx * bx + by * by) - bl);
-          d = Math.min(du, dl);
-        }
-        if (d < best) best = d;
-      }
-      return best;
-    }
+    var FM = { lift: 0 };
     var PKk = FS ? FS.pk : null, pkOn = PKk && (Math.abs(PKk.dx) + Math.abs(PKk.dy) > .3), pkx = 0, pky = 0, pks = 1;
     if (pkOn) { pkx = cx + PKk.x; pky = cy + PKk.y; pks = 1 / (PKk.s * PKk.s); }
     function sdf(x, y) { // signed distance (px) of the deformed body at (x, y)
       if (pkOn) { var ex = x - pkx, ey = y - pky, f = Math.exp(-(ex * ex + ey * ey) * pks); x -= PKk.dx * f; y -= PKk.dy * f; }   // touched: the flesh is drawn out
       var px = (x - cx) / R, py = (y - cy) / R;
       var a1 = (px * fca + py * fsa) / fqa, p1 = (-px * fsa + py * fca) / fqp; px = a1 * fca - p1 * fsa; py = a1 * fsa + p1 * fca;   // squashed away from the visitor / stretched at it
-      FM.gap = 0; FM.hb = 0; FM.fold = 0; FM.lip = 1e9;
-      if (mOn) {
-        var xm = px / mW, x2 = 1 - xm * xm, pr = x2 > 0 ? Math.pow(x2, .65) : 0;
-        if (pr > 0) {
-          var sl0 = 1.3 * xm * pr / x2 / mW, dr = Math.sin(px * 9 + 1.3), dr2 = dr * dr; dr2 = dr2 * dr2 * dr2 * pr;   // slope of the lip line; drops of flesh hang from the upper lip
-          var wb = mWb * Math.sin(tm * 2.3 + px * 2.6) * pr, hu = mHU * (pr - .12 * dr2) + wb, hl = mHL * pr - wb * .6, v = py - mY;
-          if (v > -hu && v < hl && px * px + mY * mY < 1) { // in the gap: air, but for the strands
-            var du0 = (v + hu) / Math.sqrt(1 + mHU * mHU * sl0 * sl0), dl0 = (hl - v) / Math.sqrt(1 + mHL * mHL * sl0 * sl0), cd = (du0 < dl0 ? du0 : dl0) * R;
-            var gh = (hu + hl) * R, ds = strands(px, (v + hu) / (hu + hl), gh);
-            if (ds < cd) { FM.lift = .2; return ds; }
-            FM.lift = 0; FM.gap = cd; return cd;
-          }
-          var dd = v <= -hu ? v + hu : v - hl, dl = Math.abs(dd) * R / lipW;   // the flesh beyond the lips is pushed back: the jaw hangs open
-          py = mY + dd; FM.lip = Math.abs(dd) * R;
-          FM.hb = Math.exp(-(dl - .8) * (dl - .8) * 2.2) * pr; FM.fold = Math.exp(-(dl - 2.1) * (dl - 2.1) * 6) * pr * .7;   // the lip rolls thick, a crease behind it
-        }
-      }
       var sh = 0, rr0 = Math.sqrt(px * px + py * py);   // the shiver ripples the outline only: the lit surface inside stays the same smooth flesh
       if (shv > 0 && rr0 > .7) { var an = Math.atan2(py, px); sh = shv * (.6 * Math.sin(an * 17 + tsh1) + .4 * Math.sin(an * 29 - tsh2)) * A.smooth((rr0 - .7) / .25) * R; }
       FM.lift = 0;
@@ -269,18 +224,12 @@
       }
       return (rr0 - 1) * R - sh;
     }
-    SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0); SM.fill(0);
+    SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0);
     var dep = R * .95, swell = bt * cw * 1.6, lift0 = bt * .065, flow = Math.floor(tt * 3), j, i, k;
     for (j = j0; j < j1; j++) for (i = i0; i < i1; i++) {
-      k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, d = sdf(x, y) - swell; if (d < -FM.lip) d = -FM.lip;   // the lips are an edge of the body too
+      k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, d = sdf(x, y) - swell;
       if (na > 0) d += na * FL.noise(x, y, tt);
-      SD[k] = d; SH[k] = FL.height(d, dep) + FM.hb * lipW * 1.6; SL[k] = FM.lift; SF[k] = FM.fold; SM[k] = FM.gap;
-    }
-    function throat(md, i, j) {
-      var h = A.hash(i * 1.7 + flow * .13, j * 3.1), nr = gi.ramp;
-      if (md < cw * 1.6) return h < .7 ? (nr + 2 + ((h * 3) | 0)) * 8 + 1 : 0;   // the wet inner wall, just inside the lips
-      var wv = FL.noise(i * cw * .6, j * ch * .6, tt * .5);
-      return wv > .7 && h < .5 ? (nr + 1 + ((h * 4) | 0)) * 8 + (md < cw * 5 ? 1 : 0) : 0;
+      SD[k] = d; SH[k] = FL.height(d, dep); SL[k] = FM.lift;
     }
     var dark = FS ? FS.dark : 0, hide = FS ? 1 - FS.vis : 0, ins = FS ? FS.inside : 0;
     function inside(i, j) { // swallowed: nothing but the dark of its insides, the walls just visible as they squeeze
@@ -300,12 +249,11 @@
         if (thin > 0 && A.hash(i, j + 500) < thin) continue;
         k = j * cols + i; var dd = SD[k], c;
         if (dd <= 0) c = FL.cell(SD, SH, SF, k, i, j, cols, rows, cw, ch, tt, lift0 + SL[k], gi);
-        else if (SM[k] > 0) c = throat(SM[k], i, j);   // inside the mouth: dark, only the wet inner wall catches a little light
         else c = FL.air(dd, i, j, cw, bt, 0, flow, gi);
         if (!c) continue;
         if (hide > 0 && A.hash(i * 1.3, j * 7.1) < hide) continue;
         var g2 = c >> 3, tone = c & 7;
-        if (dark > 0) { // the light goes out as the lips close over the visitor
+        if (dark > 0) { // the light goes out as it is taken in
           var cap = 4 - dark * 4.6 + (A.hash(i, j * 3.3) < .3 ? 1 : 0); if (cap < 0) continue; if (tone > cap) tone = cap | 0;
         }
         if (glitch && A.hash(i + j * 131, tick) < E * .4) g2 = SWG + ((A.hash(i * 7 + j, tick + 3) * SWILD.length) | 0);
@@ -318,9 +266,6 @@
   function drawUI(t, st) {
     // corner text fades before the dive starts, so the growing sphere never covers it
     pin.style.setProperty("--fade", ((1 - A.clamp((st.pa - (SUN_END - .02)) / .03)) * (birthOn() ? BR.x : 1)).toFixed(3));
-    var F = st.f;
-    var jk = F && (Math.abs(F.jx) > .3 || Math.abs(F.jy) > .3) ? "translate(" + F.jx.toFixed(1) + "px," + F.jy.toFixed(1) + "px)" : "";
-    if (jk !== lastJolt) { bg.style.transform = jk; lastJolt = jk; }   // the screen jolts when the SUN strikes
     var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
     var txt = hh + ":" + mm + " · ALT " + String(Math.round(st.nk * 62)).padStart(2, "0") + "° · AZ " + String(Math.round(90 + st.nk * 90)).padStart(3, "0") + "°";
     if (energy > .2) txt = txt.replace(/[0-9]/g, function (m) { return Math.random() < energy * .6 ? "#%01"[(Math.random() * 4) | 0] : m; });
