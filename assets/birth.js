@@ -1,5 +1,5 @@
 /* The opening: the pink creature is me. Scattered cells divide and gather into the name, it beats (60 BPM, a strong beat
-   and a weak one, a soft swell with thorns tearing out of the edge), and scrolling kneads the name like flesh into one
+   and a weak one, a soft swell, short spikes pulsing out of the edge), and scrolling kneads the name like flesh into one
    sphere, the SUN. A finger or the pointer sticks to the flesh, stretches it and lets go.
    One signed field (px, negative = flesh) is evaluated per character cell and drawn as glyphs. The sphere ends exactly on the
    SUN of the scene (same centre and radius), and the scene takes over from there. Reduced motion: the formed name, still. */
@@ -171,7 +171,7 @@
     if (n % 4) return Math.min(1, pulse(x, .03, .075) + .45 * pulse(x - .18, .03, .075));
     return 1.3 * Math.min(1, pulse(x, .05, .17) + .45 * pulse(x - .18, .04, .12));
   }
-  function sharp(t) { // the tear: only the first instant of each strong beat, and of the weak one at half strength
+  function sharp(t) { // the pulse: only the first instant of each strong beat, and of the weak one at half strength
     if (t < 0) return 0; var x = t - Math.floor(t);
     var a = x < .02 ? x / .02 : Math.exp(-(x - .02) / .085), b = x < .2 ? 0 : x < .21 ? (x - .2) / .01 * .6 : .6 * Math.exp(-(x - .21) / .06);
     return Math.max(a, b);
@@ -282,6 +282,7 @@
       D[k] = d; FO[k] = fold;
       Hh[k] = FL.height(d, dep);
     }
+    if (shp > .02) pulseLines(hb, shp, j0, j1, dep);
     // shade
     var out = code, lift = beat * .13 * (1 - .5 * sm(m * 2)), dust = inBirth ? (1 - sm((t - 1.2) / 1.4)) : 0, flow = Math.floor(tt * 3);
     for (j = j0; j < j1; j++) for (i = 0; i < cols; i++) {
@@ -295,27 +296,31 @@
       var di = i + Math.floor(t * 2 * (hash(j, 1) - .5)), hd = hash(di * .73, j * 1.9);
       if (hd < .006 * dust) out[k] = (gi.air + 1) * 8 + (hd < .002 ? 1 : 0);
     }
-    // the tear: on each strong beat a few points of the outline throw out thorns, and the outline at their root breaks open
-    if (shp > .02) {
-      var bi = Math.floor(hb), cand = [];
-      for (j = Math.max(1, j0); j < Math.min(rows - 1, j1); j++) for (i = 1; i < cols - 1; i++) { k = j * cols + i; var v = D[k]; if (v <= 0 && v > -cw * 1.2 && D[k - 1] < 1e3) cand.push(k); }
-      var nT = Math.round((L.mobile ? 12 : 26) * (m > .5 ? .8 : 1)), want = nT / Math.max(1, cand.length);
-      for (var q = 0; q < cand.length; q++) {
-        k = cand[q]; if (hash(k * .013, bi * 7.7 + 1) >= want) continue;
-        i = k % cols; j = (k / cols) | 0;
-        var gx2 = (D[k + 1] - D[k - 1]) / (2 * cw), gy2 = (D[k + cols] - D[k - cols]) / (2 * ch), g2 = Math.hypot(gx2, gy2) || 1, ux = gx2 / g2, uy = gy2 / g2;
-        var len = (2.5 + hash(k, bi) * 7 * (L.mobile ? .8 : 1)) * shp, aa = Math.atan2(uy, ux) * 57.2958; if (aa < 0) aa += 180;
-        var ch1 = (aa < 22 || aa >= 158) ? 3 : (aa >= 68 && aa < 112) ? 2 : (aa < 90 ? 1 : 0);   // index into THORN: / \ | -
-        for (var s2 = -1; s2 <= 1; s2 += 2) { var nk = k + s2 * (Math.abs(ux) > Math.abs(uy) ? cols : 1); if (nk > 0 && nk < out.length && hash(nk, bi) < .7) out[nk] = 0; }
-        for (var st = 0; st <= len; st++) {
-          var px2 = (i + .5) * cw + ux * st * cw * 1.25, py2 = (j + .5) * ch + uy * st * cw * 1.25, ii = Math.floor(px2 / cw), jj = Math.floor(py2 / ch);
-          if (ii < 0 || jj < 0 || ii >= cols || jj >= rows) break;
-          var tip = st > len - 1;
-          out[jj * cols + ii] = (gi.thorn + (tip && hash(k, 3) < .4 ? (ux > 0 ? 5 : 4) : ch1)) * 8 + (tip ? 3 : 4);
-        }
+    paint();
+  }
+  // the pulse: on each beat a few points of the outline push the flesh out into short, thin spikes (the SUN's thorn profile),
+  // which sink back within the beat. They grow out of the body (a smooth union), so the outline never opens.
+  function pulseLines(hb, shp, j0, j1, dep) {
+    var cols = L.cols, rows = L.rows, cw = L.cw, ch = L.ch, D = L.D, Hh = L.Hh, bi = Math.floor(hb), cand = [], j, i, k;
+    for (j = Math.max(1, j0); j < Math.min(rows - 1, j1); j++) for (i = 1; i < cols - 1; i++) {
+      k = j * cols + i; var v = D[k]; if (v <= 0 && v > -cw * 1.2 && (D[k - 1] > 0 || D[k + 1] > 0 || D[k - cols] > 0 || D[k + cols] > 0)) cand.push(k);
+    }
+    var want = (L.mobile ? 4 : 7) / Math.max(1, cand.length), wb = cw * (L.mobile ? 1.15 : 1.05), sk = cw * .7;
+    for (var q = 0; q < cand.length; q++) {
+      k = cand[q]; if (hash(k * .013, bi * 7.7 + 1) >= want) continue;
+      i = k % cols; j = (k / cols) | 0;
+      var gx = (D[k + 1] - D[k - 1]) / (2 * cw), gy = (D[k + cols] - D[k - cols]) / (2 * ch), gl = Math.hypot(gx, gy) || 1, nx = gx / gl, ny = gy / gl;
+      var Ls = cw * (2 + 2.4 * hash(k, bi)) * (L.mobile ? .85 : 1) * shp * (1 + .07 * Math.sin(hb * 11 + q * 2.3));
+      if (Ls < cw * .6) continue;
+      var bx = (i + .5) * cw - nx * cw * .5, by = (j + .5) * ch - ny * ch * .5, slope = Math.sqrt(1 + Math.pow(wb * 1.35 / Ls, 2)), ext = Ls + wb + cw;
+      var i0 = Math.max(0, Math.floor((bx - ext) / cw)), i1 = Math.min(cols - 1, Math.ceil((bx + ext) / cw)), jj0 = Math.max(0, Math.floor((by - ext) / ch)), jj1 = Math.min(rows - 1, Math.ceil((by + ext) / ch));
+      for (var jj = jj0; jj <= jj1; jj++) for (var ii = i0; ii <= i1; ii++) {
+        var qx = (ii + .5) * cw - bx, qy = (jj + .5) * ch - by, a = qx * nx + qy * ny, c = Math.abs(qx * ny - qy * nx), dS;
+        if (a > Ls) dS = Math.hypot(a - Ls, c); else dS = (c - wb * Math.pow(1 - Math.max(0, a) / Ls, 1.35)) / slope;
+        var kk = jj * cols + ii, d0 = D[kk], h = Math.max(sk - Math.abs(d0 - dS), 0) / sk, d1 = Math.min(d0, dS) - h * h * sk * .25;
+        if (d1 < d0) { D[kk] = d1; Hh[kk] = FL.height(d1, dep); }
       }
     }
-    paint();
   }
   function paint() {
     var cols = L.cols, rows = L.rows, cw = L.cw, ch = L.ch, out = L.code, tw = AT.tw, th = AT.th, dpr = L.dpr, j, i, cc;
