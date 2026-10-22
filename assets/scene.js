@@ -10,7 +10,7 @@
   // one world clock: every periodic thing is a whole number of beats (or an integer split of one) of the 60 BPM heart
   var BEAT = 1000, TAU = Math.PI * 2;
   // the first beat: on the first visit of a session, opened at the top, the world waits in near-silence and starts on one heartbeat.
-  // The clock's zero is that beat (an accent, beat 0 of 4), so the heart, the ring's first inhale and the air all start together
+  // The clock's zero is that beat (an accent, beat 0 of 4), so the heart and the air start together
   var HUSH = 900, CLK0 = 0, silent = false;   // ms of silence before the first beat; the world clock's zero (page time); waiting for it
   var AIR_BEAT = /[?&]airbeat=1/.test(location.search);   // optional, off by default: the SUN's air swells with the heartbeat (for comparison only)
   var cursor = document.querySelector(".sun-cursor");
@@ -60,7 +60,6 @@
   function repaint() { if (!ready) return; if (reduce) render(0); else wake(); }
   var sun = scene.querySelector(".sunsec"), pin = sun.querySelector(".sunsec__pin"), works = scene.querySelector(".works");
   var label = pin.querySelector(".sunsec__label"), bio = pin.querySelector(".sunsec__bio"), links = pin.querySelector(".sunsec__links"), readout = pin.querySelector(".sunsec__readout");
-  var ringEl = bg.querySelector(".scene__ring");
   // glyph roles (A.EDGE / A.AIR): the interior ramp holds no air or stroke characters — the dark side is ';' and '=' rows, not dust
   // the interior set; its order is re-measured (ink coverage, JetBrains Mono 600) before the first atlas — 'sun' stays as one block
   var CHARS = " ;====+*sun%#@", LV = CHARS.length, WILD = "SUN01/#:<>*", GE = LV + WILD.length, GA = GE + A.EDGE.length;
@@ -82,12 +81,6 @@
     return tn;
   }
 
-  var ring = [];
-  for (var k = 0; k < 16; k++) for (var c = 0; c < 3; c++) {
-    var sp = document.createElement("span"); sp.className = "scene__glyph"; sp.textContent = "SUN"[c];
-    sp.style.setProperty("--a", (k * 22.5 + c * 4.4) + "deg"); ringEl.appendChild(sp); ring.push({ el: sp, c: "SUN"[c], wild: false });
-  }
-
   var W = 0, H = 0, PH = 0, dpr = 1, BASE = 8, R0 = 300, fcx = 0, fcy = 0, small = false, MQ = 1, MBW = 6;
   function build() {
     dpr = Math.min(2, devicePixelRatio || 1);
@@ -99,7 +92,7 @@
     buildFlesh();
     fit();
   }
-  // the sphere (+ ring) lives in the free area between the text blocks → never overlaps bio / links / readout
+  // the sphere lives in the free area between the text blocks → never overlaps bio / links / readout
   function fit() {
     var p = pin.getBoundingClientRect();
     function rr(el) { var b = el.getBoundingClientRect(); return { l: b.left - p.left, r: b.right - p.left, t: b.top - p.top, b: b.bottom - p.top }; }
@@ -114,25 +107,24 @@
         half = Math.min(half, Math.hypot(dx, dy));
       });
     } else { x0 = 8; x1 = W - 8; y0 = ro.b + 16; y1 = H - 16; fcx = (x0 + x1) / 2; fcy = (y0 + y1) / 2; half = Math.min(x1 - x0, y1 - y0) / 2; }
-    var rfs = Math.max(11, Math.min(18, half * .045));
-    R0 = (half - rfs) / 1.12;
-    ringEl.style.setProperty("--rfs", rfs + "px");
+    var pad = Math.max(11, Math.min(18, half * .045));   // the margin around the sphere (keeps its size)
+    R0 = (half - pad) / 1.12;
     // phones: the SUN is fewer cells across, so the mouth holds fewer air slots. Scale the slots, their speed and their share by the
     // cells per radius (42 = a large screen, which keeps exactly the desktop rule) so the mouth reads equally alive
     MQ = small || H < 500 ? Math.max(.5, Math.min(1, R0 / BASE / 42)) : 1; MBW = MQ < 1 ? Math.max(4, Math.round(6 * MQ)) : 6;
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
   // the opening (birth.js) takes the first stretch of About's pinned scroll; About's own timeline starts after it, unchanged
-  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null, lastBs = 1;
+  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null;
   function birthOn() { return BR && BR.on && root.classList.contains("birth"); }
   function progSun() {
     if (!birthOn()) return prog(sun);
     var r = sun.getBoundingClientRect(), b = Math.max(0, r.height - 2.8 * H), span = r.height - b - H;
     return span > 0 ? A.clamp((-r.top - b) / span) : 1;
   }
-  window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0, bs: lastBs } : null; };
+  window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0 } : null; };
 
-  var rot = 0, ringRot = 0, lastRead = "", lastJolt = "";
+  var rot = 0, lastRead = "", lastJolt = "";
   var SUN_END = .36, ATK_END = .58, ENG_END = .68, REC0 = .82, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → it cowers and its mouth opens → it lunges → the gulp, inside → sated, into Works
   var FEAR = reduce ? null : window.SUN_FEAR || null, bgL = 0, bgT = 0;
   function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
@@ -142,12 +134,6 @@
     moS = target + (x + c * dt) * e; moV = (moV - c * w * dt) * e;
     if (moS < 0) { moS = 0; moV = 0; } else if (moS > 1) { moS = 1; moV = 0; }
     return moS;
-  }
-  // the ring breathes: one slow breath every 8 beats on the world clock, in a little shorter than out, eased at both turns
-  var BR_BEATS = 8, BR_IN = 3.5, BR_AMP = .055;   // beats per breath; beats breathing in; how far the ring opens, smallest to largest (share of its radius)
-  function breath(t) {
-    var x = ((t / BEAT) % BR_BEATS + BR_BEATS) % BR_BEATS;
-    return x < BR_IN ? .5 - .5 * Math.cos(Math.PI * x / BR_IN) : .5 + .5 * Math.cos(Math.PI * (x - BR_IN) / (BR_BEATS - BR_IN));
   }
   function frameState(t) {
     var pa = reduce ? .3 : progSun(), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
@@ -170,8 +156,7 @@
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: f ? f.R : R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: f ? f.cx : fcx + (W / 2 - fcx) * k, cy: f ? f.cy : fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
       L: [L[0] / n, L[1] / n, L[2] / n],
-      tt: reduce ? 0 : BR && BR.t0 !== undefined ? (t + CLK0 - BR.t0) / 1000 : t / 1000,   // the flesh's own clock: the opening's, so the surface carries straight on
-      bs: lastBs = reduce ? 1 : 1 + BR_AMP * (breath(t < 0 ? 0 : t) - .5) * (1 - A.clamp(k * 2.2)) * (f ? 1 - f.tense : 1)   // around the resting radius (static = the middle of a breath); fades out with the ring as the dive starts
+      tt: reduce ? 0 : BR && BR.t0 !== undefined ? (t + CLK0 - BR.t0) / 1000 : t / 1000   // the flesh's own clock: the opening's, so the surface carries straight on
     };
   }
 
@@ -333,37 +318,14 @@
   function drawUI(t, st) {
     // corner text fades before the dive starts, so the growing sphere never covers it
     pin.style.setProperty("--fade", ((1 - A.clamp((st.pa - (SUN_END - .02)) / .03)) * (birthOn() ? BR.x : 1)).toFixed(3));
-    ringEl.style.setProperty("--rx", st.cx + "px"); ringEl.style.setProperty("--ry", st.cy + "px");
-    var F = st.f; agit = F ? F.agit : 0;
-    ringEl.style.setProperty("--rr", (Math.round(st.R * 1.12 * st.bs * (F ? F.ringK : 1) * dpr * 4) / (dpr * 4)) + "px");   // quarter device pixels: a steady glide
-    ringEl.style.setProperty("--ro", st.thin >= 1 ? "0" : ((birthOn() ? 1 : st.a) * (1 - A.clamp(st.k * 2.2)) * (F ? F.ringO : 1) * st.dim).toFixed(3));
+    var F = st.f;
     var jk = F && (Math.abs(F.jx) > .3 || Math.abs(F.jy) > .3) ? "translate(" + F.jx.toFixed(1) + "px," + F.jy.toFixed(1) + "px)" : "";
     if (jk !== lastJolt) { bg.style.transform = jk; lastJolt = jk; }   // the screen jolts when the SUN strikes
-    ringEl.style.setProperty("--rot", ringRot.toFixed(2) + "deg");
     var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
     var txt = hh + ":" + mm + " · ALT " + String(Math.round(st.nk * 62)).padStart(2, "0") + "° · AZ " + String(Math.round(90 + st.nk * 90)).padStart(3, "0") + "°";
     if (energy > .2) txt = txt.replace(/[0-9]/g, function (m) { return Math.random() < energy * .6 ? "#%01"[(Math.random() * 4) | 0] : m; });
     if (txt !== lastRead) { readout.textContent = txt; lastRead = txt; }
   }
-
-  var calm = true;
-  var agit = 0;   // the SUN's fear and fury shake the ring too
-  function wild(t) {
-    var E = Math.max(energy, agit), tick = Math.floor(t / (BEAT / 16));
-    if (E > .03) {
-      calm = false;
-      for (var n = 0; n < ring.length; n++) {
-        var o = ring[n], h = A.hash(n, tick);
-        if (h < E * .85) {
-          o.wild = true; o.el.classList.add("is-wild"); o.el.textContent = WILD[(A.hash(n * 3, tick) * WILD.length) | 0];
-          o.el.style.setProperty("--gx", ((A.hash(n, tick + 1) - .5) * E * 70).toFixed(1) + "px");
-          o.el.style.setProperty("--gy", ((A.hash(n, tick + 2) - .5) * E * 90).toFixed(1) + "px");
-          o.el.style.setProperty("--gr", ((A.hash(n, tick + 4) - .5) * E * 180).toFixed(0) + "deg");
-        } else if (o.wild) settle(o);
-      }
-    } else if (!calm) { calm = true; ring.forEach(settle); }
-  }
-  function settle(o) { o.wild = false; o.el.classList.remove("is-wild"); o.el.textContent = o.c; o.el.style.removeProperty("--gx"); o.el.style.removeProperty("--gy"); o.el.style.removeProperty("--gr"); }
 
   // ---------- hero: the Baloo 2 wordmark sampled into small characters (same atlas system as the SUN, no outline layer) ----------
   var hero = document.querySelector(".hero"), h1 = document.querySelector(".wordmark"), hcv = document.querySelector(".hero__canvas");
@@ -576,12 +538,11 @@
     var dt = lastT ? Math.min(64, t - lastT) : 16; lastT = t;
     energy *= Math.pow(.9, dt / 16.7); if (energy < .01) energy = 0;
     // no idle spin: rotation only from input (pointer velocity + scroll)
-    rot += energy * dt * .0035 + scrollAcc * .0009; ringRot += energy * dt * .25 + scrollAcc * .05; scrollAcc = 0;
+    rot += energy * dt * .0035 + scrollAcc * .0009; scrollAcc = 0;
     var wt = t - CLK0; if (silent && wt > HB_WAVE + 200) silent = false;   // once the first beat has crossed the whole name
     if (visible) render(wt);
     if (heroVis) drawHero(wt);
-    wild(wt);
-    if ((visible || heroVis || energy > 0 || !calm) && !document.hidden) requestAnimationFrame(frame); else { running = false; lastT = 0; }
+    if ((visible || heroVis || energy > 0) && !document.hidden) requestAnimationFrame(frame); else { running = false; lastT = 0; }
   }
   function wake() { if (ready && !running && !reduce && !document.hidden) { running = true; requestAnimationFrame(frame); } }
   // the first beat plays once per session, and only when the page opens at its top (no hash, not restored mid-page)

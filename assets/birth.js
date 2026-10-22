@@ -1,6 +1,6 @@
 /* The opening: the pink creature is me. Scattered cells divide and gather into the name, it beats (60 BPM, a strong beat
    and a weak one, a soft swell with thorns tearing out of the edge), and scrolling kneads the name like flesh into one
-   sphere, the SUN, out of whose rim the ring is born. A finger or the pointer sticks to the flesh, stretches it and lets go.
+   sphere, the SUN. A finger or the pointer sticks to the flesh, stretches it and lets go.
    One signed field (px, negative = flesh) is evaluated per character cell and drawn as glyphs. The sphere ends exactly on the
    SUN of the scene (same centre and radius), and the scene takes over from there. Reduced motion: the formed name, still. */
 (function () {
@@ -11,7 +11,6 @@
   var MONO = A ? A.FAMILY : '"JetBrains Mono", ui-monospace, monospace';
   var scene = document.querySelector(".scene"), sun = document.querySelector(".sunsec"), bg = scene && scene.querySelector(".scene__bg");
   var cv = reduce ? document.querySelector(".hero__canvas") : document.querySelector(".birth__canvas");
-  var ringEl = bg && bg.querySelector(".scene__ring");
   // the scene reads this: x = how far the scene's own SUN has taken over (0 = the birth owns the screen)
   var STATE = window.BIRTH = { on: !reduce, x: reduce ? 1 : 0, still: reduce };
   function off() { STATE.on = false; STATE.x = 1; root.classList.remove("birth"); }
@@ -253,8 +252,8 @@
   function birthLen() { return Math.max(1, sun.offsetHeight - 2.8 * L.H); }   // About keeps its own 280vh after it
   function rawProgress() { return clamp(-sun.getBoundingClientRect().top / birthLen()); }
   function pastBirth() { return clamp((-sun.getBoundingClientRect().top - birthLen()) / (L.H * .1)); }
-  // phases on the sprung progress: knead → still the flesh → the ring is born → the scene takes over
-  var M0 = .03, M1 = .75, CALM0 = .72, CALM1 = .85, RING0 = .78, RING1 = .92, HAND0 = .92, HAND1 = .99;
+  // phases on the sprung progress: knead → still the flesh → the scene takes over
+  var M0 = .03, M1 = .75, CALM0 = .72, CALM1 = .85, HAND0 = .92, HAND1 = .99;
 
   // ---------- frame ----------
   var HEART0 = 3.15;   // first heartbeat (s): the moment the name is whole
@@ -329,22 +328,6 @@
     if (GPU) GPU.end();
   }
 
-  // ---------- the ring is born out of the rim, glyph by glyph, on the scene's own ring (same element, same place) ----------
-  var glyphs = ringEl ? ringEl.children : [], ringShown = -1;
-  function ring(r, sg) {
-    if (!glyphs.length || !sg) return;
-    var key = r <= 0 ? 0 : r >= 1 ? 1 : -2;
-    if (key === ringShown && key !== -2) return; ringShown = key;
-    var Rr = sg.R * 1.12 * sg.bs;
-    for (var n = 0; n < glyphs.length; n++) {
-      var el = glyphs[n].style;
-      if (r >= 1) { el.removeProperty("opacity"); el.removeProperty("--rr"); el.removeProperty("color"); continue; }
-      var kk = (n / 3) | 0, order = ((kk * 7) % 16) / 16, a0 = clamp((r - order * .55) / .45);
-      if (a0 <= 0) { el.opacity = "0"; continue; }
-      el.opacity = "1"; el.setProperty("--rr", lerp(sg.R * .9, Rr, back(a0)).toFixed(2) + "px"); el.color = TONES[a0 < .25 ? 1 : a0 < .55 ? 2 : 3];
-    }
-  }
-
   // ---------- drivers ----------
   var ptr = null, last = -1, t0 = 0, running = false, hidden = false;
   function advance(t, raw, m, calm) { // fixed substeps → the same motion whatever the frame rate
@@ -362,7 +345,6 @@
     if (past > 0 && PH.ps < 1) { PH.ps = Math.max(PH.ps, lerp(PH.ps, 1, past)); }   // already into About: the opening must not trail behind
     var ps = clamp(PH.ps, 0, 1.2), x = Math.max(sm((ps - HAND0) / (HAND1 - HAND0)), past);
     STATE.x = x;
-    ring(clamp((ps - RING0) / (RING1 - RING0)), sg);
     var settled = raw >= 1 && Math.abs(PH.ps - 1) < 1e-3 && Math.abs(PH.pv) < 1e-3 && x >= 1;
     // no crossfade: once the scene has drawn the SUN (the same pixels, same flesh) the opening simply steps aside
     if (x >= 1 || (x > 0 && STATE.sunDrawn)) { if (!hidden) { cv.style.visibility = "hidden"; hidden = true; } }
@@ -386,7 +368,7 @@
     // opened at the top: the cells are born; arriving mid-page (a link, a restored scroll): the name is already whole
     var atTop = !location.hash && scrollY <= 2;
     t0 = performance.now() - (atTop ? 0 : HEART0 * 1000); STATE.t0 = t0;   // the SUN keeps the flesh on this clock after the handoff
-    PH.ps = rawProgress(); ring(0, geo()); ringShown = -1;
+    PH.ps = rawProgress();
     addEventListener("scroll", wake, { passive: true });
     addEventListener("pointermove", function (e) { if (e.pointerType === "mouse") ptr = { x: e.clientX, y: e.clientY }; wake(); }, { passive: true });
     document.addEventListener("pointerleave", function () { ptr = null; });

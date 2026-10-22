@@ -38,8 +38,8 @@
   // the strands of flesh across the open mouth: where they hang (across its width), how wide, and how far open it is when each one snaps
   var STR = [[-.6, 1.5, .34], [-.38, 2.4, .58], [-.17, 1.8, .8], [.02, 2.8, .95], [.2, 1.6, .5], [.4, 2.2, .7], [.6, 1.4, .42]];
   var EXPORT = window.SUN_ATTACK = { progress: 0, held: false, eaten: false, recede: 0 };
-  var OUT = { cx: 0, cy: 0, R: 1, ca: 1, sa: 0, qa: 1, qp: 1, shiver: 0, beat: 0, bpm: 60, jx: 0, jy: 0, agit: 0, ringK: 1, ringO: 1, fear: 0,
-              attack: 0, heat: 0, tense: 0, thorn: { g: 0, lx: 1, ly: 0, len: .3 },
+  var OUT = { cx: 0, cy: 0, R: 1, ca: 1, sa: 0, qa: 1, qp: 1, shiver: 0, beat: 0, bpm: 60, jx: 0, jy: 0, agit: 0, fear: 0,
+              attack: 0, heat: 0, thorn: { g: 0, lx: 1, ly: 0, len: .3 },
               mouth: { open: 0, W: .5, HU: 0, HL: 0, y: .12, wob: 0, str: [] }, dark: 0, vis: 1, inside: 0, pk: { x: 0, y: 0, dx: 0, dy: 0, s: 1 } };
   for (var si = 0; si < STR.length; si++) { S.snap.push(-1); OUT.mouth.str.push({ u: STR[si][0], w: STR[si][1], st: 0, rt: 0 }); }
 
@@ -139,7 +139,6 @@
     OUT.vis = done ? (rc0 > 0 ? 1 : 0) : 1 - sm((gp - .75) / .2);   // sated, it comes back up out of the dark
     OUT.inside = sm((gp - .6) / .3) * (1 - sm(rc0 / .7));
     OUT.agit = lerp(Math.max(F * .55, ten * .85, mo * .25), .08, rc);
-    OUT.ringK = lerp(1 - .12 * F - .16 * ten, 1, rc); OUT.ringO = done ? sm((rc0 - .3) / .7) : 1 - sm(eng / .35); OUT.tense = ten * (1 - rc);   // the ring draws in and holds its breath
     // handoff
     var held = mopen > .98 && rc <= 0, eaten = gp >= .56;
     EXPORT.progress = mopen; EXPORT.recede = rc;   // progress: how far the mouth is open
