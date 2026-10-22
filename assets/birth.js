@@ -29,6 +29,17 @@
   // ---------- glyphs: the flesh material (flesh.js), shared with the SUN ----------
   var GLYPHS, gi = {}, AT = null, GPU = null, g = null;
 
+  // the flesh is opaque: under each of its cells a tile of the page's own colour, so whatever scrolls under the frame is hidden
+  // by it (one extra atlas tile, row 5, filled with the page background; it follows the background's tint toward a work)
+  var BACK = 0, bgCol = "", bgTick = 0;
+  function backing(force) {
+    if (!force && ++bgTick % 30) return;
+    var c = getComputedStyle(document.body).backgroundColor || "#141018";
+    if (c === bgCol && !force) return;
+    bgCol = c; AT = A.atlas(GLYPHS, TONES.concat([c]), L.cw, L.ch, 600, L.dpr);   // a new atlas (the GPU keeps its own copy of each)
+    var x = AT.canvas.getContext("2d"); x.fillStyle = c; x.fillRect(BACK * AT.tw, 5 * AT.th, AT.tw, AT.th);
+  }
+
   // ---------- layout ----------
   var L = {};
   function layout() {
@@ -38,8 +49,8 @@
           tx: W / 2, ty: mobile ? H * .46 : H / 2, sx: W / 2, sy: H / 2, R: Math.min(W, H) * (mobile ? .36 : .34), Hv: innerHeight || H };
     L.cx = L.tx; L.cy = L.ty;
     cv.width = Math.round(W * dpr); cv.height = Math.round(PH * dpr); if (GPU) GPU.size(cv.width, cv.height);
-    var GL = FL.glyphs(); GLYPHS = GL.chars; gi = GL.gi;
-    AT = A.atlas(GLYPHS, TONES, cw, ch, 600, dpr);
+    var GL = FL.glyphs(); GLYPHS = GL.chars + " "; gi = GL.gi; BACK = GLYPHS.length - 1;
+    backing(true);
     buildText(); buildTree(); buildBalls(); if (!reduce) frameInset();
     var n = L.cols * L.rows;
     L.D = new Float32Array(n); L.Hh = new Float32Array(n); L.F = new Float32Array(n); L.FX = new Float32Array(n); L.FY = new Float32Array(n);
@@ -232,7 +243,8 @@
     var A0 = Math.PI * L.R * L.R * (1 + .25 * sm(f / .4)), W = L.W, Hv = L.Hv, s = io(f / .4), g = io((f - .4) / .6), long = W >= Hv, a1 = .3 * Math.max(W, Hv);
     function bar(a) { return (-4 * a + Math.sqrt(16 * a * a + 4 * Math.PI * A0)) / (2 * Math.PI); }   // a bar this long, as thick as the area allows
     var a = s * a1, bx = long ? a : 0, by = long ? 0 : a, r = bar(a);
-    if (g > 0) { var E = frameEnd(); bx = lerp(long ? a1 : 0, E.bx, g); by = lerp(long ? 0 : a1, E.by, g); r = lerp(bar(a1), E.r, g); }
+    var E = frameEnd(); G.band = E.r;
+    if (g > 0) { bx = lerp(long ? a1 : 0, E.bx, g); by = lerp(long ? 0 : a1, E.by, g); r = lerp(bar(a1), E.r, g); }
     G.cx = lerp(L.sx, W / 2, g); G.cy = lerp(L.sy, Hv / 2, g); G.bx = bx; G.by = by; G.r = r;
     var Aout = area(bx, by, r), t = Infinity;
     if (Aout > A0 * 1.0005) { // the hole: as deep in from the outline as keeps the area
@@ -245,15 +257,17 @@
   }
   function frameInset() { // how far in from the screen's edges the settled frame can reach: content stays inside that
     frameGeo(1); var E = frameEnd(), fi = G.t - G.rb * .3 - E.o;
-    for (var i = 0; i < B.n; i++) fi = Math.max(fi, (.35 + .45 * B.h[i]) * G.t + G.rb * B.sz[i] * .8 * 1.12 + G.rb * .12 - E.o);
+    for (var i = 0; i < B.n; i++) fi = Math.max(fi, ringDepth(i) * G.t + G.rb * B.sz[i] * .8 * 1.12 + G.rb * .12 - E.o);
     L.fi = Math.ceil(fi + 6); root.style.setProperty("--fi", L.fi + "px");
   }
   function lumpBody(cx, cy) { G.cx = cx; G.cy = cy; G.bx = 0; G.by = 0; G.r = L.R; G.t = Infinity; G.thick = L.R; G.rb = L.R * .27; G.ring = 0; return G; }
+  // how deep in from the outline a ball sits once the body is a ring: big ones nearer the outside, so none reaches far in
+  function ringDepth(i) { var rr = G.rb * B.sz[i] * (1 - .2 * G.ring); return clamp(Math.min(.25 + .55 * B.h[i], (1.25 * G.thick - rr) / G.thick), .1, 1); }
   function placeBalls(tt, beat) {
     var n = B.n, e, bx, by, r, wob = G.rb * .12, br = 1 + .05 * beat, tc = Math.ceil(L.W / TS) + 1, tr = Math.ceil(L.PH / TS) + 1, nt = tc * tr;
     var split = G.ring * .5 / B.half, shrink = 1 - .2 * G.ring;
     for (var i = 0; i < n; i++) {
-      var dr = lerp(B.dd[i], .35 + .45 * B.h[i], G.ring);
+      var dr = lerp(B.dd[i], ringDepth(i), G.ring);
       e = dr * G.thick;
       if (e <= G.r) { bx = G.bx; by = G.by; r = G.r - e; } else { bx = Math.max(0, G.bx - (e - G.r)); by = Math.max(0, G.by - (e - G.r)); r = 0; }
       var p = onBox(bx, by, r, B.u[i] + (i < B.half ? -split : split));
@@ -348,7 +362,11 @@
     }
     var dO = rbox(x - G.cx, y - G.cy, G.bx, G.by, G.r), dc = G.t < 1e8 ? Math.max(dO, -dO - G.t) : dO;
     if (dc > G.rb * 2 + L.cw * 9) { OUT.d = 1e4; OUT.fold = 0; OUT.dep = G.rb; return OUT; }
-    var lo = lumps(x, y);
+    var lo = lumps(x, y), k = sm((f - .85) / .15);
+    if (k > 0) { // settled, the frame's outer side runs past the screen's edges everywhere: nothing shows between it and the edge
+      var eb = Math.min(x, L.W - x, y, L.Hv - y) - G.band * .4 * k + (1 - k) * 1e3;
+      lo.d = smin(lo.d, eb, L.cw * 2);
+    }
     OUT.d = lo.d + L.cw * lerp(1, .6, f) * fleshNoise(x, y, t) - beat * L.cw * lerp(1.3, .8, f);
     OUT.fold = lo.fold; OUT.dep = G.rb; return OUT;
   }
@@ -474,9 +492,17 @@
     }
   }
   function paint() {
-    var cols = L.cols, rows = L.rows, cw = L.cw, ch = L.ch, out = L.code, tw = AT.tw, th = AT.th, dpr = L.dpr, j, i, cc;
-    if (GPU) { GPU.clear(); GPU.begin(AT, tw, th, 1); }
-    else { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); }
+    var cols = L.cols, rows = L.rows, cw = L.cw, ch = L.ch, out = L.code, tw = AT.tw, th = AT.th, dpr = L.dpr, j, i, cc, D = L.D;
+    if (GPU) GPU.clear(); else { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); }
+    if (!reduce) { // the opaque underside first (one pixel taller, so rows that round apart leave no seam)
+      backing(false);
+      if (GPU) GPU.begin(AT, tw, th + 1, 1);
+      for (j = 0; j < rows; j++) { var by = Math.round(j * ch * dpr);
+        for (i = 0; i < cols; i++) { if (D[j * cols + i] > 0) continue; var bx = Math.round(i * cw * dpr);
+          if (GPU) GPU.add(BACK, 5, bx, by); else g.drawImage(AT.canvas, BACK * tw, 5 * th, tw, th, bx, by, tw, th + 1); } }
+      if (GPU) GPU.end();
+    }
+    if (GPU) GPU.begin(AT, tw, th, 1);
     for (j = 0; j < rows; j++) { var yy = Math.round(j * ch * dpr);
       for (i = 0; i < cols; i++) { cc = out[j * cols + i]; if (!cc) continue; var g2 = cc >> 3, tone = cc & 7; if (!g2) continue;
         var xx = Math.round(i * cw * dpr);
