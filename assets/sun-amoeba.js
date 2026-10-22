@@ -26,7 +26,7 @@
   var NP = 6, on = new Uint8Array(NP), kind = new Uint8Array(NP), ret = new Uint8Array(NP);
   var tx = new Float32Array(NP), ty = new Float32Array(NP), w = new Float32Array(NP), age = new Float32Array(NP), life = new Float32Array(NP), gx = new Float32Array(NP), gy = new Float32Array(NP);
   var OUT = { n: NP, on: on, tx: tx, ty: ty, w: w, cs: 1, busy: 0, lead: -1, lux: 1, luy: 0, flow: 0 };
-  var FLAT = .38, S = { side: 1, last: -1, cs: 1, lead: -1, sideT: 0, sideN: 0, calm: 0, ax: 0, ay: 0, lux: 1, luy: 0 };
+  var FLAT = .38, S = { flow: 0, side: 1, last: -1, cs: 1, lead: -1, sideT: 0, sideN: 0, calm: 0, ax: 0, ay: 0, lux: 1, luy: 0 };
   function spawn(k, ux, uy, ww, r, Px, Py, lf) {
     for (var q = 0; q < NP; q++) if (!on[q]) { on[q] = 1; kind[q] = k; ret[q] = 0; tx[q] = ux * r * .5; ty[q] = uy * r * .5; w[q] = ww; age[q] = 0; life[q] = lf; gx[q] = Px; gy[q] = Py; return q; }
     return -1;
@@ -103,6 +103,8 @@
     var csT = Math.sqrt(Math.max(.55, 1 - area / (Math.PI * R * R)));
     S.cs = area > 0 || S.cs !== 1 ? approach(S.cs, csT, 5, dt) : 1;
     if (Math.abs(S.cs - 1) < 1e-4 && area === 0) S.cs = 1;
+    S.flow = approach(S.flow, busy > .05 && lead >= 0 ? 1 : 0, 1.2, dt);   // the inside starts streaming toward the reaching pod, slowly
+    OUT.flow = S.flow < 1e-3 ? 0 : S.flow;
     OUT.cs = S.cs; OUT.busy = busy; OUT.lead = lead; OUT.lux = S.lux; OUT.luy = S.luy;
     return OUT;
   }

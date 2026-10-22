@@ -174,7 +174,7 @@
   // ---------- the SUN in the opening's flesh (flesh.js): one grid from the screen's top left, the same glyphs, light and tones ----------
   // everything it does is a deformation of that one body: its signed distance field is squashed and shaken, never redrawn
   var FL = window.FLESH, FG = null, FAT = null, SWILD = "SUN01/#:<>*", SWG = 0, scw = 7, sch = 12.25, scols = 0, srows = 0;
-  var SD = null, SH = null, SF = null, SL = null, THL = new Float32Array(1024), TN = 1024, PDX = new Float32Array(8), PDY = new Float32Array(8), PDW = new Float32Array(8);
+  var SD = null, SH = null, SF = null, SL = null, THL = new Float32Array(1024), TN = 1024, PDX = new Float32Array(8), PDY = new Float32Array(8), PDW = new Float32Array(8), FLB = new Float32Array(15);
   function buildFlesh() {
     scw = FL.cellW(W); sch = scw * 1.75; scols = Math.ceil(W / scw); srows = Math.ceil(PH / sch);
     FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
@@ -242,12 +242,21 @@
       var d0 = (rr0 - cs) * R - sh;
       return pdN ? pods(x - cx, y - cy, d0) : d0;
     }
+    var flw = AM ? AM.flow : 0, flx = AM ? AM.lux : 1, fly = AM ? AM.luy : 0, fli = 1 / (R * R * .05), fll = Math.hypot(flx, fly) || 1; flx /= fll; fly /= fll;
+    if (flw > 0) for (var b0 = 0; b0 < 5; b0++) { // each swell rises in the middle, drifts out along the pod and fades
+      var ph = (tt * .1 + b0 / 5) % 1; FLB[b0 * 3] = Math.pow(Math.sin(ph * Math.PI), 2); FLB[b0 * 3 + 1] = (-.35 + 1.2 * ph) * R; FLB[b0 * 3 + 2] = (A.hash(b0, 2.9) - .5) * .7 * R;
+    }
     SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0);
     var dep = R * .95, swell = bt * cw * 1.6, lift0 = bt * .065, flow = Math.floor(tt * 3), j, i, k;
     for (j = j0; j < j1; j++) for (i = i0; i < i1; i++) {
       k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, d = sdf(x, y) - swell;
       if (na > 0) d += na * FL.noise(x, y, tt);
       SD[k] = d; SH[k] = FL.height(d, dep); SL[k] = FM.lift;
+      if (flw > 0 && d < 0) { // the inside streaming toward the reaching pod: a few soft, slow swells of light, never a sparkle
+        var fx = x - cx, fy = y - cy, fa = fx * flx + fy * fly, fp = -fx * fly + fy * flx, fl = 0;
+        for (var b = 0; b < 5; b++) { var u = FLB[b * 3], ex = fa - FLB[b * 3 + 1], ey = fp - FLB[b * 3 + 2]; fl += u * Math.exp(-(ex * ex + ey * ey) * fli); }
+        SL[k] += .13 * flw * fl;
+      }
     }
     var dark = FS ? FS.dark : 0, hide = FS ? 1 - FS.vis : 0, ins = FS ? FS.inside : 0;
     function inside(i, j) { // swallowed: nothing but the dark of its insides, the walls just visible as they squeeze
