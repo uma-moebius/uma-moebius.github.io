@@ -214,11 +214,12 @@
     var PKk = FS ? FS.pk : null, pkOn = PKk && (Math.abs(PKk.dx) + Math.abs(PKk.dy) > .3), pkx = 0, pky = 0, pks = 1;
     if (pkOn) { pkx = cx + PKk.x; pky = cy + PKk.y; pks = 1 / (PKk.s * PKk.s); }
     function pods(ex, ey, d) { // the body (distance d) joined smoothly with each pod; (ex, ey) from the middle of the body
+      // each pod tapers toward its tip, so its flanks never run along a row of glyphs
       for (var n = 0; n < pdN; n++) {
         var bax = PDX[n], bay = PDY[n], bb = bax * bax + bay * bay || 1, mx = ex - bax * .5, my = ey - bay * .5;
         if (Math.sqrt(mx * mx + my * my) - Math.sqrt(bb) * .5 - PDW[n] > d + pk0) continue;   // too far to change anything here
         var h = (ex * bax + ey * bay) / bb; h = h < 0 ? 0 : h > 1 ? 1 : h;
-        var qx = ex - bax * h, qy = ey - bay * h, dp = Math.sqrt(qx * qx + qy * qy) - PDW[n] * (.82 + .18 * h), dk = pk0 - Math.abs(d - dp);
+        var qx = ex - bax * h, qy = ey - bay * h, dp = Math.sqrt(qx * qx + qy * qy) - PDW[n] * (1 - .35 * h * h), dk = pk0 - Math.abs(d - dp);
         d = dk > 0 ? Math.min(d, dp) - dk * dk * .25 / pk0 : Math.min(d, dp);
       }
       return d;

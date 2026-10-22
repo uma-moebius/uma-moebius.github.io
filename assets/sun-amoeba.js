@@ -26,7 +26,7 @@
   var NP = 6, on = new Uint8Array(NP), kind = new Uint8Array(NP), ret = new Uint8Array(NP);
   var tx = new Float32Array(NP), ty = new Float32Array(NP), w = new Float32Array(NP), age = new Float32Array(NP), life = new Float32Array(NP), gx = new Float32Array(NP), gy = new Float32Array(NP);
   var OUT = { n: NP, on: on, tx: tx, ty: ty, w: w, cs: 1, busy: 0, lead: -1, lux: 1, luy: 0, flow: 0 };
-  var S = { last: -1, cs: 1, lead: -1, sideT: 0, sideN: 0, calm: 0, ax: 0, ay: 0, lux: 1, luy: 0 };
+  var FLAT = .38, S = { side: 1, last: -1, cs: 1, lead: -1, sideT: 0, sideN: 0, calm: 0, ax: 0, ay: 0, lux: 1, luy: 0 };
   function spawn(k, ux, uy, ww, r, Px, Py, lf) {
     for (var q = 0; q < NP; q++) if (!on[q]) { on[q] = 1; kind[q] = k; ret[q] = 0; tx[q] = ux * r * .5; ty[q] = uy * r * .5; w[q] = ww; age[q] = 0; life[q] = lf; gx[q] = Px; gy[q] = Py; return q; }
     return -1;
@@ -51,6 +51,11 @@
     if (src) {
       sx = src.x - g.left - g.cx; sy = src.y - g.top - g.cy; dist = Math.hypot(sx, sy) || 1; ux = sx / dist; uy = sy / dist;
       sig = dist > rc + R * .06 ? sm(1 - (dist - R) / (R * 1.5)) : 0;   // close, and not on the body itself
+      // a pod lying flat draws long flat rows in the flesh: keep it off the horizontal (which side, with some hysteresis), and let it sway slowly
+      var an0 = Math.atan2(uy, ux);
+      if (uy > .2) S.side = 1; else if (uy < -.2) S.side = -1;
+      if (Math.abs(uy) < Math.sin(FLAT)) an0 = ux > 0 ? S.side * FLAT : Math.PI - S.side * FLAT;
+      an0 += .07 * Math.sin(t * .45); ux = Math.cos(an0); uy = Math.sin(an0);
     }
     // it settles: once the pointer has rested a while, no more new pods, the reaching one just holds
     var mv = src ? Math.hypot(sx - S.ax, sy - S.ay) : 0; S.ax = sx; S.ay = sy;
@@ -58,7 +63,7 @@
     var vext = R * 1.1, vret = R * (g.round ? 2.6 : .8);
     if (sig > .02) {
       if (S.lead >= 0) { var lx = tx[S.lead], ly = ty[S.lead], ll = Math.hypot(lx, ly) || 1; if ((lx * ux + ly * uy) / ll < Math.cos(.8)) { ret[S.lead] = 1; S.lead = -1; } }
-      if (S.lead < 0) S.lead = spawn(0, ux, uy, R * .27, rc, 0, 0, 1e9);
+      if (S.lead < 0) S.lead = spawn(0, ux, uy, R * .3, rc, 0, 0, 1e9);
       if (S.lead >= 0) {
         var q0 = S.lead, wl = w[q0], reach = Math.min(dist - R * .1 - wl * .8, rc + R * .55 * sig), f0 = clear(ux * reach, uy * reach, wl * .6, g);
         reach = Math.max(rc * .6, reach * f0); gx[q0] = ux * reach; gy[q0] = uy * reach;
@@ -67,7 +72,8 @@
       if (S.calm < 1.5) {
         S.sideT -= dt;
         if (S.sideT <= 0) {
-          var hs = hash(S.sideN, 1.7), an = Math.atan2(uy, ux) + (S.sideN & 1 ? 1 : -1) * (.65 + .55 * hs), cu = Math.cos(an), su = Math.sin(an);
+          var hs = hash(S.sideN, 1.7), an = Math.atan2(uy, ux) + (S.sideN & 1 ? 1 : -1) * (.65 + .55 * hs); if (Math.abs(Math.sin(an)) < Math.sin(FLAT)) an = Math.cos(an) > 0 ? (Math.sin(an) < 0 ? -FLAT : FLAT) : Math.PI - (Math.sin(an) < 0 ? -FLAT : FLAT);
+          var cu = Math.cos(an), su = Math.sin(an);
           var rs = rc + R * (.12 + .16 * hash(S.sideN, 3.3)) * sig, fs = clear(cu * rs, su * rs, R * .1, g);
           if (fs > .9) spawn(1, cu, su, R * (.17 + .05 * hash(S.sideN, 4.4)), rc, cu * rs, su * rs, .9 + .7 * hash(S.sideN, 5.1));
           S.sideT = .7 + .6 * hash(S.sideN, 9.1); S.sideN++;
