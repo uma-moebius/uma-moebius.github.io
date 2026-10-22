@@ -4,7 +4,7 @@
    (the same mass: it thins as it spreads) stretches long, opens in the middle and spreads to the edges of the screen, where
    it stays as a frame of flesh around everything that follows. A finger or the pointer sticks to the body, stretches it and lets go.
    One signed field (px, negative = flesh) is evaluated per character cell and drawn as glyphs on one fixed canvas, so the
-   body stays the same body all the way down. Reduced motion: the formed name, still. */
+   body stays the same body all the way down. Reduced motion: the formed name, still, and the lumpy body, still, in About. */
 (function () {
   "use strict";
   var A = window.ASCII, FL = window.FLESH, root = document.documentElement;
@@ -508,10 +508,21 @@
   function wake() { if (!running && STATE.on && !document.hidden) { running = true; requestAnimationFrame(frame); } }
 
   function start() {
-    if (reduce) { // the formed name, still, where the hero was
+    if (reduce) { // the formed name, still, where the hero was; the lumpy body, still, in About's free space (never in Works)
+      var hero = cv, held = document.querySelector(".birth__canvas"), works = document.querySelector(".works");
       g = cv.getContext("2d"); if (!g) return;
-      var fit = function () { layout(); INV = null; render(HEART0 + .5, 0); }; fit();
-      var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(fit, 120); });
+      var fit = function () {
+        cv = hero; g = cv.getContext("2d"); layout(); INV = null; render(HEART0 + .5, 0);
+        var sg = window.SCENE_GEO && window.SCENE_GEO();
+        if (!held || !sg) return;
+        cv = held; g = cv.getContext("2d"); if (!g) return;
+        layout(); L.sx = sg.cx; L.sy = sg.cy; L.R = sg.R * .8; INV = null; render(HEART0 + .5, (M1 + F0) / 2);
+      };
+      var show = function () { root.classList.toggle("still-body", !!works && works.getBoundingClientRect().top >= innerHeight * .5); };
+      var tries = 0, wait = function () { if (!(window.SCENE_GEO && window.SCENE_GEO()) && tries++ < 100) { setTimeout(wait, 40); return; } fit(); show(); };
+      wait();
+      addEventListener("scroll", show, { passive: true });
+      var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { fit(); show(); }, 120); });
       return;
     }
     GPU = window.ASCII_GL ? window.ASCII_GL(cv, function () { GPU = null; g = fresh(); layout(); wake(); }, wake, false) : null;

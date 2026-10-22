@@ -198,3 +198,4 @@ html.birth .works__pin { --sw: min(calc(100vh - 2 * var(--fi, 0px) - var(--row) 
   --x0: calc((100vw - 2 * var(--fi, 0px) - var(--iw) - var(--wg) - var(--sw)) / 2); }
 html.birth main > .shell:last-child, html.birth .site-footer { padding-inline: max(var(--gutter), calc(var(--fi, 0px) + 8px - max(0px, (100vw - 1200px) / 2))); }
 html.birth .site-footer { padding-bottom: calc(var(--row) * 2 + var(--fi, 0px)); }
+html.still-body .birth__canvas { visibility: visible; }   /* reduced motion: the body, still, while About is on screen */
