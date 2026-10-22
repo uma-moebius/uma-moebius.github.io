@@ -1,6 +1,5 @@
 /* The SUN is me, met by chance. A visitor coming close frightens it: it shrinks, shivers and turns away while its heart
-   races, and its flesh pushes out thorns, longest toward the visitor and longer the longer it stays. Leave and they sink back,
-   and it calms back to 60 BPM and watches. Scrolling on, it cowers, then its flesh parts slowly into a mouth with thick lips,
+   races. Leave and it calms back to 60 BPM and watches. Scrolling on, it cowers, then its flesh parts slowly into a mouth with thick lips,
    strands of the same flesh stretching between them, thinning, sagging and snapping one by one. Then it eats the visitor:
    it lunges, the mouth grows past the screen's edges and the lips close over it. Dark inside. Sated, it comes back up at its
    calm size, the heart still a little quick, and settles.
@@ -73,10 +72,8 @@
     S.pl = held0 ? { x: ptr.x, y: ptr.y } : null;
     var PK = OUT.pk; PK.x = S.C[0]; PK.y = S.C[1]; PK.dx = S.D[0]; PK.dy = S.D[1]; PK.s = R * .5;
 
-    // ---------- thorns (pointer driven): they push out with the visitor's nearness, faster and longer as it lingers ----------
-    var linger = Math.min(1, S.dwell / 1.6), want = clamp(p * 1.15) * (1 + .35 * linger);
-    S.grow = approach(S.grow, want, want > S.grow ? 2.2 + 4 * linger : 2.4, dt);
-    var TH = OUT.thorn; TH.g = S.grow; TH.lx = lx; TH.ly = ly; TH.len = .32 + .28 * linger;
+    // ---------- thorns: a visitor near no longer brings them out ----------
+    var TH = OUT.thorn; TH.g = 0; TH.lx = lx; TH.ly = ly; TH.len = .32;
 
     // ---------- the scroll: it cowers and braces, then its flesh parts into a mouth, slowly, heavily ----------
     var ten = sm(a / .3) * (1 - sm((a - .3) / .4));
