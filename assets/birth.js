@@ -341,6 +341,11 @@
   }
 
   function frameBody(x, y, t, beat, f) { // the body on its way to the frame, and the frame
+    if (Math.abs(SQ.s) > .002 && f > .8) { // a pointer near the frame pushes the flesh aside: it gives way and heaps up round the dent
+      var ex = x - SQ.x, ey = y - SQ.y, rr = Math.sqrt(ex * ex + ey * ey) || 1e-3, sg = L.fi * .9, q = rr / sg;
+      var push = SQ.s * sm((f - .8) / .2) * .38 * sg * q * Math.exp(.5 - q * q * .5) / rr;
+      x -= ex * push; y -= ey * push;
+    }
     var dO = rbox(x - G.cx, y - G.cy, G.bx, G.by, G.r), dc = G.t < 1e8 ? Math.max(dO, -dO - G.t) : dO;
     if (dc > G.rb * 2 + L.cw * 9) { OUT.d = 1e4; OUT.fold = 0; OUT.dep = G.rb; return OUT; }
     var lo = lumps(x, y);
@@ -348,7 +353,19 @@
     OUT.fold = lo.fold; OUT.dep = G.rb; return OUT;
   }
 
-  // ---------- physics: sprung scroll, sticky flesh ----------
+  // ---------- physics: sprung scroll, sticky flesh, the frame giving way to a pointer ----------
+  var SQ = { x: 0, y: 0, s: 0, v: 0, on: false };
+  function squish(dt, f) { // s springs toward 1 while the pointer is over or near the frame, and wobbles back when it leaves
+    var near = 0;
+    if (ptr && f > .8) {
+      var e = Math.min(ptr.x, L.W - ptr.x, ptr.y, L.Hv - ptr.y);
+      near = 1 - sm((e - L.fi) / (L.fi * 1.2));
+      if (!SQ.on) { SQ.x = ptr.x; SQ.y = ptr.y; SQ.on = true; }
+      var k = 1 - Math.exp(-dt * 14); SQ.x += (ptr.x - SQ.x) * k; SQ.y += (ptr.y - SQ.y) * k;
+    } else SQ.on = false;
+    var w = 2 * Math.PI * 2.2, z = .32, acc = -w * w * (SQ.s - near) - 2 * z * w * SQ.v;
+    SQ.v += acc * dt; SQ.s += SQ.v * dt;
+  }
   var PH = { ps: 0, pv: 0, D: [0, 0], Dv: [0, 0], C: [0, 0], att: false, last: null, t: 0 };
   function poke(x, y) { // pointer warp: the flesh around C is carried by D, falling off with a gaussian
     var s = L.R * .5, ex = x - PH.C[0], ey = y - PH.C[1], f = Math.exp(-(ex * ex + ey * ey) / (s * s));
@@ -474,7 +491,7 @@
     var span = Math.min(.1, t - last), n = Math.max(1, Math.ceil(span / (1 / 120))), dt = span / n;
     if (m > 0 && (!INV || INV.m !== m)) morphTables(m);
     if (m > .5 && f <= 0) { lumpBody(lerp(L.tx, L.sx, io(m)), lerp(L.ty, L.sy, io(m))); placeBalls(t, 0); }
-    for (var q = 0; q < n; q++) { PH.t = last + dt * (q + 1); step(dt || 1 / 120, raw, ptr, m, f); }
+    for (var q = 0; q < n; q++) { PH.t = last + dt * (q + 1); step(dt || 1 / 120, raw, ptr, m, f); squish(dt || 1 / 120, f); }
     last = t;
   }
   function frame(now) {
