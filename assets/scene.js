@@ -1,6 +1,6 @@
 /* One character field — the opening's name kneaded into the SUN (birth.js) → the SUN, in the very same flesh (flesh.js: same cells,
    glyphs, light and tones), so the sphere never turns into another drawing. Calm, its heart pushes thorns out of the rim
-   (sun-fear.js); it reaches toward the pointer with pseudopods (sun-amoeba.js); scrolling on, it is taken in (dark inside), comes back sated and stays dimmed behind Works → a setting sun at the footer. Input velocity drives glitch. */
+   (sun-fear.js); scrolling on, it is taken in (dark inside), comes back sated and stays dimmed behind Works → a setting sun at the footer. Input velocity drives glitch. */
 (function () {
   var A = window.ASCII;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -96,7 +96,6 @@
     var p = pin.getBoundingClientRect();
     function rr(el) { var b = el.getBoundingClientRect(); return { l: b.left - p.left, r: b.right - p.left, t: b.top - p.top, b: b.bottom - p.top }; }
     var la = rr(label), bi = rr(bio), li = rr(links), ro = rr(readout), x0, x1, y0, y1;
-    AV = [la, bi, li, ro].map(function (b) { return [b.l - 10, b.t - 10, b.r + 10, b.b + 10]; });   // the pods keep clear of the text
     // readout + label sit at the top; bio / links in the bottom corners (desktop) or under the label (mobile)
     var half;
     if (!small) { // on the page axis; as large as the height allows, shrunk only where the circle would reach the bio / links boxes
@@ -123,7 +122,7 @@
 
   var rot = 0, lastRead = "";
   var SUN_END = .36, ATK_END = .58, ENG_END = .68, REC0 = .82, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → (held) → taken in, dark inside → sated, into Works
-  var FEAR = reduce ? null : window.SUN_FEAR || null, AMO = reduce ? null : window.SUN_AMOEBA || null, AV = [], bgL = 0, bgT = 0;
+  var FEAR = reduce ? null : window.SUN_FEAR || null, bgL = 0, bgT = 0;
   function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
     var dt = moT ? Math.min(.05, (t - moT) / 1000) : 0, w = 1 / .12; moT = t;
     if (!dt || target === 0 && moS < 1e-4) { moS = target; moV = 0; return moS; }
@@ -148,8 +147,7 @@
     var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
     var aIn = reduce ? 0 : birthOn() ? BR.x : rise;
     var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0, rec: rec, gulp: pf >= ENG_END ? 1 : pf < ENG_END - .04 ? -1 : 0 }) : null;
-    var am = AMO && f ? AMO.step(t / 1000, { cx: f.cx, cy: f.cy, R: f.R, left: bgL, top: bgT, live: f.live, round: f.round, avoid: AV }) : null;
-    return { f: f, am: am, atk: atk, dim: dim,
+    return { f: f, atk: atk, dim: dim,
       pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : birthOn() ? BR.x : rise,   // static mode: shown only once the field is pinned
       z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: f ? f.R : R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
       cx: f ? f.cx : fcx + (W / 2 - fcx) * k, cy: f ? f.cy : fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
@@ -174,7 +172,7 @@
   // ---------- the SUN in the opening's flesh (flesh.js): one grid from the screen's top left, the same glyphs, light and tones ----------
   // everything it does is a deformation of that one body: its signed distance field is squashed and shaken, never redrawn
   var FL = window.FLESH, FG = null, FAT = null, SWILD = "SUN01/#:<>*", SWG = 0, scw = 7, sch = 12.25, scols = 0, srows = 0;
-  var SD = null, SH = null, SF = null, SL = null, THL = new Float32Array(1024), TN = 1024, PDX = new Float32Array(8), PDY = new Float32Array(8), PDW = new Float32Array(8), FLB = new Float32Array(15);
+  var SD = null, SH = null, SF = null, SL = null, THL = new Float32Array(1024), TN = 1024;
   function buildFlesh() {
     scw = FL.cellW(W); sch = scw * 1.75; scols = Math.ceil(W / scw); srows = Math.ceil(PH / sch);
     FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
@@ -192,10 +190,7 @@
       var sj = Math.floor(t / 25); cx += (A.hash(sj, 1.3) - .5) * shv * R * 1.3; cy += (A.hash(sj, 2.9) - .5) * shv * R * 1.3;   // a fine, fast tremble
     }
     // thorns: the flesh itself is pushed out into spikes; their outward reach by angle is laid out once a frame
-    // pseudopods (sun-amoeba.js): rounded lobes from the middle of the body out to their tips; the round body gives way to them
-    var AM = st.am, pdN = 0, cs = AM ? AM.cs : 1, pk0 = R * .25, preach = 0;
-    if (AM) for (var pq = 0; pq < AM.n; pq++) if (AM.on[pq]) { PDX[pdN] = AM.tx[pq]; PDY[pdN] = AM.ty[pq]; PDW[pdN] = AM.w[pq]; preach = Math.max(preach, Math.hypot(PDX[pdN], PDY[pdN]) + PDW[pdN] - R); pdN++; }
-    var TH = FS ? FS.thorn : null, thG = TH ? TH.g * (AM ? 1 - AM.busy : 1) : 0, thOn = thG > .002;   // reaching, it does not beat out thorns
+    var TH = FS ? FS.thorn : null, thG = TH ? TH.g : 0, thOn = thG > .002;
     if (thOn) {
       THL.fill(0);
       for (var q = 0; q < 40; q++) {   // the heartbeat's thorns: the same all round the rim
@@ -206,24 +201,13 @@
         for (var n = n0; n <= n1; n++) { var e = 1 - Math.abs(n / TN * TAU - th0) / w; if (e <= 0) continue; e = L * Math.pow(e, 1.35); var m = ((n % TN) + TN) % TN; if (e > THL[m]) THL[m] = e; }
       }
     }
-    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + (FS ? Math.abs(FS.pk.dx) + Math.abs(FS.pk.dy) : 0) + cw * 6 + na + Math.max(0, preach);
+    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + (FS ? Math.abs(FS.pk.dx) + Math.abs(FS.pk.dy) : 0) + cw * 6 + na;
     var i0 = Math.max(0, Math.floor((cx - ext) / cw) - 2), i1 = Math.min(cols, Math.ceil((cx + ext) / cw) + 2);
     var j0 = Math.max(0, Math.floor((cy - ext) / ch) - 2), j1 = Math.min(rows, Math.ceil((cy + ext) / ch) + 2);
     var fca = FS ? FS.ca : 1, fsa = FS ? FS.sa : 0, fqa = FS ? FS.qa : 1, fqp = FS ? FS.qp : 1, tsh1 = t * .09, tsh2 = t * .13;
     var FM = { lift: 0 };
     var PKk = FS ? FS.pk : null, pkOn = PKk && (Math.abs(PKk.dx) + Math.abs(PKk.dy) > .3), pkx = 0, pky = 0, pks = 1;
     if (pkOn) { pkx = cx + PKk.x; pky = cy + PKk.y; pks = 1 / (PKk.s * PKk.s); }
-    function pods(ex, ey, d) { // the body (distance d) joined smoothly with each pod; (ex, ey) from the middle of the body
-      // each pod tapers toward its tip, so its flanks never run along a row of glyphs
-      for (var n = 0; n < pdN; n++) {
-        var bax = PDX[n], bay = PDY[n], bb = bax * bax + bay * bay || 1, mx = ex - bax * .5, my = ey - bay * .5;
-        if (Math.sqrt(mx * mx + my * my) - Math.sqrt(bb) * .5 - PDW[n] > d + pk0) continue;   // too far to change anything here
-        var h = (ex * bax + ey * bay) / bb; h = h < 0 ? 0 : h > 1 ? 1 : h;
-        var qx = ex - bax * h, qy = ey - bay * h, dp = Math.sqrt(qx * qx + qy * qy) - PDW[n] * (1 - .35 * h * h), dk = pk0 - Math.abs(d - dp);
-        d = dk > 0 ? Math.min(d, dp) - dk * dk * .25 / pk0 : Math.min(d, dp);
-      }
-      return d;
-    }
     function sdf(x, y) { // signed distance (px) of the deformed body at (x, y)
       if (pkOn) { var ex = x - pkx, ey = y - pky, f = Math.exp(-(ex * ex + ey * ey) * pks); x -= PKk.dx * f; y -= PKk.dy * f; }   // touched: the flesh is drawn out
       var px = (x - cx) / R, py = (y - cy) / R;
@@ -235,16 +219,10 @@
         var xa = (Math.atan2(py, px) / TAU + 1) * TN, ia = Math.floor(xa), fa = xa - ia, e0 = THL[ia % TN], e1 = THL[(ia + 1) % TN], ex = (e0 + (e1 - e0) * fa) * A.smooth((rr0 - .85) / .15);
         if (ex > 0) { // radial distance → distance to the flank (spikes are steep: divide by the slope)
           var sl = (e1 - e0) * TN / TAU / rr0; if (rr0 > 1) FM.lift = .22;
-          var dt0 = ((rr0 - cs - ex) * R - sh) / Math.sqrt(1 + sl * sl);
-          return pdN ? pods(x - cx, y - cy, dt0) : dt0;
+          return ((rr0 - 1 - ex) * R - sh) / Math.sqrt(1 + sl * sl);
         }
       }
-      var d0 = (rr0 - cs) * R - sh;
-      return pdN ? pods(x - cx, y - cy, d0) : d0;
-    }
-    var flw = AM ? AM.flow : 0, flx = AM ? AM.lux : 1, fly = AM ? AM.luy : 0, fli = 1 / (R * R * .05), fll = Math.hypot(flx, fly) || 1; flx /= fll; fly /= fll;
-    if (flw > 0) for (var b0 = 0; b0 < 5; b0++) { // each swell rises in the middle, drifts out along the pod and fades
-      var ph = (tt * .1 + b0 / 5) % 1; FLB[b0 * 3] = Math.pow(Math.sin(ph * Math.PI), 2); FLB[b0 * 3 + 1] = (-.35 + 1.2 * ph) * R; FLB[b0 * 3 + 2] = (A.hash(b0, 2.9) - .5) * .7 * R;
+      return (rr0 - 1) * R - sh;
     }
     SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0);
     var dep = R * .95, swell = bt * cw * 1.6, lift0 = bt * .065, flow = Math.floor(tt * 3), j, i, k;
@@ -252,11 +230,6 @@
       k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, d = sdf(x, y) - swell;
       if (na > 0) d += na * FL.noise(x, y, tt);
       SD[k] = d; SH[k] = FL.height(d, dep); SL[k] = FM.lift;
-      if (flw > 0 && d < 0) { // the inside streaming toward the reaching pod: a few soft, slow swells of light, never a sparkle
-        var fx = x - cx, fy = y - cy, fa = fx * flx + fy * fly, fp = -fx * fly + fy * flx, fl = 0;
-        for (var b = 0; b < 5; b++) { var u = FLB[b * 3], ex = fa - FLB[b * 3 + 1], ey = fp - FLB[b * 3 + 2]; fl += u * Math.exp(-(ex * ex + ey * ey) * fli); }
-        SL[k] += .13 * flw * fl;
-      }
     }
     var dark = FS ? FS.dark : 0, hide = FS ? 1 - FS.vis : 0, ins = FS ? FS.inside : 0;
     function inside(i, j) { // swallowed: nothing but the dark of its insides, the walls just visible as they squeeze
