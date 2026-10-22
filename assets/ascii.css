@@ -188,3 +188,7 @@ html.birth .birth__canvas { visibility: visible; }
 html.birth .hero { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 html.birth .sunsec { height: 580vh; height: 580svh; scroll-margin-top: -300vh; scroll-margin-top: -300svh; }
 html.birth .sunsec__pin > * { opacity: var(--fade, 0); }
+
+/* the SUN's body: one fixed canvas over the page, from the name to the end; it never takes a pointer */
+.flesh__canvas { display: none; }
+html.birth .flesh__canvas { display: block; position: fixed; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; z-index: 3; pointer-events: none; }

@@ -1,6 +1,6 @@
-/* One character field — the opening's name kneaded into the SUN (birth.js) → the SUN, in the very same flesh (flesh.js: same cells,
-   glyphs, light and tones), so the sphere never turns into another drawing. Calm, its heart pushes thorns out of the rim
-   (sun-fear.js); scrolling on, it is taken in (dark inside), comes back sated and stays dimmed behind Works → a setting sun at the footer. Input velocity drives glitch. */
+/* The page's own field behind About and Works: the Works characters, the heading decode, the readout, the cursor and the
+   setting sun at the footer. The SUN's body itself is drawn by the opening (birth.js) on its own canvas, all the way down.
+   Input velocity drives glitch. */
 (function () {
   var A = window.ASCII;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -11,14 +11,12 @@
   // the first beat: on the first visit of a session, opened at the top, the world waits in near-silence and starts on one heartbeat.
   // The clock's zero is that beat (an accent, beat 0 of 4), so the heart and the air start together
   var HUSH = 900, CLK0 = 0, silent = false;   // ms of silence before the first beat; the world clock's zero (page time); waiting for it
-  var AIR_BEAT = /[?&]airbeat=1/.test(location.search);   // optional, off by default: the SUN's air swells with the heartbeat (for comparison only)
   var cursor = document.querySelector(".sun-cursor");
   if (fine && !reduce) root.classList.add("has-sun-cursor");
 
   // ---------- input velocity ----------
   var energy = 0, lx = null, ly = 0, lt = 0, lastY = scrollY, lastYT = performance.now(), scrollAcc = 0;
-  var diving = false;
-  function kick(v) { if (!reduce && !diving && v > 0) energy = Math.min(1, Math.max(energy, v)); wake(); }
+  function kick(v) { if (!reduce && v > 0) energy = Math.min(1, Math.max(energy, v)); wake(); }
   addEventListener("pointermove", function (e) {
     if (cursor) { root.style.setProperty("--cx", e.clientX + "px"); root.style.setProperty("--cy", e.clientY + "px");
       cursor.classList.toggle("is-over", !!(e.target.closest && e.target.closest("a,button,input,textarea"))); }
@@ -88,10 +86,9 @@
     cv.width = Math.round(W * dpr); cv.height = Math.round(PH * dpr); if (GPU) GPU.size(cv.width, cv.height);
     BASE = small ? 6 : 8;
     CHARS = A.inkRamp(" ;====+*sun%#@", "sun", 600); GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
-    buildFlesh();
     fit();
   }
-  // the sphere lives in the free area between the text blocks → never overlaps bio / links / readout
+  // the free area between About's text blocks (the still body under reduced motion sits there) → never overlaps bio / links / readout
   function fit() {
     var p = pin.getBoundingClientRect();
     function rr(el) { var b = el.getBoundingClientRect(); return { l: b.left - p.left, r: b.right - p.left, t: b.top - p.top, b: b.bottom - p.top }; }
@@ -111,49 +108,19 @@
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
   // the opening (birth.js) takes the first stretch of About's pinned scroll; About's own timeline starts after it, unchanged
-  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null;
+  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null, AFTER = 2.8;   // screens of About after the opening (as in birth.js)
   function birthOn() { return BR && BR.on && root.classList.contains("birth"); }
   function progSun() {
     if (!birthOn()) return prog(sun);
-    var r = sun.getBoundingClientRect(), b = Math.max(0, r.height - 2.8 * H), span = r.height - b - H;
+    var r = sun.getBoundingClientRect(), b = Math.max(0, r.height - AFTER * H), span = r.height - b - H;
     return span > 0 ? A.clamp((-r.top - b) / span) : 1;
   }
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0 } : null; };
 
   var rot = 0, lastRead = "";
-  var SUN_END = .36, ATK_END = .58, ENG_END = .68, REC0 = .82, REC1 = .94, moS = 0, moV = 0, moT = 0;   // rest → (held) → taken in, dark inside → sated, into Works
-  var FEAR = reduce ? null : window.SUN_FEAR || null, bgL = 0, bgT = 0;
-  function springMo(target, t) { // critically damped, ~120ms: scroll steps arrive as one smooth motion through the whole scene
-    var dt = moT ? Math.min(.05, (t - moT) / 1000) : 0, w = 1 / .12; moT = t;
-    if (!dt || target === 0 && moS < 1e-4) { moS = target; moV = 0; return moS; }
-    var x = moS - target, e = Math.exp(-w * dt), c = moV + w * x;
-    moS = target + (x + c * dt) * e; moV = (moV - c * w * dt) * e;
-    if (moS < 0) { moS = 0; moV = 0; } else if (moS > 1) { moS = 1; moV = 0; }
-    return moS;
-  }
-  function frameState(t) {
+  function frameState() {
     var pa = reduce ? .3 : progSun(), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
-    var pf = reduce ? pa : springMo(pa, t); // everything that moves follows one sprung progress; text and anchors stay on raw scroll
-    // the old dive no longer plays: k stays 0. After the SUN's rest comes the attack (sun-fear.js), its end state is held, then the field thins into Works
-    var rise = birthOn() ? 1 : A.smooth(pf / .16), nk = A.clamp(pf / SUN_END), k = 0, atk = reduce ? 0 : A.clamp((pf - SUN_END) / (ATK_END - SUN_END));
-    // the SUN itself calms and stays dimmed behind Works until the scene scrolls away
-    var thin = 0, u = A.clamp(pw / .2), rec = reduce ? 0 : A.clamp((pf - REC0) / (REC1 - REC0));
-    var dim = reduce ? 1 : (1 - .55 * A.smooth((pa - REC1) / (1 - REC1))) * A.smooth((works.getBoundingClientRect().bottom - H * .35) / (H * .5));   // dimmed once it has receded, gone before Contact
-    if (reduce && works.getBoundingClientRect().top < H * .5) thin = 1; // static mode: SUN frame only while About is on screen
-    var drift = reduce || t < 0 ? 0 : t;   // before the first beat the light holds still
-    var az = (-62 + 62 * nk) * Math.PI / 180 + Math.sin(drift * TAU / (27 * BEAT)) * .22, el = .1 + .42 * nk + Math.sin(drift * TAU / (37 * BEAT) + 1) * .08;
-    var Ls = [Math.sin(az) * Math.cos(el), -Math.sin(el), Math.cos(az) * Math.cos(el)], Ld = [-.25, -.32, .91];
-    var L = [Ls[0] + (Ld[0] - Ls[0]) * k, Ls[1] + (Ld[1] - Ls[1]) * k, Ls[2] + (Ld[2] - Ls[2]) * k], n = Math.hypot(L[0], L[1], L[2]);
-    var halfDiag = Math.hypot(W, H) / 2, Rfill = halfDiag * 3.2;
-    var aIn = reduce ? 0 : birthOn() ? BR.x : rise;
-    var f = FEAR && ready ? FEAR.step(t / 1000, { cx: fcx, cy: fcy, R: R0 * (.35 + .65 * rise), W: W, H: H, left: bgL, top: bgT, a: atk, gate: aIn >= .98 && pa < 1 ? 1 : 0, rec: rec, gulp: pf >= ENG_END ? 1 : pf < ENG_END - .04 ? -1 : 0 }) : null;
-    return { f: f, atk: atk, dim: dim,
-      pa: pa, pw: pw, k: k, thin: thin, nk: nk, a: reduce ? (sun.getBoundingClientRect().top <= 1 ? 1 : 0) : birthOn() ? BR.x : rise,   // static mode: shown only once the field is pinned
-      z: Math.pow(3, 1 - (1 - k) * (1 - k)), R: f ? f.R : R0 * (.35 + .65 * rise) * Math.pow(Rfill / R0, k), // geometric zoom; cells grow a little ahead of it (fewer blits mid-dive)
-      cx: f ? f.cx : fcx + (W / 2 - fcx) * k, cy: f ? f.cy : fcy + (H / 2 - fcy) * k,   // entering About: the SUN grows in place from small (never slides in half-clipped)
-      L: [L[0] / n, L[1] / n, L[2] / n],
-      tt: reduce ? 0 : BR && BR.t0 !== undefined ? (t + CLK0 - BR.t0) / 1000 : t / 1000   // the flesh's own clock: the opening's, so the surface carries straight on
-    };
+    return { pa: pa, pw: pw, nk: pa };
   }
 
   // sphere shading of the footer sun
@@ -169,103 +136,9 @@
     return b;
   }
 
-  // ---------- the SUN in the opening's flesh (flesh.js): one grid from the screen's top left, the same glyphs, light and tones ----------
-  // everything it does is a deformation of that one body: its signed distance field is squashed and shaken, never redrawn
-  var FL = window.FLESH, FG = null, FAT = null, SWILD = "SUN01/#:<>*", SWG = 0, scw = 7, sch = 12.25, scols = 0, srows = 0;
-  var SD = null, SH = null, SF = null, SL = null, THL = new Float32Array(1024), TN = 1024;
-  function buildFlesh() {
-    scw = FL.cellW(W); sch = scw * 1.75; scols = Math.ceil(W / scw); srows = Math.ceil(PH / sch);
-    FG = FL.glyphs(); SWG = FG.chars.length; FAT = A.atlas(FG.chars + SWILD, FL.TONES, scw, sch, 600, dpr);
-    var n = scols * srows; SD = new Float32Array(n); SH = new Float32Array(n); SF = new Float32Array(n); SL = new Float32Array(n);
-  }
-  // while the opening hands over, the SUN is drawn whole and the opening steps aside: both are the same pixels, so there is no seam
-  function sunAlpha(st) { return (birthOn() ? (BR.x > 0 ? 1 : 0) : st.a) * st.dim; }
-  function drawSun(t, st) {
-    if (BR && birthOn() && BR.x > 0) BR.sunDrawn = true;   // the opening may now step aside: this frame is the SUN
-    var FS = st.f, R = st.R, cx = st.cx, cy = st.cy, cw = scw, ch = sch, cols = scols, rows = srows, gi = FG.gi, tt = st.tt;
-    var E = st.pa >= 1 || (birthOn() && BR.x < 1) ? 0 : energy, tick = Math.floor(t / (BEAT / 20)), glitch = E > .02, thin = st.thin;
-    var shv = 0, bt = 0, na = 0;
-    if (FS) {
-      shv = FS.shiver; bt = FS.beat * FS.heat; na = cw * 1.3 * FS.agit;   // the racing heart swells it; fear kneads the surface again
-      var sj = Math.floor(t / 25); cx += (A.hash(sj, 1.3) - .5) * shv * R * 1.3; cy += (A.hash(sj, 2.9) - .5) * shv * R * 1.3;   // a fine, fast tremble
-    }
-    // thorns: the flesh itself is pushed out into spikes; their outward reach by angle is laid out once a frame
-    var TH = FS ? FS.thorn : null, thG = TH ? TH.g : 0, thOn = thG > .002;
-    if (thOn) {
-      THL.fill(0);
-      for (var q = 0; q < 40; q++) {   // the heartbeat's thorns: the same all round the rim
-        var th0 = q / 40 * TAU + (A.hash(q, 7.7) - .5) * .12;
-        var L = thG * TH.len * (.6 + .8 * A.hash(q, 3.1)) * (1 + .07 * Math.sin(t * .011 + q * 2.3) + .1 * bt);   // they quiver
-        if (L < .004) continue;
-        var w = cw * 6 / R * (.8 + .4 * A.hash(q, 5.3)), n0 = Math.floor((th0 - w) / TAU * TN), n1 = Math.ceil((th0 + w) / TAU * TN);
-        for (var n = n0; n <= n1; n++) { var e = 1 - Math.abs(n / TN * TAU - th0) / w; if (e <= 0) continue; e = L * Math.pow(e, 1.35); var m = ((n % TN) + TN) % TN; if (e > THL[m]) THL[m] = e; }
-      }
-    }
-    var ext = R * 1.06 * (FS ? Math.max(1, FS.qa, FS.qp) : 1) + (thOn ? R * thG * TH.len * 1.2 : 0) + (FS ? Math.abs(FS.pk.dx) + Math.abs(FS.pk.dy) : 0) + cw * 6 + na;
-    var i0 = Math.max(0, Math.floor((cx - ext) / cw) - 2), i1 = Math.min(cols, Math.ceil((cx + ext) / cw) + 2);
-    var j0 = Math.max(0, Math.floor((cy - ext) / ch) - 2), j1 = Math.min(rows, Math.ceil((cy + ext) / ch) + 2);
-    var fca = FS ? FS.ca : 1, fsa = FS ? FS.sa : 0, fqa = FS ? FS.qa : 1, fqp = FS ? FS.qp : 1, tsh1 = t * .09, tsh2 = t * .13;
-    var FM = { lift: 0 };
-    var PKk = FS ? FS.pk : null, pkOn = PKk && (Math.abs(PKk.dx) + Math.abs(PKk.dy) > .3), pkx = 0, pky = 0, pks = 1;
-    if (pkOn) { pkx = cx + PKk.x; pky = cy + PKk.y; pks = 1 / (PKk.s * PKk.s); }
-    function sdf(x, y) { // signed distance (px) of the deformed body at (x, y)
-      if (pkOn) { var ex = x - pkx, ey = y - pky, f = Math.exp(-(ex * ex + ey * ey) * pks); x -= PKk.dx * f; y -= PKk.dy * f; }   // touched: the flesh is drawn out
-      var px = (x - cx) / R, py = (y - cy) / R;
-      var a1 = (px * fca + py * fsa) / fqa, p1 = (-px * fsa + py * fca) / fqp; px = a1 * fca - p1 * fsa; py = a1 * fsa + p1 * fca;   // squashed away from the visitor / stretched at it
-      var sh = 0, rr0 = Math.sqrt(px * px + py * py);   // the shiver ripples the outline only: the lit surface inside stays the same smooth flesh
-      if (shv > 0 && rr0 > .7) { var an = Math.atan2(py, px); sh = shv * (.6 * Math.sin(an * 17 + tsh1) + .4 * Math.sin(an * 29 - tsh2)) * A.smooth((rr0 - .7) / .25) * R; }
-      FM.lift = 0;
-      if (thOn && rr0 > .8) { // a thorn rises out of the rim (the lit surface inside is left alone)
-        var xa = (Math.atan2(py, px) / TAU + 1) * TN, ia = Math.floor(xa), fa = xa - ia, e0 = THL[ia % TN], e1 = THL[(ia + 1) % TN], ex = (e0 + (e1 - e0) * fa) * A.smooth((rr0 - .85) / .15);
-        if (ex > 0) { // radial distance → distance to the flank (spikes are steep: divide by the slope)
-          var sl = (e1 - e0) * TN / TAU / rr0; if (rr0 > 1) FM.lift = .22;
-          return ((rr0 - 1 - ex) * R - sh) / Math.sqrt(1 + sl * sl);
-        }
-      }
-      return (rr0 - 1) * R - sh;
-    }
-    SD.fill(1e4); SH.fill(0); SF.fill(0); SL.fill(0);
-    var dep = R * .95, swell = bt * cw * 1.6, lift0 = bt * .065, flow = Math.floor(tt * 3), j, i, k;
-    for (j = j0; j < j1; j++) for (i = i0; i < i1; i++) {
-      k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, d = sdf(x, y) - swell;
-      if (na > 0) d += na * FL.noise(x, y, tt);
-      SD[k] = d; SH[k] = FL.height(d, dep); SL[k] = FM.lift;
-    }
-    var dark = FS ? FS.dark : 0, hide = FS ? 1 - FS.vis : 0, ins = FS ? FS.inside : 0;
-    function inside(i, j) { // swallowed: nothing but the dark of its insides, the walls just visible as they squeeze
-      var x = i * cw, y = j * ch, wv = Math.sin(y * .011 - tt * 1.1 + Math.sin(x * .006 + tt * .3) * 2.4) * .6 + .4 * FL.noise(x * .5, y * .5, tt * .4), h = A.hash(i * 3.7, j * 1.9 + flow * .07);
-      if (wv < .55 || h > ins * (wv - .55) * 1.6) return 0;
-      return (gi.ramp + 1 + ((h * 5) | 0)) * 8 + (wv > .9 && h < .2 ? 1 : 0);
-    }
-    var tw = FAT.tw, th = FAT.th, atlas = FAT.canvas;
-    if (GPU) GPU.begin(FAT, tw, th, sunAlpha(st));
-    if (ins > 0) { var ii, jj, cc; for (jj = 0; jj < rows; jj++) for (ii = 0; ii < cols; ii++) { var kk = jj * cols + ii; if (hide < 1 && SD[kk] <= 0) continue; cc = inside(ii, jj); if (cc) blit(cc >> 3, cc & 7, ii, jj, 0); } }
-    function blit(g2, tone, i, j, off) { var px = Math.round((i * cw + off) * dpr), py = Math.round(j * ch * dpr); if (GPU) GPU.add(g2, tone, px, py); else g.drawImage(atlas, g2 * tw, tone * th, tw, th, px, py, tw, th); }
-    for (j = j0; j < j1; j++) {
-      var off = 0, hot = false;
-      if (Math.round(j * ch * dpr) > cv.height) break;
-      if (glitch) { var band = j >> 1, hb = A.hash(band, tick); if (hb < E * .55) { off = Math.round((A.hash(band * 3.1, tick + 7) - .5) * E * 36) * cw; hot = hb < E * .16; } }
-      for (i = i0; i < i1; i++) {
-        if (thin > 0 && A.hash(i, j + 500) < thin) continue;
-        k = j * cols + i; var dd = SD[k], c;
-        if (dd <= 0) c = FL.cell(SD, SH, SF, k, i, j, cols, rows, cw, ch, tt, lift0 + SL[k], gi);
-        else c = FL.air(dd, i, j, cw, bt, 0, flow, gi);
-        if (!c) continue;
-        if (hide > 0 && A.hash(i * 1.3, j * 7.1) < hide) continue;
-        var g2 = c >> 3, tone = c & 7;
-        if (dark > 0) { // the light goes out as it is taken in
-          var cap = 4 - dark * 4.6 + (A.hash(i, j * 3.3) < .3 ? 1 : 0); if (cap < 0) continue; if (tone > cap) tone = cap | 0;
-        }
-        if (glitch && A.hash(i + j * 131, tick) < E * .4) g2 = SWG + ((A.hash(i * 7 + j, tick + 3) * SWILD.length) | 0);
-        blit(g2, hot ? 4 : tone, i, j, off);
-      }
-    }
-    if (GPU) GPU.end();
-  }
-
   function drawUI(t, st) {
-    // corner text fades before the dive starts, so the growing sphere never covers it
-    pin.style.setProperty("--fade", ((1 - A.clamp((st.pa - (SUN_END - .02)) / .03)) * (birthOn() ? BR.x : 1)).toFixed(3));
+    // About's text shows once the body has settled, and gives way as Works comes in
+    pin.style.setProperty("--fade", (reduce ? 1 : (birthOn() ? BR.x : 1) * (1 - A.clamp(st.pw / .2))).toFixed(3));
     var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
     var txt = hh + ":" + mm + " · ALT " + String(Math.round(st.nk * 62)).padStart(2, "0") + "° · AZ " + String(Math.round(90 + st.nk * 90)).padStart(3, "0") + "°";
     if (energy > .2) txt = txt.replace(/[0-9]/g, function (m) { return Math.random() < energy * .6 ? "#%01"[(Math.random() * 4) | 0] : m; });
@@ -465,16 +338,12 @@
   // ---------- loop: only while the scene is on screen (or something is settling) ----------
   var running = false, visible = false, lastT = 0, ready = false;
   function render(t) {
-    var bb = bg.getBoundingClientRect(); bgL = bb.left; bgT = bb.top;
-    var st = frameState(t); if (BR) BR.sunDrawn = false;
-    diving = st.atk > 0 && st.pa < 1;
-    var WV = window.WORKS_VIEW;
+    var st = frameState(t), WV = window.WORKS_VIEW;
     if (GPU) {
-      GPU.clear(); if (st.thin < 1 && st.a > 0) drawSun(t, st);
+      GPU.clear();
       if (WV) GPU.layer(function (lg) { WV.draw(lg, dpr, W / 2, H / 2, st.pw); });
     } else {
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-      g.globalAlpha = sunAlpha(st); if (st.thin < 1 && st.a > 0) drawSun(t, st); g.globalAlpha = 1;
       if (WV) WV.draw(g, dpr, W / 2, H / 2, st.pw);
     }
     drawUI(t, st);
