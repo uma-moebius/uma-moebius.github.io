@@ -1,5 +1,4 @@
-/* The SUN is me, met by chance. A visitor coming close frightens it: it shrinks, shivers and turns away while its heart
-   races. Leave and it calms back to 60 BPM and watches. Scrolling on, it cowers, then its flesh parts slowly into a mouth with thick lips,
+/* The SUN is me, met by chance. A visitor coming close does not frighten it; it watches, its heart calm at 60 BPM. Scrolling on, it cowers, then its flesh parts slowly into a mouth with thick lips,
    strands of the same flesh stretching between them, thinning, sagging and snapping one by one. Then it eats the visitor:
    it lunges, the mouth grows past the screen's edges and the lips close over it. Dark inside. Sated, it comes back up at its
    calm size, the heart still a little quick, and settles.
@@ -98,20 +97,20 @@
 
     // ---------- heart ----------
     var rc = sm(g.rec || 0);   // on into Works it calms: back to its resting size, the heart still a little fast
-    var heat = lerp(Math.max(F, ten, S.grow * .8, mo * .85), .2, rc);
+    var heat = lerp(Math.max(ten, mo * .85), .2, rc);
     var bpm = 60 + 112 * heat; S.phase += dt * bpm / 60;
     if (heat < .05) { var err = t - S.phase; err -= Math.round(err); S.phase += err * Math.min(1, dt * .8); }   // calm again: back on the world's beat
     var beat = press(S.phase);
 
     // ---------- body ----------
-    var shrink = .06 * F + .15 * ten;   // scrolled at, it cowers: smaller and smaller as the strain builds
+    var shrink = .15 * ten;   // scrolled at, it cowers: smaller and smaller as the strain builds
     var scale = (1 - shrink) * (1 + .034 * heat * beat) * (1 + .08 * mo);   // calm, the SUN is as still as the opening left it; the beat swells it only when it is stirred
-    // fear: shy away from the visitor, squashed away from it; calm: watch it a little
-    var shy = .07 * F, watch = .05 * (1 - F) * (ptr && live > 0 ? 1 : 0) * live;
-    var ox = (-lx * shy + lx * watch) * R, oy = (-ly * shy + ly * watch) * R;
+    // a visitor near does not frighten it: it only watches a little
+    var watch = .05 * (ptr && live > 0 ? 1 : 0) * live;
+    var ox = lx * watch * R, oy = ly * watch * R;
     var room = R * shrink + 24; ox = clamp(ox, -room - R * .1, room + R * .1); oy = clamp(oy, -room, room);
-    var ca = lx, sa = ly, qa = 1 - .05 * F, qp = 1 + .02 * F;   // a small flinch
-    var shiver = .004 * rc + (1 - rc) * .012 * F + .03 * ten + .004 * mo;
+    var ca = lx, sa = ly, qa = 1, qp = 1;
+    var shiver = .004 * rc + .03 * ten + .004 * mo;
     var cx = cx0 + ox, cy = cy0 + oy;
     if (a > 0) {
       cx = lerp(cx, cx0, wA); cy = lerp(cy, cy0, wA);
@@ -135,7 +134,7 @@
     OUT.dark = done ? 1 - sm(rc0 / .8) : sm((gp - .5) / .3);
     OUT.vis = done ? (rc0 > 0 ? 1 : 0) : 1 - sm((gp - .75) / .2);   // sated, it comes back up out of the dark
     OUT.inside = sm((gp - .6) / .3) * (1 - sm(rc0 / .7));
-    OUT.agit = lerp(Math.max(F * .55, ten * .85, mo * .25), .08, rc);
+    OUT.agit = lerp(Math.max(ten * .85, mo * .25), .08, rc);
     // handoff
     var held = mopen > .98 && rc <= 0, eaten = gp >= .56;
     EXPORT.progress = mopen; EXPORT.recede = rc;   // progress: how far the mouth is open
