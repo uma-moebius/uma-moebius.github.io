@@ -1,7 +1,8 @@
 /* The opening: the pink creature is me. Scattered cells divide and gather into the name, it beats (60 BPM, a strong beat
    and a weak one, a soft swell, short spikes pulsing out of the edge), and scrolling kneads the name like flesh into one
-   body, the SUN: not a clean sphere but an unsteady lump of many balls of flesh pressed together. A finger or the pointer
-   sticks to the flesh, stretches it and lets go.
+   body, the SUN: not a clean sphere but an unsteady lump of many balls of flesh pressed together. Scrolled on, the same body
+   (the same mass: it thins as it spreads) stretches long, opens in the middle and spreads to the edges of the screen, where
+   it stays as a frame of flesh around everything that follows. A finger or the pointer sticks to the body, stretches it and lets go.
    One signed field (px, negative = flesh) is evaluated per character cell and drawn as glyphs on one fixed canvas, so the
    body stays the same body all the way down. Reduced motion: the formed name, still. */
 (function () {
@@ -34,12 +35,12 @@
     var r = (reduce ? cv : bg).getBoundingClientRect(), W = r.width, H = r.height, PH = Math.max(H, cv.getBoundingClientRect().height);
     var dpr = Math.min(2, devicePixelRatio || 1), mobile = W < 600, cw = FL.cellW(W), ch = cw * 1.75;
     L = { W: W, H: H, PH: PH, dpr: dpr, mobile: mobile, cw: cw, ch: ch, cols: Math.ceil(W / cw), rows: Math.ceil(PH / ch),
-          tx: W / 2, ty: mobile ? H * .46 : H / 2, sx: W / 2, sy: H / 2, R: Math.min(W, H) * (mobile ? .36 : .34) };
+          tx: W / 2, ty: mobile ? H * .46 : H / 2, sx: W / 2, sy: H / 2, R: Math.min(W, H) * (mobile ? .36 : .34), Hv: innerHeight || H };
     L.cx = L.tx; L.cy = L.ty;
     cv.width = Math.round(W * dpr); cv.height = Math.round(PH * dpr); if (GPU) GPU.size(cv.width, cv.height);
     var GL = FL.glyphs(); GLYPHS = GL.chars; gi = GL.gi;
     AT = A.atlas(GLYPHS, TONES, cw, ch, 600, dpr);
-    buildText(); buildTree(); buildBalls();
+    buildText(); buildTree(); buildBalls(); if (!reduce) frameInset();
     var n = L.cols * L.rows;
     L.D = new Float32Array(n); L.Hh = new Float32Array(n); L.F = new Float32Array(n); L.FX = new Float32Array(n); L.FY = new Float32Array(n);
     L.fold = new Float32Array(n); L.code = new Int32Array(n);
@@ -179,14 +180,15 @@
   // ---------- the body: many balls of flesh pressed together ----------
   // Each ball keeps a place on the body: u = where round it sits (0..1), and how deep under the surface. The balls are joined
   // to each other and to a shallow core, so the body reads as lumps all over, with creases where two of them meet.
+  // Every ball is a pair lying on itself; as the body spreads into the frame the two part, as a cell divides.
   var B = null, TS = 48, TL = { start: null, list: null, cols: 0 };
   function buildBalls() {
-    var n = L.mobile ? 44 : 48;
-    B = { n: n, u: new Float32Array(n), dd: new Float32Array(n), sz: new Float32Array(n), h: new Float32Array(n), x: new Float32Array(n), y: new Float32Array(n), r: new Float32Array(n) };
+    var n = L.mobile ? 44 : 48, N = n * 2;
+    B = { n: N, half: n, u: new Float32Array(N), dd: new Float32Array(N), sz: new Float32Array(N), h: new Float32Array(N), x: new Float32Array(N), y: new Float32Array(N), r: new Float32Array(N) };
     for (var i = 0; i < n; i++) {
       var rho = Math.sqrt((i + .5) / n);
-      B.u[i] = (i * .6180339887 + .13) % 1; B.dd[i] = 1 - .92 * rho;   // spread like seeds in a flower head, deeper toward the middle
-      B.sz[i] = .62 + .8 * Math.pow(hash(i, 2.6), 1.4); B.h[i] = hash(i, 4.1);
+      B.u[i] = B.u[i + n] = (i * .6180339887 + .13) % 1; B.dd[i] = B.dd[i + n] = 1 - .92 * rho;   // spread like seeds in a flower head, deeper toward the middle
+      B.sz[i] = B.sz[i + n] = .62 + .8 * Math.pow(hash(i, 2.6), 1.4); B.h[i] = hash(i, 4.1); B.h[i + n] = hash(i, 6.3);
     }
   }
   // a point on the outline of a rounded box (half sizes bx, by, corner radius r), at u of the way round, from the right middle
@@ -217,16 +219,46 @@
   // G: the body's core this frame. cx, cy: centre; bx, by, r: its rounded box; t: depth of the hole in it (Infinity = none);
   // thick: how deep the flesh is; rb: the size of a lump; ring (0..1): how far the balls have moved into the ring's depth
   var G = { cx: 0, cy: 0, bx: 0, by: 0, r: 1, t: Infinity, thick: 1, rb: 1, ring: 0 };
+  // the frame: at f = 0 the round body; it stretches into a long bar (f .4), then its middle opens and it spreads out to the
+  // screen's edges (f 1). Its area stays that of the round body with its lumps (the lumps sink into the bar as it stretches),
+  // so the flesh gets thinner as it spreads.
+  function area(bx, by, r) { return 4 * bx * by + 4 * r * (bx + by) + Math.PI * r * r; }
+  function eroded(bx, by, r, t) { return t <= r ? area(bx, by, r - t) : area(Math.max(0, bx - (t - r)), Math.max(0, by - (t - r)), 0); }
+  function frameEnd() { // the frame's outer box: just past the screen's edges, rounded so the corners are covered too
+    var b = Math.round(Math.min(L.W, L.Hv) * (L.mobile ? .075 : .08)), o = b * .15;
+    return { bx: L.W / 2 + o - b, by: L.Hv / 2 + o - b, r: b, o: o };
+  }
+  function frameGeo(f) {
+    var A0 = Math.PI * L.R * L.R * (1 + .25 * sm(f / .4)), W = L.W, Hv = L.Hv, s = io(f / .4), g = io((f - .4) / .6), long = W >= Hv, a1 = .3 * Math.max(W, Hv);
+    function bar(a) { return (-4 * a + Math.sqrt(16 * a * a + 4 * Math.PI * A0)) / (2 * Math.PI); }   // a bar this long, as thick as the area allows
+    var a = s * a1, bx = long ? a : 0, by = long ? 0 : a, r = bar(a);
+    if (g > 0) { var E = frameEnd(); bx = lerp(long ? a1 : 0, E.bx, g); by = lerp(long ? 0 : a1, E.by, g); r = lerp(bar(a1), E.r, g); }
+    G.cx = lerp(L.sx, W / 2, g); G.cy = lerp(L.sy, Hv / 2, g); G.bx = bx; G.by = by; G.r = r;
+    var Aout = area(bx, by, r), t = Infinity;
+    if (Aout > A0 * 1.0005) { // the hole: as deep in from the outline as keeps the area
+      var want = Aout - A0, lo = 0, hi = r + Math.min(bx, by);
+      for (var q = 0; q < 28; q++) { var mid = (lo + hi) / 2; if (eroded(bx, by, r, mid) > want) lo = mid; else hi = mid; }
+      t = (lo + hi) / 2;
+    }
+    G.t = t; G.thick = t < 1e8 ? t : r + Math.min(bx, by); G.rb = Math.min(L.R * .27, G.thick * .75); G.ring = sm((f - .35) / .5);
+    return G;
+  }
+  function frameInset() { // how far in from the screen's edges the settled frame can reach: content stays inside that
+    frameGeo(1); var E = frameEnd(), fi = G.t - G.rb * .3 - E.o;
+    for (var i = 0; i < B.n; i++) fi = Math.max(fi, (.35 + .45 * B.h[i]) * G.t + G.rb * B.sz[i] * .8 * 1.12 + G.rb * .12 - E.o);
+    L.fi = Math.ceil(fi + 6); root.style.setProperty("--fi", L.fi + "px");
+  }
   function lumpBody(cx, cy) { G.cx = cx; G.cy = cy; G.bx = 0; G.by = 0; G.r = L.R; G.t = Infinity; G.thick = L.R; G.rb = L.R * .27; G.ring = 0; return G; }
   function placeBalls(tt, beat) {
     var n = B.n, e, bx, by, r, wob = G.rb * .12, br = 1 + .05 * beat, tc = Math.ceil(L.W / TS) + 1, tr = Math.ceil(L.PH / TS) + 1, nt = tc * tr;
+    var split = G.ring * .5 / B.half, shrink = 1 - .2 * G.ring;
     for (var i = 0; i < n; i++) {
-      var dr = lerp(B.dd[i], .3 + .4 * B.h[i], G.ring);
+      var dr = lerp(B.dd[i], .35 + .45 * B.h[i], G.ring);
       e = dr * G.thick;
       if (e <= G.r) { bx = G.bx; by = G.by; r = G.r - e; } else { bx = Math.max(0, G.bx - (e - G.r)); by = Math.max(0, G.by - (e - G.r)); r = 0; }
-      var p = onBox(bx, by, r, B.u[i]);
+      var p = onBox(bx, by, r, B.u[i] + (i < B.half ? -split : split));
       B.x[i] = G.cx + p[0] + Math.sin(tt * .7 + B.h[i] * 20) * wob; B.y[i] = G.cy + p[1] + Math.cos(tt * .6 + B.h[i] * 13) * wob;
-      B.r[i] = G.rb * B.sz[i] * br * (1 + .06 * Math.sin(tt * .9 + B.h[i] * 40));
+      B.r[i] = G.rb * B.sz[i] * shrink * br * (1 + .06 * Math.sin(tt * .9 + B.h[i] * 40));
     }
     // which balls can reach which tile of the screen
     if (!TL.start || TL.start.length !== nt + 1) TL.start = new Int32Array(nt + 1);
@@ -250,13 +282,13 @@
   var LO = { d: 0, fold: 0 };
   function lumps(x, y) { // signed distance and crease of the body of balls at (x, y)
     var dO = rbox(x - G.cx, y - G.cy, G.bx, G.by, G.r), dc = G.t < 1e8 ? Math.max(dO, -dO - G.t) : dO, rb = G.rb;
-    dc = Math.max(dc + rb * .6, -rb * .4);   // the core sits just under the balls and is never deeper than half a lump
+    dc = Math.max(dc + rb * .6 * (1 - .5 * G.ring), -rb * .4);   // the core sits just under the balls (in the frame, nearly level with them) and is never deeper than half a lump
     var ti = Math.floor(x / TS), tj = Math.floor(y / TS), d1 = 1e4, d2 = 1e4, ds = 1e4, k = rb * .22;
     if (ti >= 0 && tj >= 0 && ti < TL.cols && tj < TL.rows) {
-      var tk = tj * TL.cols + ti, s0 = TL.start[tk], s1 = TL.start[tk + 1], list = TL.list;
+      var tk = tj * TL.cols + ti, s0 = TL.start[tk], s1 = TL.start[tk + 1], list = TL.list, half = B.half, i1 = -1;
       for (var q = s0; q < s1; q++) {
-        var b = list[q], dx = x - B.x[b], dy = y - B.y[b], di = Math.sqrt(dx * dx + dy * dy) - B.r[b];
-        if (di < d1) { d2 = d1; d1 = di; } else if (di < d2) d2 = di;
+        var b = list[q], dx = x - B.x[b], dy = y - B.y[b], di = Math.sqrt(dx * dx + dy * dy) - B.r[b], id = b >= half ? b - half : b;
+        if (di < d1) { if (id !== i1) d2 = d1; d1 = di; i1 = id; } else if (id !== i1 && di < d2) d2 = di;   // a crease only between two different balls
         ds = smin(ds, di, k);
       }
     }
@@ -308,6 +340,14 @@
     return OUT;
   }
 
+  function frameBody(x, y, t, beat, f) { // the body on its way to the frame, and the frame
+    var dO = rbox(x - G.cx, y - G.cy, G.bx, G.by, G.r), dc = G.t < 1e8 ? Math.max(dO, -dO - G.t) : dO;
+    if (dc > G.rb * 2 + L.cw * 9) { OUT.d = 1e4; OUT.fold = 0; OUT.dep = G.rb; return OUT; }
+    var lo = lumps(x, y);
+    OUT.d = lo.d + L.cw * lerp(1, .6, f) * fleshNoise(x, y, t) - beat * L.cw * lerp(1.3, .8, f);
+    OUT.fold = lo.fold; OUT.dep = G.rb; return OUT;
+  }
+
   // ---------- physics: sprung scroll, sticky flesh ----------
   var PH = { ps: 0, pv: 0, D: [0, 0], Dv: [0, 0], C: [0, 0], att: false, last: null, t: 0 };
   function poke(x, y) { // pointer warp: the flesh around C is carried by D, falling off with a gaussian
@@ -315,19 +355,19 @@
     PK[0] = x - PH.D[0] * f; PK[1] = y - PH.D[1] * f; return PK;
   }
   var PK = [0, 0];
-  function step(dt, raw, ptr, m) {
+  function step(dt, raw, ptr, m, f) {
     var w = 2 * Math.PI * .85, z = .55, acc0 = -w * w * (PH.ps - raw) - 2 * z * w * PH.pv;
     PH.pv += acc0 * dt; PH.ps += PH.pv * dt;
     var lim = L.R * .5 * .95;
     if (ptr && PH.last) {
       var vx = (ptr.x - PH.last.x), vy = (ptr.y - PH.last.y);
-      if (!PH.att && (vx || vy)) {
+      if (!PH.att && (vx || vy) && f < .05) {
         var p = poke(ptr.x, ptr.y), d = body(p[0], p[1], m, PH.t, 0).d;
         if (d < 0) { PH.att = true; PH.C = [ptr.x - PH.D[0], ptr.y - PH.D[1]]; PH.Dv = [0, 0]; }
       }
       if (PH.att) {
         PH.D[0] += vx; PH.D[1] += vy;
-        if (Math.hypot(PH.D[0], PH.D[1]) > lim) { PH.att = false; PH.Dv = [vx / dt * .35, vy / dt * .35]; }   // it tears free and snaps back
+        if (Math.hypot(PH.D[0], PH.D[1]) > lim || f >= .05) { PH.att = false; PH.Dv = [vx / dt * .35, vy / dt * .35]; }   // it tears free and snaps back
       }
     } else if (PH.att) { PH.att = false; PH.Dv = [0, 0]; }
     if (!PH.att) { // slow, underdamped: byon
@@ -338,12 +378,12 @@
   }
 
   // ---------- scroll: the opening owns the first part of About's pinned stretch ----------
-  var AFTER = 2.8;   // screens of About's pinned scroll after the opening
+  var AFTER = 1.6;   // screens of About's pinned scroll after the opening
   function birthLen() { return Math.max(1, sun.offsetHeight - AFTER * L.H); }
   function rawProgress() { return clamp(-sun.getBoundingClientRect().top / birthLen()); }
   function pastBirth() { return clamp((-sun.getBoundingClientRect().top - birthLen()) / (L.H * .1)); }
-  // phases on the sprung progress: knead → the body of balls; About shows once it has settled
-  var M0 = .03, M1 = .75, SET0 = .85, SET1 = .97;
+  // phases on the sprung progress: knead → the body of balls (held a moment) → it spreads into the frame; About shows inside it
+  var M0 = .03, M1 = .4, F0 = .5, F1 = .97, SET0 = .9, SET1 = .98;
 
   // ---------- frame ----------
   var HEART0 = 3.15;   // first heartbeat (s): the moment the name is whole
@@ -352,14 +392,16 @@
     var m = clamp((ps - M0) / (M1 - M0)), e = io(m);
     L.cx = lerp(L.tx, L.sx, e); L.cy = lerp(L.ty, L.sy, e);
     var hb = t - HEART0, still = reduce, beat = still ? 0 : press(hb), shp = hb >= 0 && !still ? sharp(hb) : 0;
-    var tt = still ? 0 : t;
-    if (m > .5) { lumpBody(L.cx, L.cy); placeBalls(tt, beat); }
+    var tt = still ? 0 : t, f = clamp((ps - F0) / (F1 - F0));
+    L.Hv = innerHeight || L.H;
+    shp *= 1 - sm(f / .25);   // the pulse lines belong to the body; the frame only swells with the beat
+    if (f > 0) { frameGeo(f); placeBalls(tt, beat); } else if (m > .5) { lumpBody(L.cx, L.cy); placeBalls(tt, beat); }
     var inBirth = t < BIRTH.toText1, wT = sm((t - BIRTH.toText0) / (BIRTH.toText1 - BIRTH.toText0));
     if (inBirth) birthField(t);
     if (m > 0 && (!INV || INV.m !== m)) morphTables(m);
     // rows that can hold flesh, air or a thorn this frame (the rest stay empty)
     var j0 = 0, j1 = rows;
-    if (!inBirth) {
+    if (!inBirth && f <= 0) {
       var reach = Math.max(L.T.halfH + L.T.fs * .25, m > 0 ? L.R * 1.25 : 0) + cw * 16 + Math.hypot(PH.D[0], PH.D[1]);
       j0 = Math.max(0, Math.floor((Math.min(L.ty, L.cy) - reach) / ch)); j1 = Math.min(rows, Math.ceil((Math.max(L.ty, L.cy) + reach) / ch));
     }
@@ -370,7 +412,7 @@
       if (inBirth) {
         var F = L.F[k], gl = Math.hypot(L.FX[k], L.FY[k]), dm = F <= 0 ? 400 : clamp((.32 - F) / Math.max(gl, 1e-4), -60, 400);
         if (wT > 0) { var o = body(p[0], p[1], 0, t, 0); d = lerp(dm, o.d, wT); } else d = dm;
-      } else { var o2 = body(p[0], p[1], m, tt, beat); d = o2.d; fold = o2.fold; dep = o2.dep; }
+      } else { var o2 = f > 0 ? frameBody(x, y, tt, beat, f) : body(p[0], p[1], m, tt, beat); d = o2.d; fold = o2.fold; dep = o2.dep; }
       D[k] = d; FO[k] = fold;
       Hh[k] = FL.height(d, dep);
     }
@@ -427,18 +469,18 @@
 
   // ---------- drivers ----------
   var ptr = null, last = -1, t0 = 0, running = false;
-  function advance(t, raw, m) { // fixed substeps → the same motion whatever the frame rate
+  function advance(t, raw, m, f) { // fixed substeps → the same motion whatever the frame rate
     if (last < 0) last = t;
     var span = Math.min(.1, t - last), n = Math.max(1, Math.ceil(span / (1 / 120))), dt = span / n;
     if (m > 0 && (!INV || INV.m !== m)) morphTables(m);
-    if (m > .5) { lumpBody(lerp(L.tx, L.sx, io(m)), lerp(L.ty, L.sy, io(m))); placeBalls(t, 0); }
-    for (var q = 0; q < n; q++) { PH.t = last + dt * (q + 1); step(dt || 1 / 120, raw, ptr, m); }
+    if (m > .5 && f <= 0) { lumpBody(lerp(L.tx, L.sx, io(m)), lerp(L.ty, L.sy, io(m))); placeBalls(t, 0); }
+    for (var q = 0; q < n; q++) { PH.t = last + dt * (q + 1); step(dt || 1 / 120, raw, ptr, m, f); }
     last = t;
   }
   function frame(now) {
     var t = (now - t0) / 1000, raw = rawProgress(), past = pastBirth();
-    var m0 = clamp((PH.ps - M0) / (M1 - M0));
-    advance(t, raw, m0);
+    var m0 = clamp((PH.ps - M0) / (M1 - M0)), f0 = clamp((PH.ps - F0) / (F1 - F0));
+    advance(t, raw, m0, f0);
     if (past > 0 && PH.ps < 1) { PH.ps = Math.max(PH.ps, lerp(PH.ps, 1, past)); }   // already into About: the opening must not trail behind
     var ps = clamp(PH.ps, 0, 1);
     STATE.x = Math.max(sm((ps - SET0) / (SET1 - SET0)), past);

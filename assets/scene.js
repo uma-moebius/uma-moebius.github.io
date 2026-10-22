@@ -108,7 +108,7 @@
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
   // the opening (birth.js) takes the first stretch of About's pinned scroll; About's own timeline starts after it, unchanged
-  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null, AFTER = 2.8;   // screens of About after the opening (as in birth.js)
+  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null, AFTER = 1.6;   // screens of About after the opening (as in birth.js)
   function birthOn() { return BR && BR.on && root.classList.contains("birth"); }
   function progSun() {
     if (!birthOn()) return prog(sun);
