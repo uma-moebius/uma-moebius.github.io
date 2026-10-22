@@ -1,4 +1,5 @@
-/* The SUN is me, met by chance. A visitor coming close does not frighten it; it watches, its heart calm at 60 BPM. Scrolling on, it cowers, then its flesh parts slowly into a mouth with thick lips,
+/* The SUN is me, met by chance. A visitor coming close does not frighten it; it watches, its heart calm at 60 BPM,
+   and on each beat its flesh pushes thorns out all round the rim. Scrolling on, it cowers, then its flesh parts slowly into a mouth with thick lips,
    strands of the same flesh stretching between them, thinning, sagging and snapping one by one. Then it eats the visitor:
    it lunges, the mouth grows past the screen's edges and the lips close over it. Dark inside. Sated, it comes back up at its
    calm size, the heart still a little quick, and settles.
@@ -32,7 +33,7 @@
   function press(ph) { var x = ph - Math.floor(ph); return Math.min(1, pulse(x, .03, .075) + .45 * pulse(x - .18, .03, .075)); }
 
   // ---------- state ----------
-  var S = { last: -1, F: 0, dwell: 0, phase: 0, held: false, eaten: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [], gulp: 0, back: -1, att: false, D: [0, 0], Dv: [0, 0], C: [0, 0], pl: null };
+  var S = { last: -1, cal: 0, F: 0, dwell: 0, phase: 0, held: false, eaten: false, wx: 0, wy: 0, grow: 0, mo: 0, kick: 0, snap: [], gulp: 0, back: -1, att: false, D: [0, 0], Dv: [0, 0], C: [0, 0], pl: null };
   // the strands of flesh across the open mouth: where they hang (across its width), how wide, and how far open it is when each one snaps
   var STR = [[-.6, 1.5, .34], [-.38, 2.4, .58], [-.17, 1.8, .8], [.02, 2.8, .95], [.2, 1.6, .5], [.4, 2.2, .7], [.6, 1.4, .42]];
   var EXPORT = window.SUN_ATTACK = { progress: 0, held: false, eaten: false, recede: 0 };
@@ -71,8 +72,6 @@
     S.pl = held0 ? { x: ptr.x, y: ptr.y } : null;
     var PK = OUT.pk; PK.x = S.C[0]; PK.y = S.C[1]; PK.dx = S.D[0]; PK.dy = S.D[1]; PK.s = R * .5;
 
-    // ---------- thorns: a visitor near no longer brings them out ----------
-    var TH = OUT.thorn; TH.g = 0; TH.lx = lx; TH.ly = ly; TH.len = .32;
 
     // ---------- the scroll: it cowers and braces, then its flesh parts into a mouth, slowly, heavily ----------
     var ten = sm(a / .3) * (1 - sm((a - .3) / .4));
@@ -101,6 +100,10 @@
     var bpm = 60 + 112 * heat; S.phase += dt * bpm / 60;
     if (heat < .05) { var err = t - S.phase; err -= Math.round(err); S.phase += err * Math.min(1, dt * .8); }   // calm again: back on the world's beat
     var beat = press(S.phase);
+    // ---------- thorns: calm, each beat pushes them out all round the rim and they sink back (never before the opening has handed over) ----------
+    var calmT = g.gate * (1 - wA) * (1 - rc) * (S.att ? 0 : 1);
+    S.cal = approach(S.cal, calmT, calmT > S.cal ? 1.2 : 6, dt);
+    var TH = OUT.thorn; TH.g = beat * S.cal; TH.len = .2;
 
     // ---------- body ----------
     var shrink = .15 * ten;   // scrolled at, it cowers: smaller and smaller as the strain builds

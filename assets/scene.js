@@ -196,12 +196,12 @@
     // thorns: the flesh itself is pushed out into spikes; their outward reach by angle is laid out once a frame
     var TH = FS ? FS.thorn : null, thG = TH ? TH.g : 0, thOn = thG > .002;
     if (thOn) {
-      THL.fill(0); var pa0 = Math.atan2(TH.ly, TH.lx);
-      for (var q = 0; q < 40; q++) {
-        var th0 = q / 40 * TAU + (A.hash(q, 7.7) - .5) * .12, fc = Math.max(0, Math.cos(th0 - pa0)), f2 = Math.pow(fc, 2.2);
-        var L = thG * TH.len * (.14 + .86 * f2) * (.6 + .8 * A.hash(q, 3.1)) * (1 + .07 * Math.sin(t * .011 + q * 2.3) + .1 * bt);   // longest toward the visitor; they quiver
+      THL.fill(0);
+      for (var q = 0; q < 40; q++) {   // the heartbeat's thorns: the same all round the rim
+        var th0 = q / 40 * TAU + (A.hash(q, 7.7) - .5) * .12;
+        var L = thG * TH.len * (.6 + .8 * A.hash(q, 3.1)) * (1 + .07 * Math.sin(t * .011 + q * 2.3) + .1 * bt);   // they quiver
         if (L < .004) continue;
-        var w = cw * (2.6 + 3.4 * fc) / R * (.8 + .4 * A.hash(q, 5.3)), n0 = Math.floor((th0 - w) / TAU * TN), n1 = Math.ceil((th0 + w) / TAU * TN);
+        var w = cw * 6 / R * (.8 + .4 * A.hash(q, 5.3)), n0 = Math.floor((th0 - w) / TAU * TN), n1 = Math.ceil((th0 + w) / TAU * TN);
         for (var n = n0; n <= n1; n++) { var e = 1 - Math.abs(n / TN * TAU - th0) / w; if (e <= 0) continue; e = L * Math.pow(e, 1.35); var m = ((n % TN) + TN) % TN; if (e > THL[m]) THL[m] = e; }
       }
     }
