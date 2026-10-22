@@ -128,6 +128,7 @@
 
     OUT.cx = cx; OUT.cy = cy; OUT.R = R * scale; OUT.ca = ca / ql; OUT.sa = sa / ql; OUT.qa = qa; OUT.qp = qp; OUT.shiver = shiver; OUT.beat = beat; OUT.bpm = bpm;
     OUT.fear = F; OUT.heat = heat; OUT.attack = a;
+    OUT.live = live * (1 - rc); OUT.round = S.round > 0 ? 1 : 0;   // for the pods (sun-amoeba.js)
     OUT.dark = done ? 1 - sm(rc0 / .8) : sm((gp - .5) / .3);
     OUT.vis = done ? (rc0 > 0 ? 1 : 0) : 1 - sm((gp - .75) / .2);   // sated, it comes back up out of the dark
     OUT.inside = sm((gp - .6) / .3) * (1 - sm(rc0 / .7));
