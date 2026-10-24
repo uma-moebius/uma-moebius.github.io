@@ -45,6 +45,80 @@
     return type !== "button" && type !== "submit" && type !== "checkbox" && type !== "radio" && type !== "range";
   }
 
+  function contactRows() {
+    if (!contact) return [];
+    return [
+      document.getElementById("name"),
+      document.getElementById("email"),
+      document.getElementById("message"),
+      contact.querySelector(".send"),
+      contact.querySelector(".contact__mail")
+    ].filter(Boolean);
+  }
+
+  function contactIndex(el) {
+    var rows = contactRows();
+    while (el && el !== document.body) {
+      var i;
+      for (i = 0; i < rows.length; i++) if (rows[i] === el) return i;
+      el = el.parentElement;
+    }
+    return -1;
+  }
+
+  function textEdge(el) {
+    if (el.selectionStart == null || el.selectionStart !== el.selectionEnd) return "";
+    var cs = getComputedStyle(el);
+    var box = document.createElement("div");
+    var copy = ["font-family", "font-size", "font-weight", "font-style", "letter-spacing", "line-height", "text-transform", "word-spacing", "tab-size", "padding-top", "padding-right", "padding-bottom", "padding-left"];
+    var i;
+    box.style.cssText = "position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;white-space:pre-wrap;overflow-wrap:normal;word-break:normal;box-sizing:content-box;height:auto;overflow:visible;";
+    for (i = 0; i < copy.length; i++) box.style.setProperty(copy[i], cs.getPropertyValue(copy[i]));
+    box.style.width = Math.max(0, el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0)) + "px";
+    document.body.appendChild(box);
+    function topAt(n) {
+      while (box.firstChild) box.removeChild(box.firstChild);
+      box.appendChild(document.createTextNode(el.value.slice(0, n)));
+      var mark = document.createElement("span");
+      mark.textContent = "\u200b";
+      box.appendChild(mark);
+      return mark.offsetTop;
+    }
+    var here = topAt(el.selectionStart);
+    var start = topAt(0);
+    var end = topAt(el.value.length);
+    document.body.removeChild(box);
+    if (here <= start && here >= end) return "both";
+    if (here <= start) return "first";
+    if (here >= end) return "last";
+    return "mid";
+  }
+
+  function moveContact(e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.isComposing || e.shiftKey) return false;
+    var rows = contactRows();
+    var i = contactIndex(e.target);
+    if (i < 0) return false;
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      var dir = e.key === "ArrowDown" ? 1 : -1;
+      if (rows[i].tagName === "TEXTAREA") {
+        var edge = textEdge(rows[i]);
+        if (dir < 0 && edge !== "first" && edge !== "both") return false;
+        if (dir > 0 && edge !== "last" && edge !== "both") return false;
+      }
+      e.preventDefault();
+      var next = i + dir;
+      if (next >= 0 && next < rows.length) rows[next].focus({ preventScroll: true });
+      return true;
+    }
+    if (e.key === "Enter" && (rows[i].id === "name" || rows[i].id === "email")) {
+      e.preventDefault();
+      if (i + 1 < rows.length) rows[i + 1].focus({ preventScroll: true });
+      return true;
+    }
+    return false;
+  }
+
   function jump(y) {
     var prev = root.style.scrollBehavior;
     root.style.scrollBehavior = "auto";
@@ -321,6 +395,7 @@
         return;
       }
     }
+    if (mode === "contact" && !lock && moveContact(e)) return;
     if (SCREENS.indexOf(mode) >= 0) {
       if (e.key === "Escape") { e.preventDefault(); back(); return; }
       if ((e.key === "Enter" || e.key === " ") && e.target && e.target.classList && e.target.classList.contains("back")) {

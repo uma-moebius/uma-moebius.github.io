@@ -109,6 +109,7 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 .contact__layout { display: flex; flex-direction: column; align-items: stretch; gap: 0; max-width: 40rem; }
 .contact__form { display: flex; flex-direction: column; gap: 0; margin: 0; font-family: var(--ui); font-size: 16px; font-weight: 400; }
 .field, .contact__send, .contact__mailrow { display: grid; grid-template-columns: 1.4ch 7ch 2ch minmax(0, 1fr); column-gap: 0; align-items: baseline; margin: 0; }
+.field:focus-within::before, .contact__send:focus-within::before, .contact__mailrow:focus-within::before { content: ">" / ""; grid-column: 1; grid-row: 1; color: #ff5c9a; font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: calc(var(--row) * 1.5); }
 .field:has(textarea) { align-items: start; }
 .field label, .contact__maillabel, .send { grid-column: 2; }
 .field input, .field textarea, .contact__mail { grid-column: 4; }
