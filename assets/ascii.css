@@ -9,7 +9,7 @@
 html, body { overflow-x: clip; }
 body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
 
-/* monospace for labels, nav, numbers, form labels, footer */
+/* monospace for labels, nav, numbers, footer */
 .logo, .nav a, .works__row, .site-footer, .contact__mail {
   font-family: var(--mono); font-size: var(--mono-size); line-height: var(--row); letter-spacing: 0; font-weight: 400;
 }
