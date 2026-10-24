@@ -104,47 +104,40 @@ html:not(.ripple) .status__link:hover { text-decoration: underline; text-underli
 /* page tint toward the selected work (~6%) */
 body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #141018)); transition: background-color .35s ease; }
 
-/* contact: a prompt, not a form card — character-cell lines, block caret, [ Send ] */
-.contact { margin-top: calc(var(--row) * 10); }
-.contact__layout { gap: calc(var(--row) * 3) calc(var(--u) * 12); grid-template-columns: minmax(0, 448px) minmax(0, 560px); }
-.contact__mail { margin-top: calc(var(--row) * 2); color: var(--candy); }
-.contact__mail::before { content: "<" / ""; color: var(--hint); } .contact__mail::after { content: ">" / ""; color: var(--hint); }
-.contact__form { gap: calc(var(--row) * 1); font-family: var(--mono); font-size: 16px; }
-.field { display: grid; grid-template-columns: 10ch minmax(0, 1fr); column-gap: 0; row-gap: 0; align-items: baseline; position: relative; }
-.field label { font-size: 16px; line-height: calc(var(--row) * 1.5); color: var(--mute); white-space: pre; transition: color .15s; }
-.field label::after { content: " >" / ""; color: var(--hint); transition: color .15s; }
-.field:focus-within label, .field:focus-within label::after { color: var(--candy); }
-.field input, .field textarea { font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 1.5); height: auto; min-height: 0;
-  padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--blush);
-  caret-color: var(--candy); caret-shape: block; }
+/* contact: name-entry rows. The mark column stays empty until a row is selected. */
+.contact { margin: calc(var(--row) * 4) 0 0; }
+.contact__layout { display: flex; flex-direction: column; align-items: stretch; gap: 0; max-width: 40rem; }
+.contact__form { display: flex; flex-direction: column; gap: 0; margin: 0; font-family: var(--ui); font-size: 16px; font-weight: 400; }
+.field, .contact__send, .contact__mailrow { display: grid; grid-template-columns: 1.4ch 7ch 2ch minmax(0, 1fr); column-gap: 0; align-items: baseline; margin: 0; }
+.field:has(textarea) { align-items: start; }
+.field label, .contact__maillabel, .send { grid-column: 2; }
+.field input, .field textarea, .contact__mail { grid-column: 4; }
+.field label, .contact__maillabel { margin: 0; color: #b83470; font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: calc(var(--row) * 1.5); }
+.field input, .field textarea { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; outline: none; box-shadow: none; background: transparent;
+  color: #ff9cc2; font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: calc(var(--row) * 1.5); caret-color: #ff5c9a; caret-shape: block; resize: none; }
 .field input { height: calc(var(--row) * 1.5); }
-.field textarea { resize: none; overflow: auto; }
-.field input:focus-visible, .field textarea:focus-visible { outline: none; }  /* focus = pink prompt + pink rule + block caret */
-.field input::placeholder, .field textarea::placeholder { color: var(--hint); }
-.field input:-webkit-autofill { -webkit-text-fill-color: var(--blush); transition: background-color 600000s 0s; }
-.field::after { content: "......................................................................................................................" / "";
-  grid-column: 2; overflow: hidden; white-space: nowrap; color: rgba(246,231,234,.22); line-height: var(--row); height: var(--row); transition: color .15s; }
-.field:focus-within::after { color: var(--candy); }
-.form-error { font-family: var(--mono); font-size: 16px; color: var(--candy); padding-left: 10ch; }
-.form-error::before { content: "! " / ""; }
-/* turnstile: out of the flex flow (no gap, no size) until it asks for an interaction */
-.turnstile { position: absolute; width: 0; height: 0; overflow: hidden; }
-.turnstile.is-visible { position: static; width: 100%; height: auto; overflow: visible; }
-.send { align-self: flex-start; margin: var(--row) 0 0 10ch; width: auto; height: calc(var(--row) * 2); padding: 0 1ch; border-radius: 0;
-  background: transparent; color: var(--candy); font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 2); letter-spacing: 0;
-  transition: background-color .12s, color .12s; }
-.send::before { content: "[ " / ""; } .send::after { content: " ]" / ""; }
-html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: var(--candy); color: var(--night); outline: none; }   /* inverse video: keyboard focus (and hover where the ripple does not play) */
-.send:active:not(:disabled) { transform: none; }
-.send:disabled { opacity: .55; }
+.field textarea { min-height: calc(var(--row) * 6); overflow: auto; }
+.field input:focus, .field input:focus-visible, .field textarea:focus, .field textarea:focus-visible { outline: none; background: transparent; box-shadow: none; }
+.field input:-webkit-autofill { -webkit-text-fill-color: #ff9cc2; caret-color: #ff5c9a; transition: background-color 600000s 0s; }
+.contact__send { margin-top: calc(var(--row) * 1.5); }
+.contact__mailrow { margin-top: calc(var(--row) * 1.5); }
+.contact__mail { margin: 0; color: #ff9cc2; font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: calc(var(--row) * 1.5); }
+.contact__mail:focus, .contact__mail:focus-visible { outline: none; }
+.form-error { margin: 0; padding: 0; font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: var(--row); color: #ff5c9a; }
+.form-error::before { content: none; }
+.turnstile { position: static; width: auto; height: auto; overflow: visible; }
+.send { margin: 0; padding: 0; width: auto; height: auto; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #ff9cc2;
+  font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: calc(var(--row) * 1.5); letter-spacing: 0; cursor: pointer; }
+.send::before, .send::after { content: none; }
+.send:hover, .send:focus, .send:focus-visible, .send:active { background: transparent; color: #ff9cc2; outline: none; box-shadow: none; transform: none; }
+.send:disabled { opacity: .55; cursor: wait; }
 .site-footer { display: block; margin-top: calc(var(--row) * 8); min-height: 0; background: none; color: var(--hint); text-align: center; padding-bottom: calc(var(--row) * 2); }
 .dusk { display: block; width: min(100% - var(--gutter) * 2, 1200px - var(--gutter) * 2);   /* horizon spans the .shell content width */ height: calc(var(--row) * 5.5); margin: 0 auto; }
 .site-footer p { margin: var(--row) 0 0; }
 @media (max-width: 768px) {
-  .contact { margin-top: calc(var(--row) * 6); }
-  .contact__layout { grid-template-columns: minmax(0, 1fr); }
-  .send, .form-error { padding-left: 0; }
-  .send { padding: 0 1ch; }
+  .field, .contact__send, .contact__mailrow { grid-template-columns: 1.4ch minmax(0, 1fr); }
+  .field label, .contact__maillabel, .send { grid-column: 2; grid-row: 1; }
+  .field input, .field textarea, .contact__mail { grid-column: 2; grid-row: 2; }
   .dusk { height: calc(var(--row) * 4.5); }
 }
 
@@ -158,18 +151,14 @@ html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: 
 @media (pointer: coarse) {
   .logo, .nav a { padding: 14px 4px; margin: -14px -4px; }
   .status__link { display: inline-block; padding: 10px 6px; margin: -10px -6px; }
-  .contact__mail { padding: 14px 0; margin-bottom: -14px; margin-top: calc(var(--row) * 2 - 14px); }
-  .field input { box-sizing: content-box; padding: 10px 0; margin: -10px 0; position: relative; z-index: 1; }   /* above its dotted rule, so a tap on the rule lands in the field */
-  .send { height: 44px; border: solid transparent; border-width: 6px 0; background-clip: padding-box; margin-top: calc(var(--row) - 6px); margin-bottom: -6px; }
+  .contact__mail, .field input, .field textarea, .send { padding-top: 10px; padding-bottom: 10px; margin-top: -10px; margin-bottom: -10px; }
   .works__row { height: 44px; }
 }
 @media (hover: none) {
   .logo:hover, .contact__mail:hover, .status__link:hover { text-decoration: none; }
   .nav a:hover { color: var(--mute); }
-  .send:hover:not(:disabled):not(:focus-visible):not(:active) { background-color: transparent; color: var(--candy); }
   html:not(.ripple) .logo:active, html:not(.ripple) .contact__mail:active, html:not(.ripple) .status__link:active { text-decoration: underline; text-underline-offset: 3px; }
   html:not(.ripple) .nav a:active { color: var(--blush); }
-  html:not(.ripple) .send:active:not(:disabled) { background-color: var(--candy); color: var(--night); }
 }
 /* phones: the header keeps the logo and the three links on one line (it wrapped to two below 430px) */
 @media (max-width: 768px) {
