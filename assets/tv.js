@@ -30,7 +30,7 @@
   if (typeof window.onTvOpen !== "function") {
     window.onTvOpen = function (reveal) { reveal(); };
   }
-  if (document.fonts && document.fonts.load) document.fonts.load("16px DotGothic16");
+  if (document.fonts && document.fonts.load) document.fonts.load("16px \"JetBrains Mono\"");
 
   function reduceMotion() {
     return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);

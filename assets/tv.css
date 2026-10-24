@@ -1,11 +1,4 @@
 /* The inside of the flesh TV. The frame itself is untouched; this only covers the hole. */
-@font-face {
-  font-family: "DotGothic16";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("fonts/dotgothic16-latin.woff2") format("woff2");
-}
 
 html.birth .tv,
 html.birth .tv__name,
@@ -27,7 +20,7 @@ html.birth.tv-contact .field input,
 html.birth.tv-contact .field textarea,
 html.birth.tv-contact .form-error,
 html.birth.tv-contact .send {
-  font-family: "DotGothic16", sans-serif;
+  font-family: var(--ui);
   font-weight: 400;
   font-synthesis: none;
   letter-spacing: 0;
@@ -129,7 +122,7 @@ html.birth.tv-contact .contact__layout { position: relative; padding-top: calc(v
   border: 0;
   background: transparent;
   color: #ff9cc2;
-  font-family: "DotGothic16", sans-serif;
+  font-family: var(--ui);
   font-weight: 400;
   font-synthesis: none;
   font-size: 16px;
@@ -181,7 +174,7 @@ html.birth.tv-contact .back {
 .tv__name {
   margin: 0;
   color: #ff5c9a;
-  font-family: "DotGothic16", sans-serif;
+  font-family: var(--ui);
   font-weight: 400;
   font-synthesis: none;
   font-size: 32px;
@@ -199,7 +192,7 @@ html.birth.tv-contact .back {
   border: 0;
   background: transparent;
   color: #ff9cc2;
-  font-family: "DotGothic16", sans-serif;
+  font-family: var(--ui);
   font-weight: 400;
   font-synthesis: none;
   font-size: 16px;
@@ -231,7 +224,7 @@ html.birth.tv-contact .back {
   border: 0;
   background: transparent;
   color: #b83470;
-  font-family: "DotGothic16", sans-serif;
+  font-family: var(--ui);
   font-weight: 400;
   font-synthesis: none;
   font-size: 32px;
