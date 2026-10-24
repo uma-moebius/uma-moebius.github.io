@@ -174,18 +174,12 @@
     else reveal();
   }
 
-  function fiPx() {
-    var v = parseFloat(getComputedStyle(root).getPropertyValue("--fi"));
-    return isFinite(v) ? v : 0;
-  }
-
   function drawNoise() {
     if (!noise) return;
-    var fi = fiPx();
-    var w = Math.max(1, Math.round(window.innerWidth - fi * 2));
-    var h = Math.max(1, Math.round(window.innerHeight - fi * 2));
-    var dpr = Math.min(2, window.devicePixelRatio || 1);
     noise.hidden = false;
+    var w = Math.max(1, noise.clientWidth || window.innerWidth);
+    var h = Math.max(1, noise.clientHeight || window.innerHeight);
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
     if (noise.width !== Math.round(w * dpr) || noise.height !== Math.round(h * dpr)) {
       noise.width = Math.round(w * dpr);
       noise.height = Math.round(h * dpr);
