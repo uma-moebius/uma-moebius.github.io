@@ -111,7 +111,7 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 .field, .contact__send, .contact__mailrow { display: grid; grid-template-columns: 1.4ch 7ch 2ch minmax(0, 1fr); column-gap: 0; align-items: baseline; margin: 0; }
 .field:focus-within::before, .contact__send:focus-within::before, .contact__mailrow:focus-within::before { content: ">" / ""; grid-column: 1; grid-row: 1; color: #ff5c9a; font-family: var(--ui); font-size: 18px; font-weight: 400; line-height: 1.5; }
 .field + .field { margin-top: calc(var(--row) * 0.5); }
-.field label, .contact__maillabel, .send { grid-column: 2; }
+.field label, .contact__maillabel { grid-column: 2; }
 .field input, .field textarea, .contact__mail { grid-column: 4; }
 .field label, .contact__maillabel { margin: 0; color: #ff5c9a; font-family: var(--ui); font-size: 18px; font-weight: 400; line-height: 1.5; }
 .field input, .field textarea { width: 100%; margin: 0; padding: 4px 0.5ch; border: 0; border-radius: 0; outline: none; box-shadow: none; background: #3d1528;
@@ -127,10 +127,11 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 .form-error { margin: calc(var(--row) * 0.5) 0 0; padding: 0; font-family: var(--ui); font-size: 18px; font-weight: 400; line-height: 1.5; color: #ff5c9a; }
 .form-error::before { content: none; }
 .turnstile { position: static; width: auto; height: auto; overflow: visible; }
-.send { margin: 0; padding: 0; width: auto; height: auto; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #ff9cc2;
-  font-family: var(--ui); font-size: 18px; font-weight: 400; line-height: 1.5; letter-spacing: 0; cursor: pointer; }
+.send { grid-column: 4; margin: 0; padding: 4px 0.5ch; width: 100%; height: auto; border: 0; border-radius: 0; background: #ff5c9a; box-shadow: none; color: #141018;
+  font-family: var(--ui); font-size: 18px; font-weight: 400; line-height: 1.5; letter-spacing: 0; text-align: left; cursor: pointer; }
 .send::before, .send::after { content: none; }
-.send:hover, .send:focus, .send:focus-visible, .send:active { background: transparent; color: #ff9cc2; outline: none; box-shadow: none; transform: none; }
+.send:hover, .send:focus, .send:focus-visible { background: #ff9cc2; color: #141018; outline: none; box-shadow: none; transform: none; }
+.send:active { background: #ff5c9a; color: #141018; outline: none; box-shadow: none; transform: none; }
 .send:disabled { opacity: .55; cursor: wait; }
 .site-footer { display: block; margin-top: calc(var(--row) * 8); min-height: 0; background: none; color: var(--hint); text-align: center; padding-bottom: calc(var(--row) * 2); }
 .dusk { display: block; width: min(100% - var(--gutter) * 2, 1200px - var(--gutter) * 2);   /* horizon spans the .shell content width */ height: calc(var(--row) * 5.5); margin: 0 auto; }
@@ -140,7 +141,8 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
   .field:focus-within::before, .contact__send:focus-within::before, .contact__mailrow:focus-within::before,
   .field label, .contact__maillabel, .field input, .field textarea, .contact__mail, .form-error, .send { font-size: 16px; }
   .field, .contact__send, .contact__mailrow { grid-template-columns: 1.4ch minmax(0, 1fr); }
-  .field label, .contact__maillabel, .send { grid-column: 2; grid-row: 1; }
+  .field label, .contact__maillabel { grid-column: 2; grid-row: 1; }
+  .send { grid-column: 2; grid-row: 1; }
   .field input, .field textarea, .contact__mail { grid-column: 2; grid-row: 2; }
   .dusk { height: calc(var(--row) * 4.5); }
 }
@@ -155,8 +157,8 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 @media (pointer: coarse) {
   .logo, .nav a { padding: 14px 4px; margin: -14px -4px; }
   .status__link { display: inline-block; padding: 10px 6px; margin: -10px -6px; }
-  .contact__mail, .send { padding-top: 10px; padding-bottom: 10px; margin-top: -10px; margin-bottom: -10px; }
-  .field input { min-height: 44px; }
+  .contact__mail { padding-top: 10px; padding-bottom: 10px; margin-top: -10px; margin-bottom: -10px; }
+  .field input, .send { min-height: 44px; }
   .works__row { height: 44px; }
 }
 @media (hover: none) {
