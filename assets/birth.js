@@ -417,6 +417,11 @@
   function birthLen() { return Math.max(1, sun.offsetHeight - AFTER * L.H); }
   function rawProgress() { return clamp(-sun.getBoundingClientRect().top / birthLen()); }
   function pastBirth() { return clamp((-sun.getBoundingClientRect().top - birthLen()) / (L.H * .1)); }
+  // scrollY where the frame has fully spread (raw progress 1). Null until the field has been measured.
+  STATE.scrollEnd = function () {
+    if (!L.H) return null;
+    return sun.getBoundingClientRect().top + window.scrollY + birthLen();
+  };
   // phases on the sprung progress: knead → the body of balls (held a moment) → it spreads into the frame; About shows inside it
   var M0 = .03, M1 = .4, F0 = .5, F1 = .97, SET0 = .9, SET1 = .98;
 
