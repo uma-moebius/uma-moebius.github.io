@@ -1,0 +1,226 @@
+/* The inside of the flesh TV. The frame itself is untouched; this only covers the hole. */
+
+html.birth .site-header { display: none; }
+
+/* Park everything after the opening. The scene's height is set from the measured scroll end. */
+
+html.birth .site-footer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+html.birth .works {
+  position: fixed;
+  top: 150vh;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.birth main > .shell:last-child {
+  position: fixed;
+  top: 150vh;
+  left: 0;
+  width: min(1200px, 100%);
+  margin: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* About's own text stays out until that screen is chosen. */
+html.birth .sunsec__pin > * { opacity: 0; }
+html.birth.tv-about .sunsec__pin > * { opacity: 1; }
+
+html.birth.tv-works .works {
+  z-index: 2;
+  top: var(--fi, 0px);
+  right: var(--fi, 0px);
+  bottom: var(--fi, 0px);
+  left: var(--fi, 0px);
+  width: auto;
+  height: auto;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+html.birth.tv-works .works__pin {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: auto;
+  margin: 0;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html.birth.tv-contact main > .shell:last-child {
+  z-index: 2;
+  top: var(--fi, 0px);
+  right: var(--fi, 0px);
+  bottom: var(--fi, 0px);
+  left: var(--fi, 0px);
+  width: auto;
+  max-width: none;
+  height: auto;
+  padding: calc(var(--row) * 4) var(--gutter) calc(var(--row) * 2);
+  overflow: auto;
+  visibility: visible;
+  pointer-events: auto;
+  background: #141018;
+}
+
+html.birth.tv-contact .contact { margin-top: 0; }
+html.birth.tv-contact .contact__layout { position: relative; padding-top: calc(var(--row) * 2); }
+
+.back {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--row) * 2);
+  left: var(--gutter);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ff9cc2;
+  font-family: var(--ui);
+  font-size: 13px;
+  line-height: var(--row);
+  cursor: pointer;
+}
+
+html.birth.tv-about .back,
+html.birth.tv-works .back,
+html.birth.tv-contact .back {
+  position: fixed;
+  z-index: 4;
+  top: calc(var(--fi, 0px) + var(--row));
+  left: calc(var(--fi, 0px) + 16px);
+}
+
+.back[hidden] { display: none; }
+
+.tv {
+  position: fixed;
+  z-index: 2;
+  top: var(--fi, 0px);
+  right: var(--fi, 0px);
+  bottom: var(--fi, 0px);
+  left: var(--fi, 0px);
+  display: grid;
+  place-items: center;
+  background: #141018;
+  pointer-events: none;
+}
+
+.tv[hidden],
+.tv__title[hidden],
+.tv__menu[hidden],
+.tv__noise[hidden] { display: none; }
+
+.tv__title,
+.tv__menu { pointer-events: auto; }
+
+.tv__title {
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tv__name {
+  margin: 0;
+  color: #ff5c9a;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: min(80px, 16svh, calc((100vw - 2 * var(--fi, 32px) - 40px) / 7.06));
+  line-height: 1.05;
+  letter-spacing: -0.01282em;
+  white-space: nowrap;
+}
+
+.tv__start {
+  display: inline-block;
+  margin-top: 22px;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: #ff9cc2;
+  font-family: var(--ui);
+  font-size: 13px;
+  line-height: var(--row);
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  animation: tv-blink 1.2s steps(1) infinite;
+}
+
+.tv__menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 14ch;
+  margin: 0;
+  padding: 8px 4px;
+  user-select: none;
+  touch-action: none;
+}
+
+.tv__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: #b83470;
+  font-family: var(--ui);
+  font-size: 22px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tv__mark {
+  display: inline-block;
+  width: 1.4ch;
+  color: #ff5c9a;
+  flex: none;
+}
+
+.tv__item[aria-current="true"] { color: #ff5c9a; }
+.tv__item[aria-current="true"] .tv__mark::before { content: ">" / ""; }
+
+.tv__noise {
+  position: fixed;
+  z-index: 2;
+  top: var(--fi, 0px);
+  right: var(--fi, 0px);
+  bottom: var(--fi, 0px);
+  left: var(--fi, 0px);
+  width: auto;
+  height: auto;
+  pointer-events: auto;
+}
+
+@keyframes tv-blink { 50% { opacity: 0; } }
+
+@media (pointer: coarse) {
+  .back { padding: 12px 10px; margin: -12px -10px; }
+  .tv__start { min-height: 44px; padding: 12px 16px; }
+  .tv__item { min-height: 44px; font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv__start { animation: none; }
+}
