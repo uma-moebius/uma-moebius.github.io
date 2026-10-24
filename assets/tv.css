@@ -9,14 +9,7 @@ html.birth.tv-about .status,
 html.birth.tv-about .status__link,
 html.birth.tv-works .works__row,
 html.birth.tv-works .works__empty,
-html.birth.tv-contact .contact__maillabel,
-html.birth.tv-contact .contact__mail,
-html.birth.tv-contact .contact__form,
-html.birth.tv-contact .field label,
-html.birth.tv-contact .field input,
-html.birth.tv-contact .field textarea,
-html.birth.tv-contact .form-error,
-html.birth.tv-contact .send {
+html.birth.tv-contact .contact__mail {
   font-family: var(--ui);
   font-weight: 400;
   font-synthesis: none;
@@ -275,13 +268,7 @@ html.birth.tv-about .status__link:focus-visible,
 html.birth.tv-works .works__row:focus,
 html.birth.tv-works .works__row:focus-visible,
 html.birth.tv-contact a:focus,
-html.birth.tv-contact a:focus-visible,
-html.birth.tv-contact button:focus,
-html.birth.tv-contact button:focus-visible,
-html.birth.tv-contact input:focus,
-html.birth.tv-contact input:focus-visible,
-html.birth.tv-contact textarea:focus,
-html.birth.tv-contact textarea:focus-visible {
+html.birth.tv-contact a:focus-visible {
   outline: none;
 }
 

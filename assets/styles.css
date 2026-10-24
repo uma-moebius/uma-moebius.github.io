@@ -160,12 +160,6 @@ html:not(.ripple) .nav a:hover {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 
-  .send,
-  .send:hover,
-  .send:active { 
-    transition: none;
-    transform: none;
-  }
 }
 
 /* 404 + thank-you: one small character SUN above a line of mono text */

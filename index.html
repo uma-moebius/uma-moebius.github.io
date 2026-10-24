@@ -110,33 +110,7 @@
       <section class="contact" id="contact" aria-label="Contact">
         <div class="contact__layout">
           <button class="back" type="button" hidden>Back</button>
-          <form class="contact__form" id="contact-form" action="/api/contact" method="POST">
-            <div hidden aria-hidden="true">
-              <label for="company">Company</label>
-              <input id="company" name="company" type="text" tabindex="-1" autocomplete="off">
-            </div>
-            <div class="field">
-              <label for="name">NAME</label>
-              <input id="name" name="name" type="text" autocomplete="name" required>
-            </div>
-            <div class="field">
-              <label for="email">EMAIL</label>
-              <input id="email" name="email" type="email" autocomplete="email" required>
-            </div>
-            <div class="field">
-              <label for="message">MESSAGE</label>
-              <textarea id="message" name="message" rows="4" required></textarea>
-            </div>
-            <p class="form-error" id="form-error" role="alert" hidden></p>
-            <div class="turnstile" id="turnstile"></div>
-            <div class="contact__send">
-              <button class="send" type="submit">SEND</button>
-            </div>
-          </form>
-          <div class="contact__mailrow">
-            <span class="contact__maillabel">MAIL</span>
             <a class="contact__mail" href="mailto:hello@yumatanemura.com">hello@yumatanemura.com</a>
-          </div>
         </div>
       </section>
     </div>
