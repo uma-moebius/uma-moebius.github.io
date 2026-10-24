@@ -1,4 +1,4 @@
-/* Works: a pinned full-screen scene, driven by window.SITE_WORKS (assets/works-data.js).
+/* Works: the list inside the screen, driven by window.SITE_WORKS (assets/works-data.js).
    Hover / focus = sparse large characters; confirm = density steps 24→16→10→6→4px → the sharp image.
    An empty list shows NO DATA and draws nothing behind it.
    The About portrait (window.SITE_PORTRAIT) resolves through the same plate. */
@@ -184,7 +184,16 @@
   }
 
   // ---- view state + sequences ----
-  var view = { n: 0, s: plate.sizes()[0] }, seq = null, introDone = false, reveal = 0;
+  var view = { n: 0, s: plate.sizes()[0] }, seq = null, introDone = false, reveal = 0, shown = false, t0 = 0;
+  function screenOn() {
+    var root = document.documentElement;
+    if (root.classList.contains("birth")) return root.classList.contains("tv-works");
+    return true;
+  }
+  function resetIntro() {
+    shown = false; introDone = false; reveal = 0; seq = null; t0 = 0;
+    view = { n: current, s: plate.sizes()[0] }; previewing = -1; hoverIdx = -1; markRows(); syncImg();
+  }
   function rev(n) { var z = plate.sizes().slice().reverse(); return z.map(function (s) { return { n: n, s: s, d: 85 }; }); }
   function play(steps, from, soft) { seq = { steps: steps, from: from, t0: performance.now(), soft: !!soft }; }
   function hoverIn(n) { var z = plate.sizes().slice().reverse(); return z.map(function (s) { return { n: current, s: s, d: 45 }; }).concat([{ n: n, s: plate.sizes()[0], d: 60 }]); }
@@ -222,15 +231,16 @@
   }
 
   // ---- drawing, called by scene.js every frame while the scene is on screen ----
-  function draw(g, d, gx, gy, pw) {
+  function draw(g, d, gx, gy) {
     paintPortrait(g, d, gx, gy);
+    if (!screenOn()) { if (shown) resetIntro(); return; }
     if (!plate.place(d, gx, gy)) return;
-    var u = reduceQ.matches ? 1 : A.clamp(pw / .2);
+    if (!bitmaps[current].complete || !bitmaps[current].naturalWidth) return;
+    if (!shown) { shown = true; t0 = performance.now(); plate.prefetch(current); }
+    var u = instant() ? 1 : A.clamp((performance.now() - t0) / 600);
     if (u !== reveal) { reveal = u; syncImg(); }
-    stage.parentElement.style.setProperty("--in", u.toFixed(3)); stage.parentElement.classList.toggle("is-live", u > .95);
-    if (!introDone && u >= 1 && !instant()) { introDone = true; play(plate.fwd(current, 170), { n: current, s: plate.sizes()[0] }); plate.prefetch(current); }
-    if (instant() && u >= 1 && !introDone) { introDone = true; view = { n: current, s: 0 }; syncImg(); }
-    if (introDone && u < .6 && !seq) { introDone = false; view = { n: current, s: plate.sizes()[0] }; previewing = -1; markRows(); syncImg(); }
+    if (!introDone && u >= 1 && !instant()) { introDone = true; play(plate.fwd(current, 170), { n: current, s: plate.sizes()[0] }); }
+    if (instant() && !introDone) { introDone = true; reveal = 1; view = { n: current, s: 0 }; syncImg(); }
     if (!introDone && u < 1) { plate.reveal(g, u, current); return; }
     if (seq) {
       var done = plate.runSeq(g, seq);

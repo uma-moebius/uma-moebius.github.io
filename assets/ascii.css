@@ -59,11 +59,9 @@ html:not(.ripple) .status__link:hover { text-decoration: underline; text-underli
 }
 @media (prefers-reduced-motion: reduce) { .status__portrait img[src] { opacity: 1; } }
 
-/* Works: pinned full-screen scene; index on the cell grid, work as frameless characters → frameless image */
-.works { position: relative; z-index: 2; height: 260vh; height: 260svh; margin-top: -100vh; margin-top: -100svh; scroll-margin-top: -55vh; }
-.works.is-empty { height: 150vh; height: 150svh; scroll-margin-top: -25vh; }   /* no works yet: about one screen of Works, the full scene returns with the first work */
-.works__pin { position: sticky; top: 0; height: 100vh; height: 100svh; opacity: var(--in, 0); pointer-events: none; }
-.works__pin.is-live { pointer-events: auto; }
+/* Works: the list and the picture, one screen. Characters resolve on the stage, then the image. */
+.works { position: relative; z-index: 2; height: 100vh; height: 100svh; }
+.works__pin { position: absolute; inset: 0; }
 .works__pin { --wfs: 16px; --iw: calc(var(--wfs) * 24); --wg: calc(var(--u) * 12);
   --sw: min(calc(100vh - var(--row) * 10), calc(100vw - var(--iw) - var(--wg) - var(--gutter) * 2));
   --x0: calc((100vw - var(--iw) - var(--wg) - var(--sw)) / 2); }   /* index + work centred as one composition */
@@ -87,7 +85,6 @@ html:not(.ripple) .status__link:hover { text-decoration: underline; text-underli
 .works__stage > img:not([src]) { display: none; }
 .works__empty { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); margin: 0; text-align: center;
   font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: var(--row); color: #ff9cc2; }
-.works.is-empty .works__pin { opacity: 1; pointer-events: auto; }
 @media (min-width: 1440px) { .works__pin { --wfs: 20px; } }
 @media (max-width: 768px) {
   .works__pin { --wfs: 16px; }
@@ -156,7 +153,6 @@ html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: 
 @media (prefers-reduced-motion: reduce) {
   body { transition: none; }
   .sunsec { height: 100vh; height: 100svh; }
-  .works, .works.is-empty { height: 100vh; height: 100svh; margin-top: 0; scroll-margin-top: 0; }
   .works__row, .works__mark { transition: none; }
 }
 /* touch: hit areas of at least 44px without moving anything (the extra padding is taken back by a negative margin)
@@ -196,7 +192,7 @@ html.birth .sunsec__pin > * { opacity: var(--fade, 0); }
 .flesh__canvas { display: none; }
 html.birth .flesh__canvas { display: block; position: fixed; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; z-index: 3; pointer-events: none; }
 /* inside the frame: what follows the opening sits within the flesh (--fi: how far in from the screen's edges it can reach) */
-html.birth .sunsec__pin, html.birth .works__pin { top: var(--fi, 0px); height: calc(100vh - 2 * var(--fi, 0px)); height: calc(100svh - 2 * var(--fi, 0px)); margin-inline: var(--fi, 0px); }
+html.birth .sunsec__pin { top: var(--fi, 0px); height: calc(100vh - 2 * var(--fi, 0px)); height: calc(100svh - 2 * var(--fi, 0px)); margin-inline: var(--fi, 0px); }
 html.birth .works__pin { --sw: min(calc(100vh - 2 * var(--fi, 0px) - var(--row) * 8), calc(100vw - 2 * var(--fi, 0px) - var(--iw) - var(--wg) - var(--gutter) * 2));
   --x0: calc((100vw - 2 * var(--fi, 0px) - var(--iw) - var(--wg) - var(--sw)) / 2); }
 html.birth main > .shell:last-child, html.birth .site-footer { padding-inline: max(var(--gutter), calc(var(--fi, 0px) + 8px - max(0px, (100vw - 1200px) / 2))); }
