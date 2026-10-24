@@ -103,6 +103,7 @@ html.birth.tv-contact main > .shell:last-child {
   background: #141018;
 }
 
+html.birth.tv-works .works.is-empty { background: #141018; }
 html.birth.tv-works .works__empty { font-size: 16px; }
 html.birth.tv-contact .contact__heading { font-size: 32px; }
 html.birth.tv-contact .contact { margin-top: 0; }

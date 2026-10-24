@@ -1,6 +1,6 @@
 /* Works: a pinned full-screen scene, driven by window.SITE_WORKS (assets/works-data.js).
    Hover / focus = sparse large characters; confirm = density steps 24→16→10→6→4px → the sharp image.
-   An empty list renders the empty state: the character field stays and one monospace line types in.
+   An empty list shows NO DATA and draws nothing behind it.
    The About portrait (window.SITE_PORTRAIT) resolves through the same plate. */
 (function () {
   var WORKS = (window.SITE_WORKS || []).slice();
@@ -149,18 +149,13 @@
   var portrait = setupPortrait();
   function paintPortrait(g, d, gx, gy) { if (portrait) portrait.paint(g, d, gx, gy); }
 
-  // ---- empty state: no works yet → index + stage stay out of the page, one line types in with the scene ----
+  // ---- empty state: no works yet → the list stays out, and NO DATA is the whole screen ----
   if (!WORKS.length) {
     list.hidden = true; stage.hidden = true;
     pinEl.parentElement.classList.add("is-empty");
-    var typed = empty && empty.querySelector(".works__empty-type"), line = empty ? empty.dataset.line : "", shown = -1;
     if (empty) empty.hidden = false;
-    window.WORKS_VIEW = { empty: true, busy: function () { return portrait ? portrait.busy() : false; }, draw: function (g, d, gx, gy, pw) {
+    window.WORKS_VIEW = { empty: true, busy: function () { return portrait ? portrait.busy() : false; }, draw: function (g, d, gx, gy) {
       paintPortrait(g, d, gx, gy);
-      var u = matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : A.clamp(pw / .2);
-      pinEl.style.setProperty("--in", u.toFixed(3)); pinEl.classList.toggle("is-live", u > .95);
-      var n = Math.round(A.clamp((u - .35) / .6) * line.length);       // types in while the scene assembles
-      if (n !== shown && typed) { shown = n; typed.textContent = line.slice(0, n); }
     } };
     return;
   }

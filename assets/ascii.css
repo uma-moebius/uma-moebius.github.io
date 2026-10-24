@@ -84,14 +84,13 @@ html:not(.ripple) .status__link:hover { text-decoration: underline; text-underli
 .works__row:focus-visible { outline: 1px solid var(--candy); outline-offset: 2px; }
 .works__stage { position: absolute; left: calc(var(--x0) + var(--iw) + var(--wg)); top: 50%; transform: translateY(-50%); width: var(--sw); aspect-ratio: 1; }
 .works__stage > img { display: block; width: 100%; height: 100%; object-fit: contain; opacity: 0; user-select: none; }
+.works__stage > img:not([src]) { display: none; }
 .works__empty { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); margin: 0; text-align: center;
-  font-family: var(--mono); font-size: var(--wfs); line-height: var(--row); color: var(--blush); white-space: pre; }   /* one line on the cell grid, centred */
-.works__caret { display: inline-block; width: 1ch; height: 1.15em; margin-left: .2ch; vertical-align: -.2em; background: var(--candy); animation: caret-blink 1s steps(1) infinite; }
-@keyframes caret-blink { 50% { opacity: 0; } }
+  font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: var(--row); color: #ff9cc2; }
+.works.is-empty .works__pin { opacity: 1; pointer-events: auto; }
 @media (min-width: 1440px) { .works__pin { --wfs: 20px; } }
 @media (max-width: 768px) {
   .works__pin { --wfs: 16px; }
-  .works__empty { font-size: 13px; }
   .works__stage { left: var(--gutter); right: var(--gutter); top: calc(var(--row) * 5); transform: none; width: auto; }
   .works__index { left: var(--gutter); top: auto; bottom: calc(var(--row) * 2); transform: none; width: auto; right: var(--gutter); }
   .works__row { height: calc(var(--row) * 2.25); }
@@ -156,7 +155,6 @@ html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: 
 
 @media (prefers-reduced-motion: reduce) {
   body { transition: none; }
-  .works__caret { animation: none; }
   .sunsec { height: 100vh; height: 100svh; }
   .works, .works.is-empty { height: 100vh; height: 100svh; margin-top: 0; scroll-margin-top: 0; }
   .works__row, .works__mark { transition: none; }
