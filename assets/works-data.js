@@ -4,4 +4,4 @@
    src must be same-origin or served with CORS (Access-Control-Allow-Origin), or the characters cannot be read from it. */
 window.SITE_WORKS = [];
 /* About portrait. Empty until the picture is hosted (same CORS rule as a work). */
-window.SITE_PORTRAIT = "";
+window.SITE_PORTRAIT = "https://media.yumatanemura.com/portrait.webp";
