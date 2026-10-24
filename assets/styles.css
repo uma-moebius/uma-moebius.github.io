@@ -162,7 +162,7 @@ html:not(.ripple) .nav a:hover {
 
 }
 
-/* 404 + thank-you: one small character SUN above a line of mono text */
+/* 404: one small character SUN above a line of mono text */
 .mini-sun {
   margin: 0;
   font-family: var(--ui);
@@ -194,10 +194,6 @@ html:not(.ripple) .nav a:hover {
   color: var(--blush);
   font-size: 20px;
   font-weight: 400;
-}
-
-.thank-you-page .edge__line {
-  font-size: 28px;
 }
 
 .edge__back {

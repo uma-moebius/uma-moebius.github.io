@@ -1,4 +1,4 @@
-/* A small SUN drawn in characters (same glyph ramp and five tones as the home page), for the 404 and thank-you pages.
+/* A small SUN drawn in characters (same glyph ramp and five tones as the home page), for the 404 page.
    Fills every <pre class="mini-sun" data-rows="N">; the light drifts slowly unless reduced motion is set. */
 (function () {
   var CHARS = " .·:-=+*sun%#@", LV = CHARS.length;
