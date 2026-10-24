@@ -4,7 +4,7 @@
    The accessible name is the real label (aria-label); the swap runs on animation frames only while it sweeps (~0.3s). */
 (function () {
   if (!window.requestAnimationFrame || matchMedia("(prefers-reduced-motion: reduce)").matches) return;   // reduced motion: no ripple, the static hover style stays
-  var SEL = ".logo, .nav a, .sunsec__links a, .contact__mail, .send, .edge__back";
+  var SEL = ".logo, .nav a, .status__link, .contact__mail, .send, .edge__back";
   var FRONT = "*+", TRAIL = "=";            // the sweep: a dense glyph at its front, a lighter one behind it, then the letter returns
   var T_FRONT = "#ff9cc2", T_TRAIL = "#b83470";   // the top tone and the middle tone of the five
   var hover = matchMedia("(hover: hover) and (pointer: fine)");

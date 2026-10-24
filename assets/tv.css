@@ -5,10 +5,8 @@ html.birth .tv__name,
 html.birth .tv__start,
 html.birth .tv__item,
 html.birth .back,
-html.birth.tv-about .sunsec__label,
-html.birth.tv-about .sunsec__bio,
-html.birth.tv-about .sunsec__links,
-html.birth.tv-about .sunsec__readout,
+html.birth.tv-about .status,
+html.birth.tv-about .status__link,
 html.birth.tv-works .works__label,
 html.birth.tv-works .works__row,
 html.birth.tv-works .works__empty,
@@ -106,7 +104,6 @@ html.birth.tv-contact main > .shell:last-child {
   background: #141018;
 }
 
-html.birth.tv-about .sunsec__readout,
 html.birth.tv-works .works__empty { font-size: 16px; }
 html.birth.tv-contact .contact__heading { font-size: 32px; }
 html.birth.tv-contact .contact { margin-top: 0; }
@@ -274,8 +271,8 @@ html.birth .tv__item:focus,
 html.birth .tv__item:focus-visible,
 html.birth .back:focus,
 html.birth .back:focus-visible,
-html.birth.tv-about .sunsec__links a:focus,
-html.birth.tv-about .sunsec__links a:focus-visible,
+html.birth.tv-about .status__link:focus,
+html.birth.tv-about .status__link:focus-visible,
 html.birth.tv-works .works__row:focus,
 html.birth.tv-works .works__row:focus-visible,
 html.birth.tv-contact a:focus,
@@ -293,6 +290,6 @@ html.birth .tv__start:focus-visible { color: #ff5c9a; }
 html.birth .tv__start:focus-visible::before { content: "> "; }
 html.birth .back:focus-visible { color: #ff5c9a; }
 html.birth .back:focus-visible::before { content: "> "; }
-html.birth.tv-about .sunsec__links a:focus-visible { color: #ff5c9a; }
+html.birth.tv-about .status__link:focus-visible { color: #ff5c9a; }
 html.birth.tv-works .works__row:focus-visible,
 html.birth.tv-works .works__row:focus-visible .works__title { color: #ff5c9a; }

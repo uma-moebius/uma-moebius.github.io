@@ -1,4 +1,4 @@
-/* The page's own field behind About and Works: the Works characters, the heading decode, the readout, the cursor and the
+/* The page's own field behind About and Works: the Works characters, the heading decode, the cursor and the
    setting sun at the footer. The SUN's body itself is drawn by the opening (birth.js) on its own canvas, all the way down.
    Input velocity drives glitch. */
 (function () {
@@ -56,7 +56,6 @@
   function to2d() { GPU = null; g = fresh(); cv.dataset.renderer = "2d"; if (ready) { build(); repaint(); } }
   function repaint() { if (!ready) return; if (reduce) render(0); else wake(); }
   var sun = scene.querySelector(".sunsec"), pin = sun.querySelector(".sunsec__pin"), works = scene.querySelector(".works");
-  var label = pin.querySelector(".sunsec__label"), bio = pin.querySelector(".sunsec__bio"), links = pin.querySelector(".sunsec__links"), readout = pin.querySelector(".sunsec__readout");
   // glyph roles (A.EDGE / A.AIR): the interior ramp holds no air or stroke characters — the dark side is ';' and '=' rows, not dust
   // the interior set; its order is re-measured (ink coverage, JetBrains Mono 600) before the first atlas — 'sun' stays as one block
   var CHARS = " ;====+*sun%#@", LV = CHARS.length, WILD = "SUN01/#:<>*", GE = LV + WILD.length, GA = GE + A.EDGE.length;
@@ -88,21 +87,20 @@
     CHARS = A.inkRamp(" ;====+*sun%#@", "sun", 600); GLYPHS = CHARS + WILD + A.EDGE + A.AIR;
     fit();
   }
-  // the free area between About's text blocks (the still body under reduced motion sits there) → never overlaps bio / links / readout
+  // the free area around the status screen (the still body under reduced motion sits there)
   function fit() {
     var p = pin.getBoundingClientRect();
-    function rr(el) { var b = el.getBoundingClientRect(); return { l: b.left - p.left, r: b.right - p.left, t: b.top - p.top, b: b.bottom - p.top }; }
-    var la = rr(label), bi = rr(bio), li = rr(links), ro = rr(readout), x0, x1, y0, y1;
-    // readout + label sit at the top; bio / links in the bottom corners (desktop) or under the label (mobile)
+    function rr(el) { if (!el) return null; var b = el.getBoundingClientRect(); return { l: b.left - p.left, r: b.right - p.left, t: b.top - p.top, b: b.bottom - p.top }; }
+    var blocks = [rr(pin.querySelector(".status__stats")), rr(pin.querySelector(".status__portrait"))];
     var half;
-    if (!small) { // on the page axis; as large as the height allows, shrunk only where the circle would reach the bio / links boxes
-      x0 = 24; x1 = W - 24; y0 = ro.b + 16; y1 = H - 24; fcx = W / 2; fcy = (y0 + y1) / 2;
-      half = Math.min((x1 - x0) / 2, (y1 - y0) / 2);
-      [bi, li].forEach(function (b) {
-        var dx = Math.max(b.l - 24 - fcx, 0, fcx - b.r - 24), dy = Math.max(b.t - 24 - fcy, 0, fcy - b.b - 24);
-        half = Math.min(half, Math.hypot(dx, dy));
-      });
-    } else { x0 = 8; x1 = W - 8; y0 = ro.b + 16; y1 = H - 16; fcx = (x0 + x1) / 2; fcy = (y0 + y1) / 2; half = Math.min(x1 - x0, y1 - y0) / 2; }
+    if (!small) { fcx = W / 2; fcy = H / 2; half = Math.min((W - 48) / 2, (H - 48) / 2); }
+    else { fcx = W / 2; fcy = H / 2; half = Math.min(W - 16, H - 32) / 2; }
+    blocks.forEach(function (b) {
+      if (!b || b.r <= b.l || b.b <= b.t) return;
+      var dx = Math.max(b.l - 24 - fcx, 0, fcx - b.r - 24), dy = Math.max(b.t - 24 - fcy, 0, fcy - b.b - 24);
+      half = Math.min(half, Math.hypot(dx, dy));
+    });
+    if (half < 16) half = 16;
     var pad = Math.max(11, Math.min(18, half * .045));   // the margin around the sphere (keeps its size)
     R0 = (half - pad) / 1.12;
   }
@@ -117,7 +115,6 @@
   }
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0 } : null; };
 
-  var lastRead = "";
   function frameState() {
     var pa = reduce ? .3 : progSun(), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
     return { pa: pa, pw: pw, nk: pa };
@@ -139,10 +136,6 @@
   function drawUI(t, st) {
     // About's text shows once the body has settled, and gives way as Works comes in
     pin.style.setProperty("--fade", (reduce ? 1 : (birthOn() ? BR.x : 1) * (1 - A.clamp(st.pw / .2))).toFixed(3));
-    var mins = Math.round((6 + st.nk * 6) * 60), hh = String(Math.floor(mins / 60)).padStart(2, "0"), mm = String(mins % 60).padStart(2, "0");
-    var txt = hh + ":" + mm + " · ALT " + String(Math.round(st.nk * 62)).padStart(2, "0") + "° · AZ " + String(Math.round(90 + st.nk * 90)).padStart(3, "0") + "°";
-    if (energy > .2) txt = txt.replace(/[0-9]/g, function (m) { return Math.random() < energy * .6 ? "#%01"[(Math.random() * 4) | 0] : m; });
-    if (txt !== lastRead) { readout.textContent = txt; lastRead = txt; }
   }
 
   // ---------- hero: the Baloo 2 wordmark sampled into small characters (same atlas system as the SUN, no outline layer) ----------

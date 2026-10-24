@@ -9,8 +9,8 @@
 html, body { overflow-x: clip; }
 body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
 
-/* monospace for labels, nav, numbers, readouts, form labels, footer */
-.logo, .nav a, .section-label, .works__row, .sunsec__readout, .field label, .site-footer, .send, .contact__mail {
+/* monospace for labels, nav, numbers, form labels, footer */
+.logo, .nav a, .section-label, .works__row, .field label, .site-footer, .send, .contact__mail {
   font-family: var(--mono); font-size: var(--mono-size); line-height: var(--row); letter-spacing: 0; font-weight: 400;
 }
 .section-label { text-transform: none; color: var(--mute); font-size: 16px; letter-spacing: .08em; }
@@ -41,17 +41,25 @@ html.wm-ascii .wordmark::selection { color: var(--ink); }
 .sunsec { position: relative; z-index: 1; height: 280vh; height: 280svh; }   /* 1.8 screens of scroll for the whole SUN timeline */
 .sunsec__pin { position: sticky; top: 0; height: 100vh; height: 100svh; }
 .sunsec__pin > * { opacity: var(--fade, 1); }
-.sunsec__label { position: absolute; left: 0; right: 0; top: calc(var(--row) * 2); margin: 0; }
 .sunsec__pin { --edge: calc(max(0px, (100% - 1200px) / 2) + var(--gutter)); }   /* the .shell content edges */
-.sunsec__bio, .sunsec__links { position: absolute; bottom: calc(var(--row) * 3); margin: 0; font-family: var(--mono); font-size: 16px; line-height: calc(var(--row) * 1.5); }
-.sunsec__bio { left: var(--edge); }
-.sunsec__links { right: var(--edge); text-align: right; }
-html:not(.ripple) .sunsec__links a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.sunsec__readout { position: absolute; left: 0; right: 0; top: calc(var(--row) * 3.5); margin: 0; text-align: center; color: var(--hint); }
+.status { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; column-gap: calc(var(--u) * 6);
+  margin: 0; padding: calc(var(--row) * 5) var(--edge); font-family: var(--ui); font-size: 16px; font-weight: 400; line-height: calc(var(--row) * 1.5); color: #ff9cc2; }
+.status__stats { margin: 0; }
+.status__row { display: grid; grid-template-columns: 5ch 2ch minmax(0, 1fr); margin: 0; }
+.status__row dt { margin: 0; color: #b83470; font-weight: 400; }
+.status__row dd { grid-column: 3; margin: 0; color: #ff9cc2; }
+.status__link { color: #ff9cc2; }
+.status__link:focus, .status__link:focus-visible { outline: none; }
+.status__link:focus-visible { color: #ff5c9a; }
+html:not(.ripple) .status__link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.status__portrait { justify-self: center; width: min(100%, calc(100svh - var(--row) * 14)); aspect-ratio: 1; position: relative; }
+.status__portrait img { display: none; width: 100%; height: 100%; object-fit: contain; opacity: 0; }
+.status__portrait img[src] { display: block; }
 @media (max-width: 768px) {
-  .sunsec__bio, .sunsec__links { top: calc(var(--row) * 5); bottom: auto; }
-  .sunsec__readout { top: calc(var(--row) * 10.5); }
+  .status { grid-template-columns: minmax(0, 1fr); align-content: center; row-gap: calc(var(--row) * 2); padding-top: calc(var(--row) * 6); }
+  .status__portrait { order: -1; width: min(68vw, 42svh); }
 }
+@media (prefers-reduced-motion: reduce) { .status__portrait img[src] { opacity: 1; } }
 
 /* Works: pinned full-screen scene; index on the cell grid, work as frameless characters → frameless image */
 .works { position: relative; z-index: 2; height: 260vh; height: 260svh; margin-top: -100vh; margin-top: -100svh; scroll-margin-top: -55vh; }
@@ -160,17 +168,17 @@ html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: 
    and no hover state that sticks after a tap: a press shows the hover look only while held */
 @media (pointer: coarse) {
   .logo, .nav a { padding: 14px 4px; margin: -14px -4px; }
-  .sunsec__links a { display: inline-block; padding: 10px 6px; margin: -10px -6px; }
+  .status__link { display: inline-block; padding: 10px 6px; margin: -10px -6px; }
   .contact__mail { padding: 14px 0; margin-bottom: -14px; margin-top: calc(var(--row) * 2 - 14px); }
   .field input { box-sizing: content-box; padding: 10px 0; margin: -10px 0; position: relative; z-index: 1; }   /* above its dotted rule, so a tap on the rule lands in the field */
   .send { height: 44px; border: solid transparent; border-width: 6px 0; background-clip: padding-box; margin-top: calc(var(--row) - 6px); margin-bottom: -6px; }
   .works__row { height: 44px; }
 }
 @media (hover: none) {
-  .logo:hover, .contact__mail:hover, .sunsec__links a:hover { text-decoration: none; }
+  .logo:hover, .contact__mail:hover, .status__link:hover { text-decoration: none; }
   .nav a:hover { color: var(--mute); }
   .send:hover:not(:disabled):not(:focus-visible):not(:active) { background-color: transparent; color: var(--candy); }
-  html:not(.ripple) .logo:active, html:not(.ripple) .contact__mail:active, html:not(.ripple) .sunsec__links a:active { text-decoration: underline; text-underline-offset: 3px; }
+  html:not(.ripple) .logo:active, html:not(.ripple) .contact__mail:active, html:not(.ripple) .status__link:active { text-decoration: underline; text-underline-offset: 3px; }
   html:not(.ripple) .nav a:active { color: var(--blush); }
   html:not(.ripple) .send:active:not(:disabled) { background-color: var(--candy); color: var(--night); }
 }

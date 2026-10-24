@@ -82,12 +82,16 @@
       <section class="sunsec" id="about" aria-labelledby="about-label">
         <div class="sunsec__pin">
           <button class="back" type="button" hidden>Back</button>
-          <h2 class="section-label sunsec__label" id="about-label" data-decode>About</h2>
-          <p class="sunsec__bio">Yuma Tanemura<br>Illustrator / Designer<br>Based in Japan</p>
-          <p class="sunsec__links">
-            <a href="https://github.com/uma-moebius" target="_blank" rel="noopener noreferrer">GitHub</a>
-          </p>
-          <p class="sunsec__readout" aria-hidden="true">06:00 · ALT 00° · AZ 090°</p>
+          <h2 class="sr-only" id="about-label">About</h2>
+          <div class="status">
+            <dl class="status__stats">
+              <div class="status__row"><dt>NAME</dt><dd>Yuma Tanemura</dd></div>
+              <div class="status__row"><dt>CLASS</dt><dd>Illustrator / Designer</dd></div>
+              <div class="status__row"><dt>HOME</dt><dd>Japan</dd></div>
+              <div class="status__row"><dt>LINK</dt><dd><a class="status__link" href="https://github.com/uma-moebius" target="_blank" rel="noopener noreferrer">GitHub</a></dd></div>
+            </dl>
+            <div class="status__portrait" id="portrait-stage"><img id="portrait-img" alt="" decoding="async"></div>
+          </div>
         </div>
       </section>
 
