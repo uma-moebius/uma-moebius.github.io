@@ -423,7 +423,7 @@
     return sun.getBoundingClientRect().top + window.scrollY + birthLen();
   };
   // phases on the sprung progress: knead → the body of balls (held a moment) → it spreads into the frame; About shows inside it
-  var M0 = .03, M1 = .4, F0 = .5, F1 = .97, SET0 = .9, SET1 = .98;
+  var M0 = -.12, M1 = .4, F0 = .5, F1 = .97, SET0 = .9, SET1 = .98;
 
   // ---------- frame ----------
   var HEART0 = 3.15;   // first heartbeat (s): the moment the name is whole
@@ -451,7 +451,7 @@
       k = j * cols + i; var x = (i + .5) * cw, y = (j + .5) * ch, p = poke(x, y), d, fold = 0;
       if (inBirth) {
         var F = L.F[k], gl = Math.hypot(L.FX[k], L.FY[k]), dm = F <= 0 ? 400 : clamp((.32 - F) / Math.max(gl, 1e-4), -60, 400);
-        if (wT > 0) { var o = body(p[0], p[1], 0, t, 0); d = lerp(dm, o.d, wT); } else d = dm;
+        if (wT > 0) { var o = body(p[0], p[1], m, t, 0); d = lerp(dm, o.d, wT); } else d = dm;
       } else { var o2 = f > 0 ? frameBody(x, y, tt, beat, f) : body(p[0], p[1], m, tt, beat); d = o2.d; fold = o2.fold; dep = o2.dep; }
       D[k] = d; FO[k] = fold;
       Hh[k] = FL.height(d, dep);
