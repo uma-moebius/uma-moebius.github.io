@@ -63,15 +63,11 @@
   // the same five tones as the wordmark, capped at the light pink (never white); atlas rows are tones, not levels
   var COLORS = ["#3d1528", "#6e1d43", "#b83470", "#ff5c9a", "#ff9cc2"], ST = COLORS.length - 1;
   var SUN_TL = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4];   // glyph level → resting tone
-  var DIVE_TL = [0, 0, 0, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4];  // during the dive the swallowed surface keeps its approved pinks (no middle tone)
-  var SUN_HOT = 1.05, SUN_HOT_BEAT = .92, sunDk = 0;   // light needed for the top tone (at rest; the beat value is unused: the heartbeat belongs to the wordmark)
-  var T_DEEP = 0, T_DIM = 1;   // atlas rows for the darkest two tones
+  var SUN_HOT = 1.05, SUN_HOT_BEAT = .92;   // light needed for the top tone (at rest; the beat value is unused: the heartbeat belongs to the wordmark)
   // tone of a sphere cell from its level, recomputed every frame (never accumulated); `up` = the beat lifts it by one
   function sunTone(lvl, b, i, j, up) {
-    var dive = sunDk > 0 && A.hash(i + 5.1, j + 3.7) < sunDk / .3;    // the first 30% of the dive hands each cell over to the dive pinks
-    var tn = (dive ? DIVE_TL : SUN_TL)[lvl], ok = b >= (up ? SUN_HOT_BEAT : SUN_HOT);
+    var tn = SUN_TL[lvl], ok = b >= (up ? SUN_HOT_BEAT : SUN_HOT);
     if (tn === undefined) tn = ST;
-    if (dive) return tn;
     if (tn === ST && !ok) tn = ST - 1;
     if (up && tn < ST) { tn++; if (tn === ST && (lvl < SUN_TL.length - 3 || !ok)) tn = ST - 1; }
     return tn;
@@ -106,18 +102,13 @@
   }
   function prog(el) { var r = el.getBoundingClientRect(), span = r.height - H; return span > 0 ? A.clamp(-r.top / span) : 1; }
   // the opening (birth.js) takes the first stretch of About's pinned scroll; About's own timeline starts after it, unchanged
-  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null, AFTER = 1.6;   // screens of About after the opening (as in birth.js)
+  var BR = window.BIRTH && window.BIRTH.on ? window.BIRTH : null;
   function birthOn() { return BR && BR.on && root.classList.contains("birth"); }
-  function progSun() {
-    if (!birthOn()) return prog(sun);
-    var r = sun.getBoundingClientRect(), b = Math.max(0, r.height - AFTER * H), span = r.height - b - H;
-    return span > 0 ? A.clamp((-r.top - b) / span) : 1;
-  }
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0 } : null; };
 
   function frameState() {
-    var pa = reduce ? .3 : progSun(), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
-    return { pa: pa, pw: pw, nk: pa };
+    var pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
+    return { pw: pw };
   }
 
   // sphere shading of the footer sun
@@ -197,7 +188,6 @@
   var HB_PERIOD = BEAT, HB_GAP = 180, HB_SECOND = .45, HB_ATTACK = 30, HB_DECAY = 70, HB_WAVE = 320;
   var HB_STEPS = 4.6, HB_EVERY = 4, HB_ACCENT = 1.3, HB_HOLD = .9;      // ramp steps at full pressure; accent strength; per-frame release (~0.3s)
   function pulse(x, a, d) { a = a || HB_ATTACK; d = d || HB_DECAY; return x < 0 ? 0 : x < a ? x / a : Math.exp(-(x - a) / d); }
-  function heart(t) { var x = ((t % HB_PERIOD) + HB_PERIOD) % HB_PERIOD; return Math.min(1, pulse(x) + HB_SECOND * pulse(x - HB_GAP)); }
   // pressure at local time t: an ordinary beat peaks at 1; the accent swells longer (slower rise and fall) and peaks at HB_ACCENT
   function press(t) {
     var n = Math.floor(t / HB_PERIOD), x = t - n * HB_PERIOD;
@@ -300,7 +290,7 @@
   // ---------- footer: a small setting sun on a character horizon (static; same material) ----------
   var dusk = document.querySelector(".dusk");
   function drawDusk() {
-    if (!dusk) return; sunDk = 0;
+    if (!dusk) return;
     var r = dusk.getBoundingClientRect(), Wd = Math.round(r.width), Hd = Math.round(r.height); if (Wd < 10) return;
     dusk.width = Math.round(Wd * dpr); dusk.height = Math.round(Hd * dpr);
     var dg = dusk.getContext("2d"), cw = small ? 4 : 5, ch = cw * 1.75, AT = A.atlas(GLYPHS, COLORS, cw, ch, 600, dpr), top = LV - 1;
