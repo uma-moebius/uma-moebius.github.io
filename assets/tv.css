@@ -169,7 +169,7 @@ html.birth.tv-contact .back {
   font-weight: 400;
   font-synthesis: none;
   font-size: 32px;
-  font-size: round(down, min(80px, 16svh, calc((100vw - 2 * var(--fi, 32px) - 32px) / 7)), 16px);
+  font-size: round(down, min(48px, 10svh, calc((100vw - 2 * var(--fi, 32px) - 32px) / 7)), 16px);
   line-height: 1.5;
   letter-spacing: 0;
   white-space: nowrap;
