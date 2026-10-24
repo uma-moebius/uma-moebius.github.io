@@ -103,6 +103,7 @@
     im.src = src;
     if (im.decode) im.decode().catch(function () {});
     imgEl.alt = "Yuma Tanemura";
+    imgEl.crossOrigin = "anonymous"; // same CORS mode as the plate's copy, so the browser fetches the file once
     imgEl.src = src;
     var plate = createPlate(stageEl, [im]);
     im.addEventListener("load", function () { plate.resetCache(); plate.prefetch(0); });
