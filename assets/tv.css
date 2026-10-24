@@ -275,3 +275,32 @@ html.birth.tv-contact .back {
 @media (prefers-reduced-motion: reduce) {
   .tv__start { animation: none; }
 }
+
+html.birth .tv__start:focus,
+html.birth .tv__start:focus-visible,
+html.birth .tv__item:focus,
+html.birth .tv__item:focus-visible,
+html.birth .back:focus,
+html.birth .back:focus-visible,
+html.birth.tv-about .sunsec__links a:focus,
+html.birth.tv-about .sunsec__links a:focus-visible,
+html.birth.tv-works .works__row:focus,
+html.birth.tv-works .works__row:focus-visible,
+html.birth.tv-contact a:focus,
+html.birth.tv-contact a:focus-visible,
+html.birth.tv-contact button:focus,
+html.birth.tv-contact button:focus-visible,
+html.birth.tv-contact input:focus,
+html.birth.tv-contact input:focus-visible,
+html.birth.tv-contact textarea:focus,
+html.birth.tv-contact textarea:focus-visible {
+  outline: none;
+}
+
+html.birth .tv__start:focus-visible { color: #ff5c9a; }
+html.birth .tv__start:focus-visible::before { content: "> "; }
+html.birth .back:focus-visible { color: #ff5c9a; }
+html.birth .back:focus-visible::before { content: "> "; }
+html.birth.tv-about .sunsec__links a:focus-visible { color: #ff5c9a; }
+html.birth.tv-works .works__row:focus-visible,
+html.birth.tv-works .works__row:focus-visible .works__title { color: #ff5c9a; }
