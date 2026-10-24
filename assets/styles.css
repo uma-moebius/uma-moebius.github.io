@@ -160,57 +160,8 @@ html:not(.ripple) .nav a:hover {
 
 }
 
-/* 404: one small character SUN above a line of mono text */
-.mini-sun {
-  margin: 0;
-  font-family: var(--ui);
-  font-size: 8px;
-  line-height: 14px;
-  font-weight: 600;
-  letter-spacing: 0;
-  user-select: none;
-}
-
-.edge-page {
-  min-height: 100vh;
-  background: var(--night);
-}
-
-.edge {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 48px 24px;
-  text-align: center;
-}
-
-.edge__line {
-  margin: 0;
-  color: var(--blush);
-  font-size: 20px;
-  font-weight: 400;
-}
-
-.edge__back {
-  color: var(--candy);
-  font-size: 16px;
-}
-
-html:not(.ripple) .edge__back:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-/* touch: no grey tap flash; the back link gets a 44px hit area (taken back by a negative margin) and no hover that sticks after a tap */
+/* touch: no grey tap flash */
 html { -webkit-tap-highlight-color: transparent; }
-@media (pointer: coarse) { .edge__back { display: inline-block; padding: 13px 6px; margin: -13px -6px; } }
-@media (hover: none) {
-  .edge__back:hover { text-decoration: none; }
-  html:not(.ripple) .edge__back:active { text-decoration: underline; text-underline-offset: 3px; }
-}
 
 /* page to page (same origin): one short, quiet cross-fade; browsers without cross-document view transitions simply navigate */
 @media (prefers-reduced-motion: no-preference) {
