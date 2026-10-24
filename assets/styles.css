@@ -88,7 +88,6 @@ textarea:focus-visible {
 
 .logo,
 .nav a,
-.section-label,
 .site-footer {
   font-size: 13px;
   font-weight: 500;
@@ -130,12 +129,6 @@ html:not(.ripple) .nav a:hover {
   line-height: 1.2;
   letter-spacing: -0.01282em;
   white-space: nowrap;
-}
-
-.section-label {
-  margin: 0;
-  color: var(--mute);
-  text-align: center;
 }
 
 .contact {

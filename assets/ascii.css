@@ -10,11 +10,9 @@ html, body { overflow-x: clip; }
 body { font-size: 16px; line-height: calc(var(--row) * 1.5); }
 
 /* monospace for labels, nav, numbers, form labels, footer */
-.logo, .nav a, .section-label, .works__row, .field label, .site-footer, .send, .contact__mail {
+.logo, .nav a, .works__row, .field label, .site-footer, .send, .contact__mail {
   font-family: var(--mono); font-size: var(--mono-size); line-height: var(--row); letter-spacing: 0; font-weight: 400;
 }
-.section-label { text-transform: none; color: var(--mute); font-size: 16px; letter-spacing: .08em; }
-.section-label::before { content: "[ " / ""; } .section-label::after { content: " ]" / ""; }   /* same brackets as [ Send ] */
 .site-header { position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding-top: calc(var(--row) * 2); }
 .site-header .shell { align-items: center; gap: var(--row) calc(var(--u) * 4); }
 .nav { gap: calc(var(--u) * 4); }
@@ -66,7 +64,6 @@ html:not(.ripple) .status__link:hover { text-decoration: underline; text-underli
 .works.is-empty { height: 150vh; height: 150svh; scroll-margin-top: -25vh; }   /* no works yet: about one screen of Works, the full scene returns with the first work */
 .works__pin { position: sticky; top: 0; height: 100vh; height: 100svh; opacity: var(--in, 0); pointer-events: none; }
 .works__pin.is-live { pointer-events: auto; }
-.works__label { position: absolute; left: 0; right: 0; top: calc(var(--row) * 2); margin: 0; }
 .works__pin { --wfs: 16px; --iw: calc(var(--wfs) * 24); --wg: calc(var(--u) * 12);
   --sw: min(calc(100vh - var(--row) * 10), calc(100vw - var(--iw) - var(--wg) - var(--gutter) * 2));
   --x0: calc((100vw - var(--iw) - var(--wg) - var(--sw)) / 2); }   /* index + work centred as one composition */
