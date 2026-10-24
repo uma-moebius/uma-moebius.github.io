@@ -15,7 +15,7 @@
   if (fine && !reduce) root.classList.add("has-sun-cursor");
 
   // ---------- input velocity ----------
-  var energy = 0, lx = null, ly = 0, lt = 0, lastY = scrollY, lastYT = performance.now(), scrollAcc = 0;
+  var energy = 0, lx = null, ly = 0, lt = 0, lastY = scrollY, lastYT = performance.now();
   function kick(v) { if (!reduce && v > 0) energy = Math.min(1, Math.max(energy, v)); wake(); }
   addEventListener("pointermove", function (e) {
     if (cursor) { root.style.setProperty("--cx", e.clientX + "px"); root.style.setProperty("--cy", e.clientY + "px");
@@ -26,7 +26,7 @@
   }, { passive: true });
   addEventListener("scroll", function () {
     var now = performance.now(), dy = scrollY - lastY, dt = Math.max(8, now - lastYT);
-    scrollAcc += dy; lastY = scrollY; lastYT = now; kick((Math.abs(dy) / dt - .6) / 2.5);
+    lastY = scrollY; lastYT = now; kick((Math.abs(dy) / dt - .6) / 2.5);
   }, { passive: true });
 
   // ---------- heading decode (once, on enter) ----------
@@ -117,7 +117,7 @@
   }
   window.SCENE_GEO = function () { return ready ? { cx: fcx, cy: fcy, R: R0 } : null; };
 
-  var rot = 0, lastRead = "";
+  var lastRead = "";
   function frameState() {
     var pa = reduce ? .3 : progSun(), pw = reduce ? 1 : (works.getBoundingClientRect().top <= 0 ? prog(works) : 0);
     return { pa: pa, pw: pw, nk: pa };
@@ -351,8 +351,6 @@
   function frame(t) {
     var dt = lastT ? Math.min(64, t - lastT) : 16; lastT = t;
     energy *= Math.pow(.9, dt / 16.7); if (energy < .01) energy = 0;
-    // no idle spin: rotation only from input (pointer velocity + scroll)
-    rot += energy * dt * .0035 + scrollAcc * .0009; scrollAcc = 0;
     var wt = t - CLK0; if (silent && wt > HB_WAVE + 200) silent = false;   // once the first beat has crossed the whole name
     if (visible) render(wt);
     if (heroVis) drawHero(wt);
