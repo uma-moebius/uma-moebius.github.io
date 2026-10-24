@@ -100,6 +100,8 @@ html.birth.tv-works .works.is-empty { background: #141018; }
 html.birth.tv-works .works__empty { font-size: 16px; }
 html.birth.tv-contact .contact { margin-top: 0; }
 html.birth.tv-contact .contact__layout { position: relative; padding-top: calc(var(--row) * 2); }
+html.birth.tv-contact .contact__layout { position: static; }
+html.birth.tv-contact .contact__mail { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); white-space: nowrap; font-size: 16px; }
 
 .back {
   position: absolute;
@@ -277,5 +279,6 @@ html.birth .tv__start:focus-visible::before { content: "> "; }
 html.birth .back:focus-visible { color: #ff5c9a; }
 html.birth .back:focus-visible::before { content: "> "; }
 html.birth.tv-about .status__link:focus-visible { color: #ff5c9a; }
+html.birth.tv-contact .contact__mail:focus-visible { color: #ff5c9a; }
 html.birth.tv-works .works__row:focus-visible,
 html.birth.tv-works .works__row:focus-visible .works__title { color: #ff5c9a; }
