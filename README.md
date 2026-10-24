@@ -2,6 +2,6 @@
 
 # Yuma Tanemura — Illustrator & Designer
 
-Illustrator and designer based in Japan. Open for commissions and collaborations — say hello.
+Illustrator and designer based in Japan. — say hello.
 
 [yumatanemura.com](https://yumatanemura.com)
