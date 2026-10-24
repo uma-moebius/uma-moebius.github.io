@@ -11,15 +11,23 @@
   <meta name="theme-color" content="#141018">
   <link rel="preload" href="/assets/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/styles.css">
+  <style>
+    .nosig { min-height: 100vh; min-height: 100svh; display: grid; place-content: center; justify-items: center; margin: 0; padding: 24px 16px; font-family: var(--ui); font-weight: 400; font-synthesis: none; -webkit-font-smoothing: none; text-align: center; }
+    .nosig h1 { margin: 0; color: #ff5c9a; font: inherit; font-size: min(48px, 10svh); line-height: 1.5; }
+    .nosig p { margin: 0; color: #b83470; font-size: 16px; line-height: 16px; }
+    .nosig a { display: inline-block; margin-top: 22px; padding: 6px 8px; color: #ff9cc2; font-size: 16px; line-height: 16px; text-decoration: none; animation: blink 1.2s steps(1) infinite; }
+    .nosig a:hover, .nosig a:focus-visible { color: #ff5c9a; outline: none; animation: none; }
+    @keyframes blink { 50% { opacity: 0; } }
+    @media (pointer: coarse) { .nosig a { min-height: 44px; padding: 14px 16px; } }
+    @media (prefers-reduced-motion: reduce) { .nosig a { animation: none; } }
+  </style>
 </head>
-<body class="edge-page">
-  <main class="edge">
-    <pre class="mini-sun" data-rows="11" aria-hidden="true"></pre>
-    <h1 class="edge__line">404 — lost in orbit</h1>
-    <a class="edge__back" href="/">yumatanemura.com</a>
+<body>
+  <main class="nosig">
+    <h1>404</h1>
+    <p>NO SIGNAL</p>
+    <a href="/">&gt; Back</a>
   </main>
-  <script src="/assets/mini-sun.js"></script>
-  <script src="/assets/ripple.js"></script>
   <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2049c5c9cd2f4ea08d89f3d93ec42ae2"}'></script>
 </body>
 </html>
