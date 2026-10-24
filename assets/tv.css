@@ -9,7 +9,6 @@ html.birth.tv-about .status,
 html.birth.tv-about .status__link,
 html.birth.tv-works .works__row,
 html.birth.tv-works .works__empty,
-html.birth.tv-contact .contact__heading,
 html.birth.tv-contact .contact__mail,
 html.birth.tv-contact .contact__form,
 html.birth.tv-contact .field label,
@@ -105,7 +104,6 @@ html.birth.tv-contact main > .shell:last-child {
 
 html.birth.tv-works .works.is-empty { background: #141018; }
 html.birth.tv-works .works__empty { font-size: 16px; }
-html.birth.tv-contact .contact__heading { font-size: 32px; }
 html.birth.tv-contact .contact { margin-top: 0; }
 html.birth.tv-contact .contact__layout { position: relative; padding-top: calc(var(--row) * 2); }
 

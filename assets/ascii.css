@@ -107,7 +107,6 @@ body { background-color: color-mix(in srgb, var(--night) 94%, var(--tint, #14101
 /* contact: a prompt, not a form card — character-cell lines, block caret, [ Send ] */
 .contact { margin-top: calc(var(--row) * 10); }
 .contact__layout { gap: calc(var(--row) * 3) calc(var(--u) * 12); grid-template-columns: minmax(0, 448px) minmax(0, 560px); }
-.contact__heading { font-family: var(--mono); font-weight: 400; font-size: 28px; line-height: calc(var(--row) * 2); letter-spacing: 0; max-width: none; }
 .contact__mail { margin-top: calc(var(--row) * 2); color: var(--candy); }
 .contact__mail::before { content: "<" / ""; color: var(--hint); } .contact__mail::after { content: ">" / ""; color: var(--hint); }
 .contact__form { gap: calc(var(--row) * 1); font-family: var(--mono); font-size: 16px; }
@@ -144,7 +143,6 @@ html:not(.ripple) .send:hover:not(:disabled), .send:focus-visible { background: 
 @media (max-width: 768px) {
   .contact { margin-top: calc(var(--row) * 6); }
   .contact__layout { grid-template-columns: minmax(0, 1fr); }
-  .contact__heading { font-size: 20px; line-height: calc(var(--row) * 1.75); }
   .send, .form-error { padding-left: 0; }
   .send { padding: 0 1ch; }
   .dusk { height: calc(var(--row) * 4.5); }

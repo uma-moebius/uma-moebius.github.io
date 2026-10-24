@@ -143,15 +143,6 @@ html:not(.ripple) .nav a:hover {
   gap: 48px 132px;
 }
 
-.contact__heading {
-  margin: 0;
-  max-width: 440px;
-  color: var(--blush);
-  font-size: 40px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
 .contact__mail {
   display: inline-block;
   margin-top: 32px;
@@ -265,8 +256,6 @@ html:not(.ripple) .nav a:hover {
   .contact { margin-top: 72px; }
 
   .contact__layout { grid-template-columns: 1fr; }
-
-  .contact__heading { font-size: 28px; }
 
   .site-footer { margin-top: 64px; }
 }
